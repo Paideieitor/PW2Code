@@ -31,9 +31,9 @@ To personalize the patch modify the ``settings.h`` file (I don't recomend modify
   - Crit stages updated to Gen6
 ### Gen6 weather abilities
   - Weather triggered by abilites like Drizzle now last 5 turns
-### Grass is inmune to powder moves
+### Grass is immune to powder moves
   - Grass type Pokémon are unaffected by powder moves like *Spore* or *Rage Powder*
-### Electric is inmune to paralysis
+### Electric is immune to paralysis
   - Electric type Pokémon can't get paralized
 ### Mega-Evolution (BETA)
   - Activate Mega-Evolution by pressing the *Start* button while in the move selection menu
