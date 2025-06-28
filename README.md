@@ -35,6 +35,8 @@ To personalize the patch modify the ``settings.h`` file (I don't recomend modify
   - Grass type Pokémon are unaffected by powder moves like *Spore* or *Rage Powder*
 ### Electric is immune to paralysis
   - Electric type Pokémon can't get paralized
+### Ghosts ignore traps
+  - Ghost type Pokémon can't get trapped by moves or abilities
 ### Mega-Evolution (BETA)
   - Activate Mega-Evolution by pressing the *Start* button while in the move selection menu
   - Known Issues:
@@ -44,6 +46,7 @@ To personalize the patch modify the ``settings.h`` file (I don't recomend modify
 	- THIS FEATURE IS NOT RECOMENDED TO BE USED (it also requires the NitroKernell DLL to work)
 ### Full Ability Expansion
   - Every single ability from Gen6, Gen7, Gen8 and Gen9 has been added to the battle engine
+  - Updated Intimidate interactions with existing abilities like *Inner Focus* or *Rattled*
   - To change a Pokémon ability to an expanded just modify the ability ID in that particular Pokémon Personal NARC (the ability IDs are preserved from vanilla games, but you can check them in ``BattleUpgrade.h``)
     - To give a Pokémon an ability with an ID higher than 255 you will need to use the 2 last bits of the respective wild item data, the code to do so is as follows:
     ```cpp
@@ -71,25 +74,13 @@ To personalize the patch modify the ``settings.h`` file (I don't recomend modify
 ## How to Install
 ### Installing tools
   - Set up a *Pokémon White 2 Edition USA* CTRMap project following this [guide](https://ds-pokemon-hacking.github.io/docs/generation-v/guides/bw_b2w2-using_ctrmap/)
-  - Download [PMC](https://github.com/kingdom-of-ds-hacking/PMC), go to the extras tab of CTRMap and click *Install/Update PMC* (You only need to do this the first time you create a new project)
-  - Download [ARM GNU Toolchain](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads)
+  - Download and install [PW2Builder](https://github.com/Paideieitor/PW2Builder/releases)
+  - Copy the ``Assets``, ``Global``, ``Headers``, ``Libraries`` and ``Patches`` folders to the ``PW2Builder`` folder
+  - Copy the ``ESDB.yml`` and ``settings.h`` files to the ``PW2Builder`` folder
 
-### Building the DLL
-  - In the ``PW2Code\PW2Builder`` folder, open the ``buildSettings.txt`` file
-    - Write the path to your CTRMap project after ``SET PROJECT_DIR=`` (Ex. ``SET PROJECT_DIR=MyFolder\MyCTRMapProject\``)
-    - Write the path to your CTRMap.jar file after ``SET CTRMAP_DIR=`` (Ex. ``SET CTRMAP_DIR=MyFolder\CTRMap\``)
-    - Write the path to your ARM GNU Toolchain bin folder after ``SET ARM_NONE_EABI_DIR=`` (leave like it is if you set that folder in the systems path)
-    - Write the path to your Java after ``SET JAVA_DIR=`` (leave like it is if you set that folder in the systems path)
-  - If you are on Windows skip to the final step of this section using the prebuilt PW2Builder executable
-  - If you are on Linux or other OS follow this instructions to build an executable:
-    - In the ``PW2Code\PW2Builder`` folder input the following commands:
-    ```
-    mkdir build
-    cd build
-    cmake ..
-    cmake build
-    ```
-  - Open a Command Prompt in the ``PW2Code\PW2Builder`` folder and execute the PW2Builder
+### Building the patch
+  - Open a Command Prompt in the ``Builder`` folder and execute the following command:
+    ``PW2Builder.exe -build -whitelist-all``
 
 ## Reporting Issues/Contributing
 You can message me through Discord, @dararoraro
