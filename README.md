@@ -79,7 +79,7 @@ To personalize the patch modify the ``settings.h`` file (I don't recomend modify
   - Copy the ``ESDB.yml`` and ``settings.h`` files to the ``PW2Builder`` folder
 
 ### Building the patch
-  - Open a Command Prompt in the ``Builder`` folder and execute the following command:
+  - Open a Command Prompt in the ``Builder`` folder and execute the following command:  
     ``PW2Builder.exe -build -whitelist-all``
 
 ## Reporting Issues/Contributing
