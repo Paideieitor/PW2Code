@@ -1,0 +1,61 @@
+#if ADD_INFINITE_RARE_CANDY
+	a\0\2\4\622 // Infinite Rare Candy item data
+#endif
+#if ADD_INFINITE_REPEL
+	a\0\0\2\6 // Add Repel toggle message
+	a\0\0\3\411 // Add Repel toggle message while out of the bag
+	a\0\2\4\623 // Infinite Repel item data
+	a\0\5\6\1248 // Change the Repel field script
+#endif
+#if ADD_INFINITE_RARE_CANDY || ADD_INFINITE_REPEL
+	a\0\0\2\365 // Register List names
+#endif
+#if ADD_INFINITE_RARE_CANDY || ADD_INFINITE_REPEL || EXPAND_ITEMS
+	a\0\0\2\63 // Item descriptions
+	a\0\0\2\64 // Item names
+	a\0\0\2\481 // Item pick-up message
+	a\0\0\2\482 // Item plurals
+#endif
+#if EXPAND_ABILITIES
+	a\0\0\2\18 // Adds battle messages that depend on the Pokémon (3 entries per message)
+	a\0\0\2\19 // Adds battle messages that do not depend on the Pokémon (1 entry per message)
+	a\0\0\2\374 // Ability names
+	a\0\0\2\375 // Ability descriptions
+	a\0\0\2\396 // Ability NPC dialogue
+	a\0\0\2\487 // Ability names in all-caps
+#endif
+#if EXPAND_ITEMS
+// Item data of new battle items
+	a\0\2\4\113
+	a\0\2\4\114
+	a\0\2\4\115
+	a\0\2\4\120
+	a\0\2\4\121
+	a\0\2\4\122
+	a\0\2\4\123
+	a\0\2\4\124
+	a\0\2\4\125
+	a\0\2\4\126
+	a\0\2\4\127
+	a\0\2\4\128
+	a\0\2\4\129
+	a\0\2\4\130
+	a\0\2\4\131
+	a\0\2\4\132
+	a\0\2\4\133
+	a\0\2\4\426
+	a\0\2\4\427
+	a\0\2\4\428
+	a\0\2\4\429
+	a\0\2\4\430
+	a\0\2\4\431
+	a\0\2\4\432
+	a\0\2\4\433
+	a\0\2\4\434
+	a\0\2\4\435
+	a\0\2\4\436
+	a\0\2\4\437
+	a\0\2\4\438
+	a\0\2\4\439
+	a\0\2\4\440
+#endif

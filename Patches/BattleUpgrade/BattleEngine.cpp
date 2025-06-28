@@ -2,6 +2,7 @@
 #include "BattleEngine.h"
 #include "GameVariables.h"
 #include "include/MoveTypes.h"
+#include "include/Battlefield.h"
 
 #include "system/game_input.h"
 
@@ -963,7 +964,6 @@ extern "C" int THUMB_BRANCH_ServerFlow_ActOrderProcMain(ServerFlow * serverFlow,
 
 // FIELD EFFECT EXPANSION
 #include "include/Terrains.h"
-#include "include/BattleField.h"
 
 // The battle engine stores 2 BattleField structs
 //  - One is dyanamically allocated using BattleField_Init
@@ -2636,7 +2636,7 @@ extern "C" u32 THUMB_BRANCH_SAFESTACK_ServerEvent_CalcDamage(ServerFlow * server
 
 #endif // EXPAND_FIELD_EFFECTS || GEN6_CRIT
 
-#if GRASS_INMUNE_TO_POWDER
+#if GRASS_IMMUNE_TO_POWDER
 
 extern "C" void CommonContactStatusAbility(ServerFlow* serverFlow, u32 currentSlot, CONDITION condition, ConditionData condData, u8 effectChance);
 extern "C" void THUMB_BRANCH_LINK_HandlerEffectSpore_0x44(ServerFlow* serverFlow, u32 defendingSlot, CONDITION condition, ConditionData condData, u8 effectChance) {
@@ -2646,7 +2646,28 @@ extern "C" void THUMB_BRANCH_LINK_HandlerEffectSpore_0x44(ServerFlow* serverFlow
         CommonContactStatusAbility(serverFlow, defendingSlot, condition, condData, 30u);
 }
 
-#endif // GRASS_INMUNE_TO_POWDER
+#endif // GRASS_IMMUNE_TO_POWDER
+
+#if GHOST_IGNORES_TRAPS
+
+extern "C" b32 THUMB_BRANCH_LINK_ServerControl_RunCore_0x5C(ServerFlow * serverFlow, BattleMon * battleMon) {
+    if (BattleMon_HasType(battleMon, TYPE_GHOST))
+        return false;
+    return ServerEvent_CheckRunPrevent(serverFlow, battleMon);
+}
+
+extern "C" u32 IsMonTrapped(BtlClientWk * client, BattleMon * battleMon, u32 * trappingSlot, u16 * trappingAbility);
+extern "C" u32 THUMB_BRANCH_LINK_CanMonSwitch_0x2A(BtlClientWk * client, BattleMon * battleMon, u32 * trappingSlot, u16 * trappingAbility) {
+    if (BattleMon_HasType(battleMon, TYPE_GHOST))
+        return 4;
+    return IsMonTrapped(client, battleMon, trappingSlot, trappingAbility);
+}
+extern "C" u32 THUMB_BRANCH_LINK_IsForbidEscape_0x86(BtlClientWk * client, BattleMon * battleMon, u32 * trappingSlot, u16 * trappingAbility) {
+    if (BattleMon_HasType(battleMon, TYPE_GHOST))
+        return 4;
+    return IsMonTrapped(client, battleMon, trappingSlot, trappingAbility);
+}
+#endif // GHOST_IGNORES_TRAPS
 
 #if EXPAND_ABILITIES || EXPAND_ITEMS
 #include "include/Contact.h"
@@ -2948,7 +2969,7 @@ extern "C" WEATHER Handler_CheckWeather(ServerFlow* serverFlow, u32 pokemonSlot,
 }
 #endif // EXPAND_ABILITIES || EXPAND_ITEMS
 
-#if EXPAND_ABILITIES || EXPAND_ITEMS || GRASS_INMUNE_TO_POWDER
+#if EXPAND_ABILITIES || EXPAND_ITEMS || GRASS_IMMUNE_TO_POWDER
 // CONTACT REWORK - Modifies contact checks to allow the battle 
 // engine to modify it from the items and abilities
 
@@ -2961,7 +2982,7 @@ ABILITY abilityIgnoresBait[] = {
 extern "C" b32 AbilityIgnoresBait(ABILITY ability) { 
     return SEARCH_ARRAY(abilityIgnoresBait, ability); }
 #endif
-#if EXPAND_ITEMS || GRASS_INMUNE_TO_POWDER
+#if EXPAND_ITEMS || GRASS_IMMUNE_TO_POWDER
 MOVE_ID powderMove[] = {
     MOVE_SPORE,
     MOVE_COTTON_SPORE,
@@ -2994,10 +3015,10 @@ extern "C" void THUMB_BRANCH_HandlerFollowMeBaitTarget(BattleEventItem * item, S
                 return;
 #endif
         
-#if EXPAND_ITEMS || GRASS_INMUNE_TO_POWDER
+#if EXPAND_ITEMS || GRASS_IMMUNE_TO_POWDER
             // If the redirection is made by a powder move
             if (PowderMove((MOVE_ID)item->subID)) {
-#if GRASS_INMUNE_TO_POWDER
+#if GRASS_IMMUNE_TO_POWDER
                 if (BattleMon_HasType(attackingMon, TYPE_GRASS))
                     return;
 #endif
@@ -3022,9 +3043,9 @@ extern "C" void THUMB_BRANCH_HandlerFollowMeBaitTarget(BattleEventItem * item, S
     }
 }
 
-#endif // EXPAND_ABILITIES || EXPAND_ITEMS || GRASS_INMUNE_TO_POWDER
+#endif // EXPAND_ABILITIES || EXPAND_ITEMS || GRASS_IMMUNE_TO_POWDER
 
-#if EXPAND_ABILITIES || EXPAND_ITEMS || ELECTRIC_INMUNE_TO_PARALYSIS
+#if EXPAND_ABILITIES || EXPAND_ITEMS || ELECTRIC_IMMUNE_TO_PARALYSIS
 
 ABILITY abilityImmuneToGastroAcid[] = {
     ABIL_MULTITYPE,
@@ -3093,7 +3114,7 @@ extern "C" u32 THUMB_BRANCH_SAFESTACK_ServerControl_AddConditionCheckFail(Server
         failStatus = 0;
     }
 #endif
-#if ELECTRIC_INMUNE_TO_PARALYSIS
+#if ELECTRIC_IMMUNE_TO_PARALYSIS
     if (condition == CONDITION_PARALYSIS && 
         failStatus == 0 && 
         BattleMon_HasType(defendingMon, TYPE_ELEC)) {
@@ -3121,7 +3142,7 @@ extern "C" u32 THUMB_BRANCH_SAFESTACK_ServerControl_AddConditionCheckFail(Server
     }
 }
 
-#endif // EXPAND_ABILITIES || EXPAND_ITEMS || ELECTRIC_INMUNE_TO_PARALYSIS
+#endif // EXPAND_ABILITIES || EXPAND_ITEMS || ELECTRIC_IMMUNE_TO_PARALYSIS
 
 #if EXPAND_ABILITIES
 // References for the implementations in https://bulbapedia.bulbagarden.net/wiki/Ability#List_of_Abilities and https://www.youtube.com/@mupokepedia
@@ -3246,17 +3267,38 @@ ABILITY abilityCantBeNeutralized[] = {
 extern "C" b32 AbilityCantBeNeutralized(ABILITY ability) {
     return SEARCH_ARRAY(abilityCantBeNeutralized, ability); }
 
+#if GEN9_INTIMIDATE_INTERACTIONS
+
+extern "C" void HandlerIgnoreIntimidate(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work) {
+    if (pokemonSlot == BattleEventVar_GetValue(VAR_MON_ID)
+        && BattleEventVar_GetValue(VAR_INTIMIDATE_FLAG)) {
+        BattleEventVar_RewriteValue(VAR_MOVE_FAIL_FLAG, 1);
+
+        BattleHandler_PushRun(serverFlow, EFFECT_ABILITY_POPUP_ADD, pokemonSlot);
+
+        HandlerParam_Message* message;
+        message = (HandlerParam_Message*)BattleHandler_PushWork(serverFlow, EFFECT_MESSAGE, pokemonSlot);
+        BattleHandler_StrSetup(&message->str, 2u, 201);
+        BattleHandler_AddArg(&message->str, pokemonSlot);
+        BattleHandler_PopWork(serverFlow, message);
+
+        BattleHandler_PushRun(serverFlow, EFFECT_ABILITY_POPUP_REMOVE, pokemonSlot);
+    }
+}
+
+#endif // GEN9_INTIMIDATE_INTERACTIONS
+
 struct AbilityEventAddTableExt
 {
     ABILITY ability;
     AbilityEventAddFunc func;
     const char* dllName;
 };
+
 AbilityEventAddTableExt abilityEventAddTableExt[]{
     { ABIL_INTIMIDATE, EventAddIntimidate, nullptr },
     { ABIL_CLEAR_BODY, EventAddClearBody, nullptr },
     { ABIL_WHITE_SMOKE, EventAddClearBody, nullptr },
-    { ABIL_INNER_FOCUS, EventAddInnerFocus, nullptr },
     { ABIL_STEADFAST, EventAddSteadfast, nullptr },
     { ABIL_THICK_FAT, EventAddThickFat, nullptr },
     { ABIL_HYPER_CUTTER, EventAddHyperCutter, nullptr },
@@ -3284,7 +3326,6 @@ AbilityEventAddTableExt abilityEventAddTableExt[]{
     { ABIL_AIR_LOCK, EventAddAirLock, nullptr },
     { ABIL_CLOUD_NINE, EventAddAirLock, nullptr },
     { ABIL_TECHNICIAN, EventAddTechnician, nullptr },
-    { ABIL_OBLIVIOUS, EventAddOblivious, nullptr },
     { ABIL_HYDRATION, EventAddHydration, nullptr },
     { ABIL_POISON_HEAL, EventAddPoisonHeal, nullptr },
     { ABIL_ICE_BODY, EventAddIceBody, nullptr },
@@ -3333,11 +3374,9 @@ AbilityEventAddTableExt abilityEventAddTableExt[]{
     { ABIL_LIMBER, EventAddLimber, nullptr },
     { ABIL_INSOMNIA, EventAddInsomnia, nullptr },
     { ABIL_VITAL_SPIRIT, EventAddInsomnia, nullptr },
-    { ABIL_OWN_TEMPO, EventAddOwnTempo, nullptr },
     { ABIL_MAGMA_ARMOR, EventAddMagmaArmor, nullptr },
     { ABIL_WATER_VEIL, EventAddWaterVeil, nullptr },
     { ABIL_IMMUNITY, EventAddImmunity, nullptr },
-    { ABIL_SCRAPPY, EventAddScrappy, nullptr },
     { ABIL_SOUNDPROOF, EventAddSoundproof, nullptr },
     { ABIL_LEVITATE, EventAddLevitate, nullptr },
     { ABIL_FLOWER_GIFT, EventAddFlowerGift, nullptr },
@@ -3401,7 +3440,6 @@ AbilityEventAddTableExt abilityEventAddTableExt[]{
     { ABIL_MUMMY, EventAddMummy, nullptr },
     { ABIL_MOXIE, EventAddMoxie, nullptr },
     { ABIL_JUSTIFIED, EventAddJustified, nullptr },
-    { ABIL_RATTLED, EventAddRattled, nullptr },
     { ABIL_MAGIC_BOUNCE, EventAddMagicBounce, nullptr },
     { ABIL_SAP_SIPPER, EventAddSapSipper, nullptr },
     { ABIL_PRANKSTER, EventAddPrankster, nullptr },
@@ -3411,6 +3449,19 @@ AbilityEventAddTableExt abilityEventAddTableExt[]{
     { ABIL_VICTORY_STAR, EventAddVictoryStar, nullptr },
     { ABIL_TURBOBLAZE, EventAddMoldBreaker, nullptr },
     { ABIL_TERAVOLT, EventAddMoldBreaker, nullptr },
+#if GEN9_INTIMIDATE_INTERACTIONS
+    { ABIL_OBLIVIOUS, EventAddObliviousUpdated, "Abilities/Oblivious" },
+    { ABIL_OWN_TEMPO, EventAddOwnTempoUpdated, "Abilities/OwnTempo" },
+    { ABIL_INNER_FOCUS, EventAddInnerFocusUpdated, "Abilities/InnerFocus" },
+    { ABIL_SCRAPPY, EventAddScrappyUpdated, "Abilities/Scrappy" },
+    { ABIL_RATTLED, EventAddRattledUpdated, "Abilities/Rattled" },
+#else
+    { ABIL_OBLIVIOUS, EventAddOblivious, nullptr },
+    { ABIL_OWN_TEMPO, EventAddOwnTempo, nullptr },
+    { ABIL_INNER_FOCUS, EventAddInnerFocus, nullptr },
+    { ABIL_SCRAPPY, EventAddScrappy, nullptr },
+    { ABIL_RATTLED, EventAddRattled, nullptr },
+#endif
     { ABIL_AROMA_VEIL, EventAddAromaVeil, "Abilities/AromaVeil" },
     { ABIL_FLOWER_VEIL, EventAddFlowerVeil, "Abilities/FlowerVeil" },
     { ABIL_CHEEK_POUCH, EventAddCheekPouch, "Abilities/CheekPouch" },
@@ -4728,7 +4779,7 @@ extern "C" b32 THUMB_BRANCH_BattleHandler_AddSideEffect(ServerFlow* serverFlow, 
 
 #endif // EXPAND_ABILITIES
 
-#if EXPAND_ABILITIES || GRASS_INMUNE_TO_POWDER
+#if EXPAND_ABILITIES || GRASS_IMMUNE_TO_POWDER
 
 #if EXPAND_ABILITIES
 // Unseen Fist - Modified CheckProtectBreak server event
@@ -4780,7 +4831,7 @@ extern "C" void THUMB_BRANCH_SAFESTACK_flowsub_CheckNoEffect_Protect(ServerFlow 
     }
     PokeSet_SeekStart(targetSet);
     for (BattleMon* targetMon = PokeSet_SeekNext(targetSet); targetMon; targetMon = PokeSet_SeekNext(targetSet)) {
-#if GRASS_INMUNE_TO_POWDER
+#if GRASS_IMMUNE_TO_POWDER
         if (PowderMove(*moveID) && BattleMon_HasType(targetMon, TYPE_GRASS)) {
             // If a Grass Pokémon is hit by a non-self-targeting move
             u32 targetSlot = BattleMon_GetID(targetMon);
@@ -4809,7 +4860,7 @@ extern "C" void THUMB_BRANCH_SAFESTACK_flowsub_CheckNoEffect_Protect(ServerFlow 
     }
 }
 
-#endif // EXPAND_ABILITIES || GRASS_INMUNE_TO_POWDER
+#endif // EXPAND_ABILITIES || GRASS_IMMUNE_TO_POWDER
 
 #if EXPAND_ABILITIES || ADD_MEGA_EVOLUTION
 

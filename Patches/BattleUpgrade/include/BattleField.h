@@ -1,5 +1,5 @@
-#ifndef __BATTLEFIELD_H
-#define __BATTLEFIELD_H
+#ifndef __BATTLEFIELD_EXT_H
+#define __BATTLEFIELD_EXT_H
 
 #include "settings.h"
 #include "Terrains.h"
@@ -184,4 +184,4 @@ extern "C" void ServerEvent_SwitchInPriority(ServerFlow * serverFlow);
 
 extern "C" WEATHER Handler_CheckWeather(ServerFlow * serverFlow, u32 pokemonSlot, WEATHER weather);
 
-#endif // __BATTLEFIELD_H
+#endif // __BATTLEFIELD_EXT_H

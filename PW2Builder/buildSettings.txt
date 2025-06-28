@@ -1,7 +1,0 @@
-REM - All the paths in this file must end in the folder separator character (\ in Windows)
-REM - If any of this paths are part of the Enviroment Variables you can just leave them empty
-
-SET PROJECT_DIR=..\..\W2U\W2U_CTRMap\
-SET CTRMAP_DIR=..\..\CTRMap\
-SET ARM_NONE_EABI_DIR=
-SET JAVA_DIR=

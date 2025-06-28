@@ -1,0 +1,9 @@
+#if EXPAND_FIELD_EFFECTS
+	FieldEffects
+#endif
+#if EXPAND_ABILITIES
+	Abilities
+#endif
+#if EXPAND_ITEMS
+	Items
+#endif

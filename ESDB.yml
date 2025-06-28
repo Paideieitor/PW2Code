@@ -3445,3 +3445,18 @@ Symbols:
   - Name: HandlerCommon_CheckUnchangeableItem
     Segment: 0xA7
     Address: 0x21cdf1d
+  - Name: ServerEvent_CheckRunPrevent
+    Segment: 0xA7
+    Address: 0x21a1339
+  - Name: ServerControl_RunCore
+    Segment: 0xA7
+    Address: 0x21a11f1
+  - Name: IsMonTrapped
+    Segment: 0xA7
+    Address: 0x21b4bfd
+  - Name: CanMonSwitch
+    Segment: 0xA7
+    Address: 0x21b4b1d
+  - Name: IsForbidEscape
+    Segment: 0xA7
+    Address: 0x21b4b61

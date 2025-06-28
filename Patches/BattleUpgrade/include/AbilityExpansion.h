@@ -144,5 +144,28 @@ extern "C" BattleEventHandlerTableEntry* EventAddTeraShell(u32 * handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddTeraformZero(u32 * handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddPoisonPuppeteer(u32 * handlerAmount);
 
+//Natural Cure
+//Lightning Rod
+//Illuminate
+//Trace
+//Soundproof
+//Normalize
+//Mold Breaker
+//Frisk
+//Contrary
+//Weak Armor
+//Moody
+//Overcoat
+//Infiltrator
+//Sap Sipper
+//Prankster
+extern "C" BattleEventHandlerTableEntry * EventAddObliviousUpdated(u32 * handlerAmount);
+extern "C" BattleEventHandlerTableEntry * EventAddOwnTempoUpdated(u32 * handlerAmount);
+extern "C" BattleEventHandlerTableEntry * EventAddInnerFocusUpdated(u32 * handlerAmount);
+extern "C" BattleEventHandlerTableEntry * EventAddScrappyUpdated(u32 * handlerAmount);
+extern "C" BattleEventHandlerTableEntry * EventAddRattledUpdated(u32 * handlerAmount);
+
+extern "C" void HandlerIgnoreIntimidate(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work);
+
 #endif // ABILITY_EXPANSION_H
 

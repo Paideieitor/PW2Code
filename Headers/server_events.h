@@ -38,5 +38,6 @@ extern "C" b32 ServerEvent_SkipAvoidCheck(ServerFlow* serverFlow, BattleMon* att
 extern "C" b32 ServerEvent_CheckHit(ServerFlow* serverFlow, BattleMon* attackingMon, BattleMon* defendingMon, MoveParam* moveParam);
 extern "C" void ServerEvent_AfterWeatherChange(ServerFlow* serverFlow, WEATHER weather);
 extern "C" b32 ServerEvent_CheckProtectBreak(ServerFlow * serverFlow, BattleMon * attackingMon);
+extern "C" u32 ServerEvent_CheckRunPrevent(ServerFlow * serverFlow, BattleMon * battleMon);
 
 #endif // __SERVER_EVENTS_H
