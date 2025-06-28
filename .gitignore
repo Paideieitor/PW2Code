@@ -1,0 +1,9 @@
+/ExternalDependencies
+/PW2Builder
+/.vs
+/build
+*.sln
+*.vcxproj
+*.filters
+*.user
+/x64

@@ -17,15 +17,15 @@
 
 #if EXPAND_ITEMS
 
-extern "C" BagItem* BagSave_AddItemCore(BagSaveData* bag, u16 item_idx, u16 quantity, HeapID heapId);
-extern "C" bool THUMB_BRANCH_BagSave_AddItem(BagSaveData* bag, u16 itemId, u16 quantity, HeapID heapId)
-{
-    int amount = 50;
-//#define ITEM_BOOSTER_ENERGY 440
-    BagSave_AddItemCore(bag, 440, amount, heapId);
-
-    return BagSave_AddItemCore(bag, itemId, quantity, heapId) != 0;
-}
+//extern "C" BagItem* BagSave_AddItemCore(BagSaveData* bag, u16 item_idx, u16 quantity, HeapID heapId);
+//extern "C" bool THUMB_BRANCH_BagSave_AddItem(BagSaveData* bag, u16 itemId, u16 quantity, HeapID heapId)
+//{
+//    int amount = 50;
+////#define ITEM_BOOSTER_ENERGY 440
+//    BagSave_AddItemCore(bag, 440, amount, heapId);
+//
+//    return BagSave_AddItemCore(bag, itemId, quantity, heapId) != 0;
+//}
 
 extern "C" ItemType THUMB_BRANCH_PML_ItemGetType(u16 itemID) {
     return (ItemType)GetItemParam(itemID, ITSTAT_POCKET_FIELD, 0x1/*HEAPID_USER*/);
