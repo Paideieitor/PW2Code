@@ -1,6 +1,5 @@
 # PW2Code
-Code Injection Patches to upgrade the Pokémon White 2 Edition gameplay. 
-Comes with a Patch Builder to install on to your CTRMap Project
+Code Injection Patches to upgrade the Pokémon White 2 Edition gameplay
 
 ## Features
 To personalize the patch modify the ``settings.h`` file (I don't recomend modifying the non-boolean definitions unless you know what you are doing)
