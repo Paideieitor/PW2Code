@@ -7,3 +7,4 @@
 *.filters
 *.user
 /x64
+*.lnk
