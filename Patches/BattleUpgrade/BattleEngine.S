@@ -1,5 +1,7 @@
 .thumb
 
+.type THUMB_BRANCH_LINK_CALCDMG_Set_0xFA, %function
+
 #include "settings.h"
 
 #if WEATHER_ABILITY_TURNS != 255
@@ -50,6 +52,44 @@ FULL_COPY_BattleHandler_ChangeAbility_0x126:
     .size FULL_COPY_BattleHandler_ChangeAbility_0x126, . - FULL_COPY_BattleHandler_ChangeAbility_0x126
 
 #endif // EXPAND_ABILITIES || ADD_MEGA_EVOLUTION
+
+#if GEN7_WEAK_ARMOR
+
+FULL_COPY_HandlerWeakArmor_0x9E:
+    strb    r7, [r1,#0xC]
+    .size FULL_COPY_HandlerWeakArmor_0x9E, . - FULL_COPY_HandlerWeakArmor_0x9E
+
+#endif // GEN7_WEAK_ARMOR
+
+#if GEN8_MOODY
+
+FULL_COPY_HandlerMoody_0x76:
+    cmp r5, #5
+    .size FULL_COPY_HandlerMoody_0x76, . - FULL_COPY_HandlerMoody_0x76
+
+#endif // GEN8_MOODY
+
+#if GEN7_INFILTRATOR
+
+THUMB_BRANCH_LINK_CALCDMG_Set_0xFA:
+    ldr     r3, [sp,#0x18]  @ attackingMon
+    push    {r7, lr}
+    movs    r7, r0
+    movs    r0, r3
+    movs    r1, #0x11       @ VALUE_EFFECTIVE_ABILITY
+    bl      BattleMon_GetValue
+    cmp     r0, #151        @ ABIL_INFILTRATOR
+    bne     Check_Substitute
+    movs    r0, #0
+    b       Exit_CALCDMG_Set
+Check_Substitute:
+    movs    r0, r7          @ targetMon
+    bl      BattleMon_IsSubstituteActive
+Exit_CALCDMG_Set:
+    pop     {r7, pc}
+    .size THUMB_BRANCH_LINK_CALCDMG_Set_0xFA, . - THUMB_BRANCH_LINK_CALCDMG_Set_0xFA
+
+#endif // GEN7_INFILTRATOR
 
 #if EXPAND_ITEMS
 

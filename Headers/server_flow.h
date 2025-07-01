@@ -515,6 +515,7 @@ extern "C" b32 Handler_IsSimulationMode(ServerFlow* serverFlow);
 extern "C" b32 Handler_IsSideEffectActive(ServerFlow* serverFlow, u32 side, SIDE_EFFECT sideEffect);
 extern "C" u32 Handler_GetExistFrontPokePos(ServerFlow* serverFlow, u32 pokemonSlot);
 extern "C" u8* Handler_GetTempWork(ServerFlow* serverFlow);
+extern "C" u32 Handler_GetAllOpponentFrontPokeID(ServerFlow * serverFlow, u32 pokemonSlot, u8 * frontSlots);
 
 extern "C" u32 AddConditionCheckFailOverwrite(ServerFlow * serverFlow, BattleMon * defendingMon, CONDITION condition, ConditionData condData, u8 overrideMode);
 extern "C" u32 AddConditionCheckFailStandard(ServerFlow * serverFlow, BattleMon * defendingMon, u32 failStatus, CONDITION condition);

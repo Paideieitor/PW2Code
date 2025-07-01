@@ -3460,3 +3460,12 @@ Symbols:
   - Name: IsForbidEscape
     Segment: 0xA7
     Address: 0x21b4b61
+  - Name: ServerControl_SubstituteExclude
+    Segment: 0xA7
+    Address: 0x21a2c9d
+  - Name: HandlerBypassSubstitute
+    Segment: 0xA7
+    Address: 0x21c7845
+  - Name: CALCDMG_Set
+    Segment: 0xA7
+    Address: 0x21a4531

@@ -1868,7 +1868,7 @@ extern "C" b32 THUMB_BRANCH_BattleHandler_AddFieldEffect(ServerFlow * serverFlow
         u32 pokePos = MainModule_PokeIDToPokePos(serverFlow->mainModule, serverFlow->pokeCon, pokemonSlot);
         ServerDisplay_AddCommon(serverFlow->serverCommandQueue, SCID_MoveAnim, pokePos, pokePos, moveID, 0, 0);
 
-        // ChangeBattleBackground(); TODO: CHANGE BACKGROUND WHEN THE TERRAIN STARTS AND ENDS
+        // ChangeBattleBackground(10); // TODO: CHANGE BACKGROUND WHEN THE TERRAIN STARTS AND ENDS
         // OVL_168:021E0244 in the IDB
     }
 
@@ -2636,14 +2636,26 @@ extern "C" u32 THUMB_BRANCH_SAFESTACK_ServerEvent_CalcDamage(ServerFlow * server
 
 #endif // EXPAND_FIELD_EFFECTS || GEN6_CRIT
 
-#if GRASS_IMMUNE_TO_POWDER
+#if EXPAND_ITEMS || GRASS_IMMUNE_TO_POWDER || GEN6_OVERCOAT
 
 extern "C" void CommonContactStatusAbility(ServerFlow* serverFlow, u32 currentSlot, CONDITION condition, ConditionData condData, u8 effectChance);
 extern "C" void THUMB_BRANCH_LINK_HandlerEffectSpore_0x44(ServerFlow* serverFlow, u32 defendingSlot, CONDITION condition, ConditionData condData, u8 effectChance) {
     BattleMon* defendingMon = Handler_GetBattleMon(serverFlow, defendingSlot);
-    if (defendingMon && 
-        !BattleMon_HasType(defendingMon, TYPE_GRASS))
+    if (defendingMon) {
+#if EXPAND_ITEMS
+        if (BattleMon_GetUsableItem(defendingMon) == ITEM_SAFETY_GOGGLES)
+            return;
+#endif
+#if GRASS_IMMUNE_TO_POWDER
+        if (BattleMon_HasType(defendingMon, TYPE_GRASS))
+            return;
+#endif
+#if GEN6_OVERCOAT
+        if (BattleMon_GetValue(defendingMon, VALUE_EFFECTIVE_ABILITY) == ABIL_OVERCOAT)
+            return;
+#endif
         CommonContactStatusAbility(serverFlow, defendingSlot, condition, condData, 30u);
+    }
 }
 
 #endif // GRASS_IMMUNE_TO_POWDER
@@ -2969,7 +2981,7 @@ extern "C" WEATHER Handler_CheckWeather(ServerFlow* serverFlow, u32 pokemonSlot,
 }
 #endif // EXPAND_ABILITIES || EXPAND_ITEMS
 
-#if EXPAND_ABILITIES || EXPAND_ITEMS || GRASS_IMMUNE_TO_POWDER
+#if EXPAND_ABILITIES || EXPAND_ITEMS || GRASS_IMMUNE_TO_POWDER || GEN6_OVERCOAT
 // CONTACT REWORK - Modifies contact checks to allow the battle 
 // engine to modify it from the items and abilities
 
@@ -2982,7 +2994,7 @@ ABILITY abilityIgnoresBait[] = {
 extern "C" b32 AbilityIgnoresBait(ABILITY ability) { 
     return SEARCH_ARRAY(abilityIgnoresBait, ability); }
 #endif
-#if EXPAND_ITEMS || GRASS_IMMUNE_TO_POWDER
+#if EXPAND_ITEMS || GRASS_IMMUNE_TO_POWDER || GEN6_OVERCOAT
 MOVE_ID powderMove[] = {
     MOVE_SPORE,
     MOVE_COTTON_SPORE,
@@ -3006,7 +3018,6 @@ extern "C" void THUMB_BRANCH_HandlerFollowMeBaitTarget(BattleEventItem * item, S
         u32 attackingSlot = BattleEventVar_GetValue(VAR_ATTACKING_MON);
         BattleMon* attackingMon = Handler_GetBattleMon(serverFlow, attackingSlot);
     
-
         if (attackingMon) {
 #if EXPAND_ABILITIES
             // Propeller Tail & Stallwart ignore redirection
@@ -3015,7 +3026,7 @@ extern "C" void THUMB_BRANCH_HandlerFollowMeBaitTarget(BattleEventItem * item, S
                 return;
 #endif
         
-#if EXPAND_ITEMS || GRASS_IMMUNE_TO_POWDER
+#if EXPAND_ITEMS || GRASS_IMMUNE_TO_POWDER || GEN6_OVERCOAT
             // If the redirection is made by a powder move
             if (PowderMove((MOVE_ID)item->subID)) {
 #if GRASS_IMMUNE_TO_POWDER
@@ -3024,6 +3035,10 @@ extern "C" void THUMB_BRANCH_HandlerFollowMeBaitTarget(BattleEventItem * item, S
 #endif
 #if EXPAND_ITEMS
                 if (BattleMon_GetUsableItem(attackingMon) == ITEM_SAFETY_GOGGLES)
+                    return;
+#endif
+#if GEN6_OVERCOAT
+                if (BattleMon_GetValue(attackingMon, VALUE_EFFECTIVE_ABILITY) == ABIL_OVERCOAT)
                     return;
 #endif
             }
@@ -3145,7 +3160,8 @@ extern "C" u32 THUMB_BRANCH_SAFESTACK_ServerControl_AddConditionCheckFail(Server
 #endif // EXPAND_ABILITIES || EXPAND_ITEMS || ELECTRIC_IMMUNE_TO_PARALYSIS
 
 #if EXPAND_ABILITIES
-// References for the implementations in https://bulbapedia.bulbagarden.net/wiki/Ability#List_of_Abilities and https://www.youtube.com/@mupokepedia
+// References for the implementations in https://bulbapedia.bulbagarden.net/wiki/Ability#List_of_Abilities 
+// and https://www.youtube.com/@mupokepedia
 //      CORROSION -> Implemented in [ServerControl_AddConditionCheckFail]
 //      COMATOSE -> Implemented in [ServerControl_AddConditionCheckFail], [BattleMon_CheckIfMoveCondition], [HandlerHex] & [CommonStatusReaction]
 #include "include/AbilityExpansion.h"
@@ -3312,7 +3328,6 @@ AbilityEventAddTableExt abilityEventAddTableExt[]{
     { ABIL_SWARM, EventAddSwarm, nullptr },
     { ABIL_GUTS, EventAddGuts, nullptr },
     { ABIL_SKILL_LINK, EventAddSkillLink, nullptr },
-    { ABIL_KEEN_EYE, EventAddKeenEye, nullptr },
     { ABIL_SIMPLE, EventAddSimple, nullptr },
     { ABIL_SOLID_ROCK, EventAddSolidRock, nullptr },
     { ABIL_FILTER, EventAddSolidRock, nullptr },
@@ -3358,8 +3373,6 @@ AbilityEventAddTableExt abilityEventAddTableExt[]{
     { ABIL_CUTE_CHARM, EventAddCuteCharm, nullptr },
     { ABIL_SAND_VEIL, EventAddSandVeil, nullptr },
     { ABIL_SNOW_CLOAK, EventAddSnowCloak, nullptr },
-    { ABIL_TRACE, EventAddTrace, nullptr },
-    { ABIL_NORMALIZE, EventAddNormalize, nullptr },
     { ABIL_ROUGH_SKIN, EventAddRoughSkin, nullptr },
     { ABIL_NATURAL_CURE, EventAddNaturalCure, nullptr },
     { ABIL_SYNCHRONIZE, EventAddSynchronize, nullptr },
@@ -3377,19 +3390,16 @@ AbilityEventAddTableExt abilityEventAddTableExt[]{
     { ABIL_MAGMA_ARMOR, EventAddMagmaArmor, nullptr },
     { ABIL_WATER_VEIL, EventAddWaterVeil, nullptr },
     { ABIL_IMMUNITY, EventAddImmunity, nullptr },
-    { ABIL_SOUNDPROOF, EventAddSoundproof, nullptr },
     { ABIL_LEVITATE, EventAddLevitate, nullptr },
     { ABIL_FLOWER_GIFT, EventAddFlowerGift, nullptr },
     { ABIL_FLASH_FIRE, EventAddFlashFire, nullptr },
     { ABIL_FOREWARN, EventAddForewarn, nullptr },
     { ABIL_ANTICIPATION, EventAddAnticipation, nullptr },
-    { ABIL_FRISK, EventAddFrisk, nullptr },
     { ABIL_AFTERMATH, EventAddAftermath, nullptr },
     { ABIL_RUN_AWAY, EventAddRunAway, nullptr },
     { ABIL_COLOR_CHANGE, EventAddColorChange, nullptr },
     { ABIL_MOLD_BREAKER, EventAddMoldBreaker, nullptr },
     { ABIL_TRUANT, EventAddTruant, nullptr },
-    { ABIL_LIGHTNING_ROD, EventAddLightningRod, nullptr },
     { ABIL_STORM_DRAIN, EventAddStormDrain, nullptr },
     { ABIL_SLOW_START, EventAddSlowStart, nullptr },
     { ABIL_DAMP, EventAddDamp, nullptr },
@@ -3427,7 +3437,6 @@ AbilityEventAddTableExt abilityEventAddTableExt[]{
     { ABIL_HARVEST, EventAddHarvest, nullptr },
     { ABIL_TELEPATHY, EventAddTelepathy, nullptr },
     { ABIL_MOODY, EventAddMoody, nullptr },
-    { ABIL_OVERCOAT, EventAddOvercoat, nullptr },
     { ABIL_POISON_TOUCH, EventAddPoisonTouch, nullptr },
     { ABIL_REGENERATOR, EventAddRegenerator, nullptr },
     { ABIL_BIG_PECKS, EventAddBigPecks, nullptr },
@@ -3442,7 +3451,6 @@ AbilityEventAddTableExt abilityEventAddTableExt[]{
     { ABIL_JUSTIFIED, EventAddJustified, nullptr },
     { ABIL_MAGIC_BOUNCE, EventAddMagicBounce, nullptr },
     { ABIL_SAP_SIPPER, EventAddSapSipper, nullptr },
-    { ABIL_PRANKSTER, EventAddPrankster, nullptr },
     { ABIL_SAND_FORCE, EventAddSandForce, nullptr },
     { ABIL_IRON_BARBS, EventAddRoughSkin, nullptr },
     { ABIL_ZEN_MODE, EventAddZenMode, nullptr },
@@ -3461,6 +3469,49 @@ AbilityEventAddTableExt abilityEventAddTableExt[]{
     { ABIL_INNER_FOCUS, EventAddInnerFocus, nullptr },
     { ABIL_SCRAPPY, EventAddScrappy, nullptr },
     { ABIL_RATTLED, EventAddRattled, nullptr },
+#endif
+#if GEN7_LIGHTNING_ROD
+    { ABIL_LIGHTNING_ROD, EventAddLightningRodUpdated, "Abilities/LightningRod" },
+#else
+    { ABIL_LIGHTNING_ROD, EventAddLightningRod, nullptr },
+#endif
+#if GEN6_KEEN_EYE
+    { ABIL_KEEN_EYE, EventAddKeenEyeUpdated, "Abilities/KeenEye" },
+#else
+    { ABIL_KEEN_EYE, EventAddKeenEye, nullptr },
+#endif
+#if GEN9_ILLUMINATE
+    { ABIL_ILLUMINATE, EventAddKeenEyeUpdated, "Abilities/KeenEye" },
+#endif
+#if GEN6_TRACE
+    { ABIL_TRACE, EventAddTraceUpdated, "Abilities/Trace" },
+#else
+    { ABIL_TRACE, EventAddTrace, nullptr },
+#endif
+#if GEN8_SOUNDPROOF
+    { ABIL_SOUNDPROOF, EventAddSoundproofUpdated, "Abilities/Soundproof" },
+#else
+    { ABIL_SOUNDPROOF, EventAddSoundproof, nullptr },
+#endif
+#if GEN7_NORMALIZE
+    { ABIL_NORMALIZE, EventAddNormalizeUpdated, "Abilities/Normalize" },
+#else
+    { ABIL_NORMALIZE, EventAddNormalize, nullptr },
+#endif
+#if GEN6_FRISK
+    { ABIL_FRISK, EventAddFriskUpdated, "Abilities/Frisk" },
+#else
+    { ABIL_FRISK, EventAddFrisk, nullptr },
+#endif
+#if GEN6_OVERCOAT
+    { ABIL_OVERCOAT, EventAddOvercoatUpdated, "Abilities/Overcoat" },
+#else
+    { ABIL_OVERCOAT, EventAddOvercoat, nullptr },
+#endif
+#if GEN7_PRANKSTER
+    { ABIL_PRANKSTER, EventAddPranksterUpdated, "Abilities/Prankster" },
+#else
+    { ABIL_PRANKSTER, EventAddPrankster, nullptr },
 #endif
     { ABIL_AROMA_VEIL, EventAddAromaVeil, "Abilities/AromaVeil" },
     { ABIL_FLOWER_VEIL, EventAddFlowerVeil, "Abilities/FlowerVeil" },
@@ -3655,6 +3706,9 @@ ABILITY moldBreakerAffectedAbilitiesExt[]{
     ABIL_SOUNDPROOF,
     ABIL_THICK_FAT,
     ABIL_KEEN_EYE,
+#if GEN9_ILLUMINATE
+    ABIL_ILLUMINATE,
+#endif
     ABIL_HYPER_CUTTER,
     ABIL_STICKY_HOLD,
     ABIL_MARVEL_SCALE,
@@ -4587,9 +4641,9 @@ extern "C" b32 CheckUnseenFist(ServerFlow* serverFlow) {
     }
     return false;
 }
-extern "C" void THUMB_BRANCH_SAFESTACK_HandlerSideWideGuard(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work) {
+extern "C" void THUMB_BRANCH_SAFESTACK_HandlerSideWideGuard(BattleEventItem* item, ServerFlow* serverFlow, u32 side, u32* work) {
     u32 defendingSlot = BattleEventVar_GetValue(VAR_DEFENDING_MON);
-    if (pokemonSlot == GetSideFromMonID(defendingSlot)) {
+    if (side == GetSideFromMonID(defendingSlot)) {
 
         MOVE_ID moveID = BattleEventVar_GetValue(VAR_MOVE_ID);
         MoveTarget targetType = (MoveTarget)PML_MoveGetParam(moveID, MVDATA_TARGET);
@@ -4607,14 +4661,27 @@ extern "C" void THUMB_BRANCH_SAFESTACK_HandlerSideWideGuard(BattleEventItem* ite
         }
     }
 }
-extern "C" void THUMB_BRANCH_SAFESTACK_HandlerSideQuickGuard(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work) {
+extern "C" void THUMB_BRANCH_SAFESTACK_HandlerSideQuickGuard(BattleEventItem* item, ServerFlow* serverFlow, u32 side, u32* work) {
     u32 defendingSlot = BattleEventVar_GetValue(VAR_DEFENDING_MON);
-    if (pokemonSlot == GetSideFromMonID(defendingSlot)
+    if (side == GetSideFromMonID(defendingSlot)
         && defendingSlot != BattleEventVar_GetValue(VAR_ATTACKING_MON)) {
 
-        MOVE_ID moveID = BattleEventVar_GetValue(VAR_MOVE_ID);
-        if (PML_MoveGetParam(moveID, MVDATA_PRIORITY) >= 1) {
+        ActionOrderWork* actionOrder = serverFlow->actionOrderWork;
+        u16 orderIdx = 0;
 
+        BattleMon* attackingMon = Handler_GetBattleMon(serverFlow, BattleEventVar_GetValue(VAR_ATTACKING_MON));
+        for (; orderIdx < 6; ++orderIdx)
+            if (actionOrder[orderIdx].battleMon == attackingMon)
+                break;
+
+        u32 priority = ACTION_ORDER_GET_PRIO(actionOrder, orderIdx);
+        priority -= 7;
+        // Special priority takes into account item & ability prio boosts (1 = no added prio)
+        u32 specialPriority = ACTION_ORDER_GET_SPECIAL_PRIO(actionOrder, orderIdx);
+        specialPriority -= 1;
+        priority += specialPriority;
+
+        if (priority > 0) {
             if (CheckUnseenFist)
                 return;
 
@@ -4778,6 +4845,26 @@ extern "C" b32 THUMB_BRANCH_BattleHandler_AddSideEffect(ServerFlow* serverFlow, 
 }
 
 #endif // EXPAND_ABILITIES
+
+#if GEN7_INFILTRATOR
+
+extern "C" void THUMB_BRANCH_SAFESTACK_ServerControl_SubstituteExclude(ServerFlow * serverFlow, MoveParam * moveParams, BattleMon * attackingMon, PokeSet * targetSet, int isDmgMove) {
+    PokeSet_SeekStart(targetSet);
+    for (BattleMon* currentMon = PokeSet_SeekNext(targetSet); currentMon; currentMon = PokeSet_SeekNext(targetSet)) {
+
+        if (attackingMon != currentMon &&
+            BattleMon_IsSubstituteActive(currentMon) &&
+            !isDmgMove &&
+            !getMoveFlag(moveParams->moveID, FLAG_BYPASSES_SUBSTITUTE)) {
+
+            if (BattleMon_GetValue(attackingMon, VALUE_EFFECTIVE_ABILITY) != ABIL_INFILTRATOR) {
+                PokeSet_Remove(targetSet, currentMon);
+            }
+        }
+    }
+}
+
+#endif // GEN7_INFILTRATOR
 
 #if EXPAND_ABILITIES || GRASS_IMMUNE_TO_POWDER
 
@@ -5567,28 +5654,30 @@ extern "C" WEATHER THUMB_BRANCH_LINK_HandlerWeatherBallPower_0x12(ServerFlow* se
 
 // Ability Shield - Added events for stopping ability modifications
 
-// WARNING BattleHandler_ChangeAbility is used in BattleUpgrade.S
-extern "C" u32 THUMB_BRANCH_LINK_BattleHandler_ChangeAbility_0x14(BattleMon* battleMon, ServerFlow* serverFlow) {
+extern "C" u32 AbilityChangeBlockCheck(ServerFlow * serverFlow, BattleMon * battleMon) {
+    u32 HEID = HEManager_PushState(&serverFlow->HEManager);
     if (ServerEvent_ChangeAbilityCheckFail(serverFlow, battleMon->battleSlot))
         return ABIL_MULTITYPE;
+    HEManager_PopState(&serverFlow->HEManager, HEID);
     return BattleMon_GetValue(battleMon, VALUE_ABILITY);
+}
+
+// WARNING BattleHandler_ChangeAbility is used in BattleUpgrade.S
+extern "C" u32 THUMB_BRANCH_LINK_BattleHandler_ChangeAbility_0x14(BattleMon* battleMon, ServerFlow* serverFlow) {
+    return AbilityChangeBlockCheck(serverFlow, battleMon);
 }
 
 // WARNING ServerDisplay_SkillSwap is used in BattleUpgrade.S
 extern "C" u32 THUMB_BRANCH_LINK_ServerDisplay_SkillSwap_0x16(BattleMon* battleMon, ServerFlow* serverFlow) {
-    if (ServerEvent_ChangeAbilityCheckFail(serverFlow, battleMon->battleSlot))
-        return ABIL_MULTITYPE;
-    return BattleMon_GetValue(battleMon, VALUE_ABILITY);
+    return AbilityChangeBlockCheck(serverFlow, battleMon);
 }
 extern "C" u32 THUMB_BRANCH_LINK_ServerDisplay_SkillSwap_0x20(BattleMon* battleMon, ServerFlow* serverFlow) {
-    if (ServerEvent_ChangeAbilityCheckFail(serverFlow, battleMon->battleSlot))
-        return ABIL_MULTITYPE;
-    return BattleMon_GetValue(battleMon, VALUE_ABILITY);
+    return AbilityChangeBlockCheck(serverFlow, battleMon);
 }
 
 extern "C" b32 IsMoldBreakerAffectedAbility(ABILITY ability);
-extern "C" b32 THUMB_BRANCH_SAFESTACK_HandlerMoldBreakerSkipCheck(BattleEventItem* item, ServerFlow* serverFlow, u32 factorType, u32 eventType, u32 subID, u16 abilityID) {
-    if (factorType == 4 && IsMoldBreakerAffectedAbility(abilityID)) {
+extern "C" b32 THUMB_BRANCH_SAFESTACK_HandlerMoldBreakerSkipCheck(BattleEventItem* item, ServerFlow* serverFlow, u32 factorType, u32 eventType, u32 subID) {
+    if (factorType == 4 && IsMoldBreakerAffectedAbility(subID)) {
         u32 defendingSlot = serverFlow->setTarget->getIdx;
         if (defendingSlot < BATTLE_MAX_SLOTS && 
             ServerEvent_ChangeAbilityCheckFail(serverFlow, defendingSlot)) {

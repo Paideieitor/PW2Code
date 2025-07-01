@@ -75,12 +75,12 @@ enum BattleHandlerEffect : u32
     EFFECT_PLAY_ANIMATION = 0x3B,
 };
 
-struct SWAN_ALIGNED(4) HandlerParam_StrParams
+struct HandlerParam_StrParams
 {
     u16 ID;
-    short flags;
-    int subProcID;
-    int args[8];
+    u16 flags;
+    u32 subProcID;
+    u32 args[8];
 };
 
 struct HandlerParam_Header
