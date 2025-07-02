@@ -45,7 +45,7 @@ To personalize the patch modify the ``settings.h`` file (I don't recomend modify
 	- THIS FEATURE IS NOT RECOMENDED TO BE USED (it also requires the NitroKernell DLL to work)
 ### Full Ability Expansion
   - Every single ability from Gen6, Gen7, Gen8 and Gen9 has been added to the battle engine
-  - Updated Intimidate interactions with existing abilities like *Inner Focus* or *Rattled*
+  - Updated existing abilities like *Inner Focus*, *Illuminate* or *Prankster*
   - To change a Pokémon ability to an expanded just modify the ability ID in that particular Pokémon Personal NARC (the ability IDs are preserved from vanilla games, but you can check them in ``BattleUpgrade.h``)
     - To give a Pokémon an ability with an ID higher than 255 you will need to use the 2 last bits of the respective wild item data, the code to do so is as follows:
     ```cpp
