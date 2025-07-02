@@ -29,6 +29,8 @@
 
 #define ADD_MEGA_EVOLUTION 1
 
+#define ADD_FAIRY_TYPE 1
+
 #define LIBRARY_LOAD_DEBUG 0
 
 #define EXPAND_ABILITIES 1

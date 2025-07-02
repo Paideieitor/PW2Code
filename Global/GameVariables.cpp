@@ -1,4 +1,3 @@
-#include "settings.h"
 #include "GameVariables.h"
 
 #if ADD_LEVEL_CAP

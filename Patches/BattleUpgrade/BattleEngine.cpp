@@ -2605,7 +2605,7 @@ extern "C" u32 THUMB_BRANCH_SAFESTACK_ServerEvent_CalcDamage(ServerFlow * server
         }
 
         PokeType moveType = (PokeType)moveParam->moveType;
-        if (moveType != TYPE_NULL) {
+        if (moveType < TYPE_NULL) {
             u32 stab = ServerEvent_SameTypeAttackBonus(serverFlow, attackingMon, moveType);
             damage = fixed_round(damage, stab);
         }
@@ -2634,7 +2634,7 @@ extern "C" u32 THUMB_BRANCH_SAFESTACK_ServerEvent_CalcDamage(ServerFlow * server
     return isFixedDamage;
 }
 
-#endif // EXPAND_FIELD_EFFECTS || GEN6_CRIT
+#endif // GEN6_CRIT || EXPAND_FIELD_EFFECTS
 
 #if EXPAND_ITEMS || GRASS_IMMUNE_TO_POWDER || GEN6_OVERCOAT
 

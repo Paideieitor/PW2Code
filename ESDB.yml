@@ -3469,3 +3469,39 @@ Symbols:
   - Name: CALCDMG_Set
     Segment: 0xA7
     Address: 0x21a4531
+  - Name: ServerEvent_CheckMoveDamageEffectiveness
+    Segment: 0xA7
+    Address: 0x21aa995
+  - Name: splitTypeCore
+    Segment: 0xA7
+    Address: 0x21bafe9
+  - Name: GetTypeWeaknesses
+    Segment: 0xA7
+    Address: 0x21bd2f1
+  - Name: HandlerConversion2
+    Segment: 0xA7
+    Address: 0x21c9e45
+  - Name: BattleHandler_Transform
+    Segment: 0xA7
+    Address: 0x21adffd
+  - Name: GetPokemonTypeIconPalette
+    Segment: 0x0
+    Address: 0x202d815
+  - Name: finit
+    Segment: 0x0
+    Address: 0x2070ca9
+  - Name: romfs_fopen
+    Segment: 0x0
+    Address: 0x2070ecd
+  - Name: romfs_fread
+    Segment: 0x0
+    Address: 0x2070e6d
+  - Name: romfs_fclose
+    Segment: 0x0
+    Address: 0x2070de1
+  - Name: romfs_fseek
+    Segment: 0x0
+    Address: 0x2070e55
+  - Name: romfs_ftell
+    Segment: 0x0
+    Address: 0x2070e21

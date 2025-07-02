@@ -157,12 +157,12 @@ FULL_COPY_HandlerCommon_CheckIfCanStealPokeItem_0x4A:
 
 #if GEN6_CRIT
 
-FULL_COPY_OVL_167_0x21D74E0:
+FULL_COPY_167_0x21D74E0:
     .byte 16
     .byte 8
     .byte 2
     .byte 1
     .byte 1
-    .size FULL_COPY_OVL_167_0x21D74E0, . - FULL_COPY_OVL_167_0x21D74E0
+    .size FULL_COPY_167_0x21D74E0, . - FULL_COPY_167_0x21D74E0
 
 #endif // GEN6_CRIT

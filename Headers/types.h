@@ -1,6 +1,8 @@
 #ifndef __TYPES_H
 #define __TYPES_H
 
+#include "settings.h"
+
 typedef u32 POKE_TYPE;
 enum PokeType : u32
 {
@@ -21,7 +23,12 @@ enum PokeType : u32
 	TYPE_ICE = 0xE,
 	TYPE_DRAGON = 0xF,
 	TYPE_DARK = 0x10,
+#if ADD_FAIRY_TYPE
+	TYPE_FAIRY = 0x11,
+	TYPE_NULL = 0x12,
+#else
 	TYPE_NULL = 0x11,
+#endif
 };
 
 enum TypeEffectiveness : u32
@@ -33,6 +40,12 @@ enum TypeEffectiveness : u32
 	EFFECTIVENESS_2 = 0x4,
 	EFFECTIVENESS_4 = 0x5,
 };
+
+// Type effectiveness labels.
+#define NOT_EFFECTIVE 0
+#define NOT_VERY_EFFECTIVE 2
+#define EFFECTIVE 4
+#define SUPER_EFFECTIVE 8
 
 extern "C" u16 PokeTypePair_MakeMonotype(u16 type);
 extern "C" u16 PokeTypePair_Make(u16 type1, u16 type2);

@@ -59,3 +59,12 @@
 	a\0\2\4\439
 	a\0\2\4\440
 #endif
+#if ADD_FAIRY_TYPE
+	type_chart.bin // Updated type chart
+	type_palette_map.bin // Palette selection for each type
+	a\0\0\2\398 // Add fairy type name
+	a\0\8\2\33 // Change PC type-icons palette
+	a\0\8\2\51 // Change cool icon to fairy icon in the PC
+	a\1\2\5\22 // Change battle type-icons palette
+	a\1\2\5\23 // Change cool icon to fairy icon in battle
+#endif
