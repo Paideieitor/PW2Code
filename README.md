@@ -30,6 +30,10 @@ To personalize the patch modify the ``settings.h`` file (I don't recomend modify
   - Crit stages updated to Gen6
 ### Gen6 weather abilities
   - Weather triggered by abilites like Drizzle now last 5 turns
+### Fairy type
+  - Added the Fairy type and its type interactions (Adaptation of [BlueRosie & Sunk implementation](https://github.com/BluRosie/b2w2-fairy))
+  - Updated the typing of Pokémon that gained the Fairy type in Gen6
+  - Updated the typing of moves that changed to Fairy type in Gen6
 ### Grass is immune to powder moves
   - Grass type Pokémon are unaffected by powder moves like *Spore* or *Rage Powder*
 ### Electric is immune to paralysis
@@ -69,6 +73,11 @@ To personalize the patch modify the ``settings.h`` file (I don't recomend modify
   - You can check the item IDs for the new items in ``BattleUpgrade.h``
   - Known Issues:
     - Items don't currectly have the correct sprites
+### Move Expansion (BETA)
+  - The data of every single move from Gen6, Gen7, Gen8 and Gen9 has been added to the game
+  - Known Issues:
+    - All new moves use the *Pound* animation
+    - Especial secondary effects have not been implemented yet
 
 ## How to Install
 ### Installing tools
@@ -87,7 +96,8 @@ If you are having troubles building the patches or running CTRMap, I recommend j
 
 ## Credits
 * Hello007 - CTRMap and the Gen V code injection system
-* PlatinumMaster - Gen V code injection system
+* PlatinumMaster - Gen V code injection system & PMC adaptation of the Fairy patch
 * totally_anonymous - IDB documentation
 * SpagoAsparago - Original Gen6 ability expansion
+* BlueRosie & Sunk - Original Fairy type implementation
 * CH340, totally_anonymous, Sunk, klark, Trusty Peaches and Brom - Aswering my questions, resolving doubts and hanging around
