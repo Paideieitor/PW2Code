@@ -8,12 +8,10 @@ extern "C" void CommonGemPower(BattleEventItem* item, ServerFlow* serverFlow, u3
 
 // FAIRY GEM
 extern "C" void HandlerFairyGemDecide(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work) {
-	// TODO: ADD FAIRY TYPE
-	CommonGemDecide(item, serverFlow, pokemonSlot, work, TYPE_GRASS);
+	CommonGemDecide(item, serverFlow, pokemonSlot, work, TYPE_FAIRY);
 }
 extern "C" void HandlerFairyGemPower(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work) {
-	// TODO: ADD FAIRY TYPE
-	CommonGemPower(item, serverFlow, pokemonSlot, work, TYPE_GRASS);
+	CommonGemPower(item, serverFlow, pokemonSlot, work, TYPE_FAIRY);
 }
 extern "C" void HandlerGemEnd(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work);
 BattleEventHandlerTableEntry FairyGemHandlers[] = {

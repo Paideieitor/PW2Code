@@ -7,8 +7,7 @@
 
 // FAIRY AURA FIELD
 extern "C" void HandlerFieldFairyAura(BattleEventItem * item, ServerFlow * serverFlow, u32 pokemonSlot, u32 * work) {
-    // TODO: ADD FAIRY TYPE
-    if (BattleEventVar_GetValue(VAR_MOVE_TYPE) == TYPE_GRASS) {
+    if (BattleEventVar_GetValue(VAR_MOVE_TYPE) == TYPE_FAIRY) {
         if (BattleField_GetAuraBreakMons() == 0) {
             BattleEventVar_MulValue(VAR_MOVE_POWER_RATIO, 5448);
         }

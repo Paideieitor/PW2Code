@@ -11,8 +11,7 @@ extern "C" void HandlerCommonResistBerryDamageAfter(BattleEventItem* item, Serve
 // ROSELI BERRY
 extern "C" void HandlerRoseliBerry(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work)
 {
-    // TODO: ADD FAIRY TYPE
-    CommonResistBerry(item, serverFlow, pokemonSlot, work, TYPE_GRASS, 0);
+    CommonResistBerry(item, serverFlow, pokemonSlot, work, TYPE_FAIRY, 0);
 }
 BattleEventHandlerTableEntry RoseliBerryHandlers[] = {
 {EVENT_MOVE_DAMAGE_PROCESSING_2, HandlerRoseliBerry},

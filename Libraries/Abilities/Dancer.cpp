@@ -6,35 +6,11 @@
 #include "server_flow.h"
 
 // DANCER
-MOVE_ID danceMoves[] = {
-    MOVE_SWORDS_DANCE,
-    MOVE_PETAL_DANCE,
-    MOVE_FEATHER_DANCE,
-    MOVE_TEETER_DANCE,
-    MOVE_DRAGON_DANCE,
-    MOVE_LUNAR_DANCE,
-    MOVE_QUIVER_DANCE,
-    MOVE_FIERY_DANCE,
-#if EXPAND_MOVES
-    CLANGOROUS_SOUL,
-    REVELATION_DANCE,
-    VICTORY_DANCE,
-    AQUA_STEP,
-#endif
-};
-extern "C" b32 IsDanceMove(MOVE_ID moveID) {
-    for (u16 i = 0; i < ARRAY_COUNT(danceMoves); ++i) {
-        if (moveID == danceMoves[i]) {
-            return 1;
-        }
-    }
-    return 0;
-}
 extern "C" void HandlerDancerCheckMove(BattleEventItem * item, ServerFlow * serverFlow, u32 pokemonSlot, u32 * work) {
     if (!CheckExtraActionFlag()) {
         u32 currentSlot = BattleEventVar_GetValue(VAR_MON_ID);
         MOVE_ID moveID = BattleEventVar_GetValue(VAR_MOVE_ID);
-        if (pokemonSlot != currentSlot && IsDanceMove(moveID)) {
+        if (pokemonSlot != currentSlot && getMoveFlag(moveID, FLAG_DANCE)) {
 
             BattleMon* dancerMon = Handler_GetBattleMon(serverFlow, pokemonSlot);
             // Dancer fails if the Dancer Pokémon is in a semi-invulnerable state

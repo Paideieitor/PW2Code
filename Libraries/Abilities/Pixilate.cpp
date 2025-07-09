@@ -7,15 +7,13 @@
 extern "C" void HandlerPixilateTypeChange(BattleEventItem * item, ServerFlow * serverFlow, u32 pokemonSlot, u32 * work) {
     if (pokemonSlot == BattleEventVar_GetValue(VAR_MON_ID)) {
         if (BattleEventVar_GetValue(VAR_MOVE_TYPE) == TYPE_NORMAL) {
-            // TODO: ADD FAIRY TYPE
-            BattleEventVar_RewriteValue(VAR_MOVE_TYPE, TYPE_GRASS);
+            BattleEventVar_RewriteValue(VAR_MOVE_TYPE, TYPE_FAIRY);
         }
     }
 }
 extern "C" void HandlerPixilatePower(BattleEventItem * item, ServerFlow * serverFlow, u32 pokemonSlot, u32 * work) {
     if (pokemonSlot == BattleEventVar_GetValue(VAR_ATTACKING_MON)) {
-        // TODO: ADD FAIRY TYPE
-        if (BattleEventVar_GetValue(VAR_MOVE_TYPE) == TYPE_GRASS) {
+        if (BattleEventVar_GetValue(VAR_MOVE_TYPE) == TYPE_FAIRY) {
             BattleEventVar_MulValue(VAR_MOVE_POWER_RATIO, 4915);
         }
     }

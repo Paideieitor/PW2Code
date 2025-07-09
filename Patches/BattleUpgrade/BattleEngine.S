@@ -1,6 +1,7 @@
 .thumb
 
 .type THUMB_BRANCH_LINK_CALCDMG_Set_0xFA, %function
+.type THUMB_BRANCH_LINK_LoadAnimationScriptFile_0xB6, %function
 
 #include "settings.h"
 
@@ -154,6 +155,50 @@ FULL_COPY_HandlerCommon_CheckIfCanStealPokeItem_0x4A:
     .size FULL_COPY_HandlerCommon_CheckIfCanStealPokeItem_0x4A, . - FULL_COPY_HandlerCommon_CheckIfCanStealPokeItem_0x4A
 
 #endif // ADD_MEGA_EVOLUTION || (EXPAND_ABILITIES && EXPAND_ITEMS)
+
+#if EXPAND_MOVES
+
+THUMB_BRANCH_LINK_LoadAnimationScriptFile_0xB6:
+    push    {lr}
+    ldr     r3, =0x7FFF
+    cmp     r1, r0
+    blt     Load_Move_Animation
+    ldr     r0, =FIRST_NEW_MOVE
+    cmp     r1, r0
+    bge     Load_New_Move_Animation
+    movs    r1, #1
+    b       Return_LoadAnimationScriptFile
+Load_New_Move_Animation:
+    sub     r6, #BATTLE_ANIMATIONS_COUNT
+Load_Move_Animation:
+    movs    r1, #0
+Return_LoadAnimationScriptFile:
+    movs    r0, #1
+    cmp     r1, r0
+    pop     {pc}
+    .size THUMB_BRANCH_LINK_LoadAnimationScriptFile_0xB6, . - THUMB_BRANCH_LINK_LoadAnimationScriptFile_0xB6
+
+THUMB_BRANCH_LINK_BtlvEffect_LoadAnimationScript_0x1A:
+    push    {r6, r7, lr}
+    ldr     r3, =0x7FFF
+    cmp     r4, r0
+    blt     Load_Move_Animation_2
+    ldr     r0, =FIRST_NEW_MOVE
+    cmp     r4, r0
+    bge     Load_Move_Animation_2
+    movs    r6, #1
+    b       Return_BtlvEffect_LoadAnimationScript
+Load_New_Move_Animation_2:
+    sub     r4, #BATTLE_ANIMATIONS_COUNT
+Load_Move_Animation_2:
+    movs    r6, #0
+Return_BtlvEffect_LoadAnimationScript:
+    movs    r7, #1
+    cmp     r6, r7
+    pop     {r6, r7, pc}
+    .size THUMB_BRANCH_LINK_BtlvEffect_LoadAnimationScript_0x1A, . - THUMB_BRANCH_LINK_BtlvEffect_LoadAnimationScript_0x1A
+
+#endif // EXPAND_MOVES
 
 #if GEN6_CRIT
 

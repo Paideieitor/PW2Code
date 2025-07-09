@@ -1,8 +1,6 @@
 #include "settings.h"
 #if EXPAND_ITEMS
 
-#include "Patches/BattleUpgrade/include/MoveTypes.h"
-
 #include "server_flow.h"
 
 // SAFETY GOGGLES
@@ -12,7 +10,7 @@ extern "C" void HandlerSafetyGogglesPowderMoves(BattleEventItem* item, ServerFlo
         pokemonSlot != BattleEventVar_GetValue(VAR_ATTACKING_MON)) {
 
         MOVE_ID moveID = BattleEventVar_GetValue(VAR_MOVE_ID);
-        if (PowderMove(moveID))
+        if (getMoveFlag(moveID, FLAG_POWDER))
             BattleEventVar_RewriteValue(VAR_NO_EFFECT_FLAG, 1);
     }
 }

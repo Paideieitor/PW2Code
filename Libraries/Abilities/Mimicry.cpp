@@ -31,8 +31,7 @@ extern "C" void MimicryTypeChange(ServerFlow * serverFlow, u32 pokemonSlot, b32 
             newType = PokeTypePair_MakeMonotype(TYPE_GRASS);
             break;
         case TERRAIN_MISTY:
-            // TODO: ADD FAIRY TYPE
-            newType = PokeTypePair_MakeMonotype(TYPE_PSY);
+            newType = PokeTypePair_MakeMonotype(TYPE_FAIRY);
             break;
         case TERRAIN_PSYCHIC:
             newType = PokeTypePair_MakeMonotype(TYPE_PSY);

@@ -7,8 +7,7 @@ extern "C" void CommonTypeBoostingItem(BattleEventItem* item, ServerFlow* server
 
 // FAIRY FEATHER
 extern "C" void HandlerFairyFeather(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work) {
-    // TODO: ADD FAIRY TYPE
-    CommonTypeBoostingItem(item, serverFlow, pokemonSlot, TYPE_GRASS);
+    CommonTypeBoostingItem(item, serverFlow, pokemonSlot, TYPE_FAIRY);
 }
 BattleEventHandlerTableEntry FairyFeatherHandlers[] = {
     {EVENT_MOVE_POWER, HandlerFairyFeather},

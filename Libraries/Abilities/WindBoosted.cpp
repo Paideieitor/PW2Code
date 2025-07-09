@@ -4,33 +4,6 @@
 #include "server_flow.h"
 
 // WIND RIDER
-MOVE_ID WindMoves[] = {
-    MOVE_GUST,
-    MOVE_WHIRLWIND,
-    MOVE_BLIZZARD,
-    MOVE_AEROBLAST,
-    MOVE_ICY_WIND,
-    MOVE_TWISTER,
-    MOVE_HEAT_WAVE,
-    MOVE_AIR_CUTTER,
-    MOVE_HURRICANE,
-#if EXPAND_MOVES
-    FAIRY_WIND,
-    PETAL_BLIZZARD,
-    BLEAKWIND_STORM,
-    WILDBOLT_STORM,
-    SANDSEAR_STORM,
-    SPRINGTIDE_STORM,
-#endif
-};
-extern "C" b32 IsWindMove(MOVE_ID moveID) {
-    for (u16 i = 0; i < ARRAY_COUNT(WindMoves); ++i) {
-        if (moveID == WindMoves[i]) {
-            return 1;
-        }
-    }
-    return 0;
-}
 extern "C" void WindRiderBoost(ServerFlow * serverFlow, u32 pokemonSlot) {
     BattleHandler_PushRun(serverFlow, EFFECT_ABILITY_POPUP_ADD, pokemonSlot);
 
@@ -48,7 +21,7 @@ extern "C" void HandlerWindRider(BattleEventItem * item, ServerFlow * serverFlow
     MOVE_ID moveID = BattleEventVar_GetValue(VAR_MOVE_ID);
     if (pokemonSlot == BattleEventVar_GetValue(VAR_DEFENDING_MON)
         && pokemonSlot != BattleEventVar_GetValue(VAR_ATTACKING_MON)
-        && IsWindMove(moveID)
+        && getMoveFlag(moveID, FLAG_WIND)
         && BattleEventVar_RewriteValue(VAR_NO_EFFECT_FLAG, 1)) {
         WindRiderBoost(serverFlow, pokemonSlot);
     }
@@ -103,7 +76,7 @@ extern "C" void HandlerWindPower(BattleEventItem * item, ServerFlow * serverFlow
     MOVE_ID moveID = BattleEventVar_GetValue(VAR_MOVE_ID);
     if (pokemonSlot == BattleEventVar_GetValue(VAR_DEFENDING_MON)
         && pokemonSlot != BattleEventVar_GetValue(VAR_ATTACKING_MON)
-        && IsWindMove(moveID)) {
+        && getMoveFlag(moveID, FLAG_WIND)) {
         CommonChargeHandler(serverFlow, pokemonSlot, work, moveID);
     }
 }
@@ -142,6 +115,5 @@ extern "C" BattleEventHandlerTableEntry * EventAddElectromorphosis(u32 * handler
 }
 
 // TODO: Add "CommonChargePowerHandler" as an include put Electromorphosis in it's own file
-// TODO: Once moves have a functional Wind Flag put each ability in it's own file
 
 #endif // EXPAND_ABILITIES

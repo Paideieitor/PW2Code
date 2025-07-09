@@ -3505,3 +3505,15 @@ Symbols:
   - Name: romfs_ftell
     Segment: 0x0
     Address: 0x2070e21
+  - Name: LoadAnimationScriptFile
+    Segment: 0xA8
+    Address: 0x21e0f29
+  - Name: BtlvEffect_LoadAnimationScript
+    Segment: 0xA8
+    Address: 0x21e3edd
+  - Name: CMD_ACT_MoveAnimStart
+    Segment: 0xA7
+    Address: 0x21d30d5
+  - Name: BattleViewCmd_MoveEffect_Start
+    Segment: 0xA7
+    Address: 0x21cfca1

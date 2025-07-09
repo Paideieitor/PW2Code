@@ -1,6 +1,8 @@
 #ifndef __MOVES_H
 #define __MOVES_H
 
+#include "settings.h"
+
 #include "defs.h"
 
 struct BattleMon;
@@ -631,8 +633,17 @@ enum MoveFlag : u32
     FLAG_GROUNDED_BY_GRAVITY = 0x9,
     FLAG_DEFROST = 0xA,
     FLAG_LONG_RANGE = 0xB,
-    FLAG_HEALING = 0xC,
+    FLAG_BLOCKED_BY_HEALBLOCK = 0xC,
     FLAG_BYPASSES_SUBSTITUTE = 0xD,
+    // EXPANDED
+    FLAG_POWDER = 0xE,
+    FLAG_BULLET = 0xF,
+    FLAG_BITE = 0x10,
+    FLAG_PULSE = 0x11,
+    FLAG_HEALING = 0x12,
+    FLAG_DANCE = 0x13,
+    FLAG_WIND = 0x14,
+    FLAG_SHARP = 0x15,
 };
 
 enum MoveField : u32

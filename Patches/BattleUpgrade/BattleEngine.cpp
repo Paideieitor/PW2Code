@@ -1,7 +1,6 @@
 #include "settings.h"
 #include "BattleEngine.h"
 #include "GameVariables.h"
-#include "include/MoveTypes.h"
 #include "include/Battlefield.h"
 
 #include "system/game_input.h"
@@ -23,7 +22,7 @@
 
 // List of loaded DLLs in the current battle
 // Reset in [BattleField_Free]
-#define MAX_LOADED_DLLS (BATTLE_MAX_SLOTS + FIELD_EFFECT_AMOUNT + BATTLE_MAX_SLOTS)
+#define MAX_LOADED_DLLS 128
 const char* loadedDlls[MAX_LOADED_DLLS] = { nullptr };
 
 int strcmp(const char* str1, const char* str2);
@@ -58,6 +57,33 @@ extern "C" b32 LoadDll(const char* dllName)
         }
     }
     return 1;
+}
+extern "C" void FreeDll(const char* dllName) {
+    if (dllName == nullptr)
+        return;
+
+    for (u8 dllIdx = 0; dllIdx < MAX_LOADED_DLLS; ++dllIdx) {
+        if (loadedDlls[dllIdx] == nullptr)
+            break;
+
+        if (strcmp(loadedDlls[dllIdx], dllName) == 0) {
+            k::dll::ReleaseLibrary(loadedDlls[dllIdx]);
+#if LIBRARY_LOAD_DEBUG
+            DPRINTF("Released Library %s! \n", dllName);
+#endif
+            for (; dllIdx < MAX_LOADED_DLLS - 1; ++dllIdx) {
+                if (loadedDlls[dllIdx + 1] == nullptr)
+                    break;
+
+                loadedDlls[dllIdx] = loadedDlls[dllIdx + 1];
+            }
+            loadedDlls[MAX_LOADED_DLLS - 1] = nullptr;
+            return;
+        }
+    }
+#if LIBRARY_LOAD_DEBUG
+    DPRINTF("Library %s was not loaded! \n", dllName);
+#endif
 }
 extern "C" void FreeLoadedDlls()
 {
@@ -2994,22 +3020,6 @@ ABILITY abilityIgnoresBait[] = {
 extern "C" b32 AbilityIgnoresBait(ABILITY ability) { 
     return SEARCH_ARRAY(abilityIgnoresBait, ability); }
 #endif
-#if EXPAND_ITEMS || GRASS_IMMUNE_TO_POWDER || GEN6_OVERCOAT
-MOVE_ID powderMove[] = {
-    MOVE_SPORE,
-    MOVE_COTTON_SPORE,
-    MOVE_STUN_SPORE,
-    MOVE_RAGE_POWDER,
-    MOVE_POISON_POWDER,
-    MOVE_SLEEP_POWDER,
-#if EXPAND_MOVES
-    POWDER
-    MAGIC_POWDER
-#endif
-};
-extern "C" b32 PowderMove(MOVE_ID moveID) { 
-    return SEARCH_ARRAY(powderMove, moveID); }
-#endif
 extern "C" void THUMB_BRANCH_HandlerFollowMeBaitTarget(BattleEventItem * item, ServerFlow * serverFlow, u32 pokemonSlot, u32 * work) {
     BattleStyle battleStyle = BtlSetup_GetBattleStyle(serverFlow->mainModule);
     if (battleStyle != BTL_STYLE_SINGLE &&
@@ -3028,7 +3038,7 @@ extern "C" void THUMB_BRANCH_HandlerFollowMeBaitTarget(BattleEventItem * item, S
         
 #if EXPAND_ITEMS || GRASS_IMMUNE_TO_POWDER || GEN6_OVERCOAT
             // If the redirection is made by a powder move
-            if (PowderMove((MOVE_ID)item->subID)) {
+            if (getMoveFlag((MOVE_ID)item->subID, FLAG_POWDER)) {
 #if GRASS_IMMUNE_TO_POWDER
                 if (BattleMon_HasType(attackingMon, TYPE_GRASS))
                     return;
@@ -4919,7 +4929,7 @@ extern "C" void THUMB_BRANCH_SAFESTACK_flowsub_CheckNoEffect_Protect(ServerFlow 
     PokeSet_SeekStart(targetSet);
     for (BattleMon* targetMon = PokeSet_SeekNext(targetSet); targetMon; targetMon = PokeSet_SeekNext(targetSet)) {
 #if GRASS_IMMUNE_TO_POWDER
-        if (PowderMove(*moveID) && BattleMon_HasType(targetMon, TYPE_GRASS)) {
+        if (getMoveFlag(*moveID, FLAG_POWDER) && BattleMon_HasType(targetMon, TYPE_GRASS)) {
             // If a Grass Pokémon is hit by a non-self-targeting move
             u32 targetSlot = BattleMon_GetID(targetMon);
             if (targetSlot != BattleMon_GetID(attackingMon)) {
@@ -5747,5 +5757,25 @@ extern "C" b32 THUMB_BRANCH_HandlerCommon_IsUnremovableItem(BattleMon* battleMon
 }
 
 #endif // EXPAND_ABILITIES || EXPAND_ITEMS || ADD_MEGA_EVOLUTION
+
+#if EXPAND_MOVES
+
+extern "C" void CMD_ACT_MoveAnimStart(BtlvScu * btlvScu, u32 attckViewPos, u32 defViewPos, u16 moveID, u32 moveTarget, u8 effectIndex, u8 zero);
+extern "C" void THUMB_BRANCH_SAFESTACK_BattleViewCmd_MoveEffect_Start(BtlvCore * btlCore, u32 attackingPos, u32 targetPos, u16 moveID, u32 moveTarget, u32 effectIndex, u8 zero) {
+    u32 attckViewPos = MainModule_BattlePosToViewPos(btlCore->mainModule, attackingPos);
+
+    u32 defViewPos;
+    if (targetPos == NULL_BATTLE_POS) {
+        defViewPos = 255;
+    }
+    else {
+        defViewPos = MainModule_BattlePosToViewPos(btlCore->mainModule, targetPos);
+    }
+    if (moveID >= FIRST_BATTLE_ANIMATION_ID)
+        moveID += BATTLE_ANIMATIONS_COUNT;
+    CMD_ACT_MoveAnimStart(btlCore->btlvScu, attckViewPos, defViewPos, moveID, moveTarget, effectIndex, zero);
+}
+
+#endif // EXPAND_MOVES
 
 // WARNING BattleHandler_ChangeAbility is used in BattleUpgrade.S
