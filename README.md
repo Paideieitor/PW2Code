@@ -81,8 +81,8 @@ To personalize the patch modify the ``settings.h`` file (I don't recomend modify
 
 ## How to Install
 ### Installing tools
-  - Set up a *Pokémon White 2 Edition USA* CTRMap project following this [guide](https://ds-pokemon-hacking.github.io/docs/generation-v/guides/bw_b2w2-using_ctrmap/)
-  - Download and install [PW2Builder](https://github.com/Paideieitor/PW2Builder/releases)
+  - Download [PW2Builder](https://github.com/Paideieitor/PW2Builder/releases)
+  - Set up the builder following this [instructions](https://github.com/Paideieitor/PW2Builder)
   - Copy the ``Assets``, ``Global``, ``Headers``, ``Libraries`` and ``Patches`` folders to the ``PW2Builder`` folder
   - Copy the ``ESDB.yml`` and ``settings.h`` files to the ``PW2Builder`` folder
 
