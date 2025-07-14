@@ -3517,3 +3517,15 @@ Symbols:
   - Name: BattleViewCmd_MoveEffect_Start
     Segment: 0xA7
     Address: 0x21cfca1
+  - Name: BattleEvent_PopItem
+    Segment: 0xA7
+    Address: 0x21bcce5
+  - Name: MoveEvent_AddItem
+    Segment: 0xA7
+    Address: 0x21c5b45
+  - Name: MoveEvent_CanEffectBeRegistered
+    Segment: 0xA7
+    Address: 0x21c5bbd
+  - Name: GetTypeEffectivenessMultiplier
+    Segment: 0xA7
+    Address: 0x21bd23d

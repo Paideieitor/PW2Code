@@ -1,7 +1,7 @@
 #include "settings.h"
 #if EXPAND_FIELD_EFFECTS
 
-#include "Patches/BattleUpgrade/include/Terrains.h"
+#include "Patches/BattleUpgrade/include/FieldEffectExpansion.h"
 #include "Patches/BattleUpgrade/include/BattleField.h"
 #include "Patches/BattleUpgrade/include/ActionOrderManager.h"
 

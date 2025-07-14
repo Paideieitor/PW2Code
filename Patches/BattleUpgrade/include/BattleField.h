@@ -2,7 +2,7 @@
 #define __BATTLEFIELD_EXT_H
 
 #include "settings.h"
-#include "Terrains.h"
+#include "FieldEffectExpansion.h"
 #include "../BattleEngine.h"
 
 #include "defs.h"

@@ -28,7 +28,7 @@ extern "C" void HandlerDeltaStreamResistance(BattleEventItem * item, ServerFlow 
         if (BattleEventVar_GetValue(VAR_POKE_TYPE) == TYPE_FLY &&
             GetTypeEffectiveness(BattleEventVar_GetValue(VAR_MOVE_TYPE), TYPE_FLY) == EFFECTIVENESS_2) {
 
-            BattleEventVar_RewriteValue(VAR_SET_TYPE_EFFECTIVENESS, EFFECTIVENESS_1);
+            BattleEventVar_RewriteValue(VAR_SET_TYPE_EFFECTIVENESS, OVERRIDE_EFFECTIVENESS_1);
 
             HandlerParam_Message* message;
             message = (HandlerParam_Message*)BattleHandler_PushWork(serverFlow, EFFECT_MESSAGE, pokemonSlot);

@@ -1,9 +1,13 @@
 #if EXPAND_FIELD_EFFECTS
 	FieldEffects
+	SideEffects
 #endif
 #if EXPAND_ABILITIES
 	Abilities
 #endif
 #if EXPAND_ITEMS
 	Items
+#endif
+#if EXPAND_MOVES
+	Moves
 #endif

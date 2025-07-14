@@ -75,12 +75,12 @@
 #endif
 #endif
 #if EXPAND_MOVES
-	a\0\2\1\560 <...> a\0\2\1\919  // Move data for the new moves
-	a\0\6\5\560 <...> a\0\6\5\919  // Animations for the new moves
 	a\0\0\2\16  // Use move messages
 	a\0\0\2\402 // Move descriptions
 	a\0\0\2\403 // Move names
 	a\0\0\2\488 // Move names in all caps
+	a\0\2\1\560 <...> a\0\2\1\919  // Move data for the new moves
+	a\0\6\5\560 <...> a\0\6\5\919  // Animations for the new moves
 #endif
 #if UPDATE_OLD_MOVES
 	a\0\2\1\14 // Swords Dance

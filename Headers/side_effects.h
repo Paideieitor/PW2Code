@@ -29,7 +29,8 @@ typedef BattleEventHandlerTableEntry* (*SideEffectEventAddFunc)(u32*);
 struct SideEffectEventAddTable
 {
     SIDE_EFFECT sideEffect;
-    SideEffectEventAddFunc handlers;
+    SideEffectEventAddFunc func;
+    u32 maxCount;
 };
 
 extern "C" BattleEventHandlerTableEntry* EventAddSideReflect(u32 * handlerAmount);

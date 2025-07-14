@@ -313,6 +313,7 @@ struct SWAN_ALIGNED(4) BattleEventItem
 
 extern "C" BattleEventItem * BattleEvent_AddItem(BattleEventItemType eventType, u16 subID, BattleEventPriority mainPriority, u32 subPriority, u32 dependID, const BattleEventHandlerTableEntry * handlerTable, u16 NumHandlers);
 extern "C" void BattleEventItem_Remove(BattleEventItem* item);
+extern "C" void BattleEvent_PopItem(BattleEventItem * item);
 
 extern "C" void BattleEventItem_SetTempItemFlag(BattleEventItem* item);
 extern "C" void BattleEventItem_SetWorkValue(BattleEventItem* item, u32 idx, u32 value);

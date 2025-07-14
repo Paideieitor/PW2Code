@@ -1,5 +1,5 @@
-#ifndef __TERRAINS_H
-#define __TERRAINS_H
+#ifndef __FIELD_EFFECT_EXPANSION_H
+#define __FIELD_EFFECT_EXPANSION_H
 
 #include "server_flow.h"
 
@@ -33,4 +33,13 @@ extern "C" BattleEventHandlerTableEntry * EventAddFieldSwordOfRuin(u32 * handler
 extern "C" BattleEventHandlerTableEntry * EventAddFieldTabletsOfRuin(u32 * handlerAmount);
 extern "C" BattleEventHandlerTableEntry * EventAddFieldBeadsOfRuin(u32 * handlerAmount);
 
-#endif // __TERRAINS_H
+extern "C" b32 CheckDisableEntryHazards(BattleMon * battleMon);
+extern "C" b32 CheckUnseenFist(ServerFlow * serverFlow);
+
+extern "C" BattleEventHandlerTableEntry * EventAddSideSpikesUpdated(u32 * handlerAmount);
+extern "C" BattleEventHandlerTableEntry * EventAddSideToxicSpikesUpdated(u32 * handlerAmount);
+extern "C" BattleEventHandlerTableEntry * EventAddSideStealthRockUpdated(u32 * handlerAmount);
+extern "C" BattleEventHandlerTableEntry * EventAddSideWideGuardUpdated(u32 * handlerAmount);
+extern "C" BattleEventHandlerTableEntry * EventAddSideQuickGuardUpdated(u32 * handlerAmount);
+
+#endif // __FIELD_EFFECT_EXPANSION_H

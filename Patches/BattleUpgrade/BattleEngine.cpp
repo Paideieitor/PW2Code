@@ -3,6 +3,10 @@
 #include "GameVariables.h"
 #include "include/Battlefield.h"
 
+#include "include/AbilityExpansion.h"
+#include "include/ItemExpansion.h"
+#include "include/MoveExpansion.h"
+
 #include "system/game_input.h"
 
 #include "kDLL.h"
@@ -20,12 +24,43 @@
 #include "personal.h"
 #include "items.h"
 
-// List of loaded DLLs in the current battle
-// Reset in [BattleField_Free]
 #define MAX_LOADED_DLLS 128
-const char* loadedDlls[MAX_LOADED_DLLS] = { nullptr };
+struct LoadedDll
+{
+    const char* name;
+    u32 count;
+};
 
-int strcmp(const char* str1, const char* str2);
+// List of loaded DLLs in the current battle
+// Loaded in [FieldEffectEvent_AddItem], [SideEffectEvent_AddItem], [AbilityEvent_AddItem], [ItemEvent_AddItem], [MoveEvent_AddItem]
+// Freed in [BattleEventItem_Remove]
+// Reset in [BattleField_Free]
+LoadedDll loadedDlls[MAX_LOADED_DLLS];
+extern "C" void ClearDll(u32 idx) {
+    loadedDlls[idx].name = nullptr;
+    loadedDlls[idx].count = 0;
+}
+extern "C" void ClearLoadedDlls() {
+#if LIBRARY_LOAD_DEBUG
+    DPRINT("Clearing Dlls!\n");
+#endif
+    for (u32 dllIdx = 0; dllIdx < MAX_LOADED_DLLS; ++dllIdx)
+        ClearDll(dllIdx);
+}
+#if LIBRARY_LOAD_DEBUG
+extern "C" void PrintLoadedDlls() {
+    for (u8 dllIdx = 0; dllIdx < 24; ++dllIdx) {
+        if (loadedDlls[dllIdx].name == nullptr) {
+            DPRINT("--- \n");
+        }
+        else {
+            DPRINTF("%s (%d) \n", loadedDlls[dllIdx].name, loadedDlls[dllIdx].count);
+        }
+    }
+}
+#endif
+
+extern "C" int strcmp(const char* str1, const char* str2);
 extern "C" b32 LoadDll(const char* dllName)
 {
     if (dllName == nullptr)
@@ -33,26 +68,28 @@ extern "C" b32 LoadDll(const char* dllName)
 
     for (u8 dllIdx = 0; dllIdx < MAX_LOADED_DLLS; ++dllIdx)
     {
-        if (loadedDlls[dllIdx] == nullptr)
+        if (loadedDlls[dllIdx].name == nullptr)
         {
             k::dll::LibraryHandle handle = k::dll::LoadLibrary(dllName);
             if (!handle)
             {
 #if LIBRARY_LOAD_DEBUG
-                DPRINTF("Failed to load %s library! \n", dllName);
+                DPRINTF("Failed to load %s! \n", dllName);
 #endif
                 return 0;
             }
 #if LIBRARY_LOAD_DEBUG
-            DPRINTF("Loaded %s library! \n", dllName);
+            DPRINTF("Loaded %s! \n", dllName);
 #endif
-            loadedDlls[dllIdx] = dllName;
+            loadedDlls[dllIdx].name = dllName;
+            loadedDlls[dllIdx].count = 1;
             break;
         }
-        if (strcmp(loadedDlls[dllIdx], dllName) == 0) {
+        if (strcmp(loadedDlls[dllIdx].name, dllName) == 0) {
 #if LIBRARY_LOAD_DEBUG
-            DPRINTF("Library %s is already loaded! \n", dllName);
+            DPRINTF("Added %s! \n", dllName);
 #endif
+            ++loadedDlls[dllIdx].count;
             break;
         }
     }
@@ -63,21 +100,32 @@ extern "C" void FreeDll(const char* dllName) {
         return;
 
     for (u8 dllIdx = 0; dllIdx < MAX_LOADED_DLLS; ++dllIdx) {
-        if (loadedDlls[dllIdx] == nullptr)
+        if (loadedDlls[dllIdx].name == nullptr)
             break;
 
-        if (strcmp(loadedDlls[dllIdx], dllName) == 0) {
-            k::dll::ReleaseLibrary(loadedDlls[dllIdx]);
+        if (strcmp(loadedDlls[dllIdx].name, dllName) == 0) {
+            
+            --loadedDlls[dllIdx].count;
+            if (loadedDlls[dllIdx].count == 0) {
+                k::dll::ReleaseLibrary(loadedDlls[dllIdx].name);
 #if LIBRARY_LOAD_DEBUG
-            DPRINTF("Released Library %s! \n", dllName);
+                DPRINTF("Released %s! \n", dllName);
 #endif
-            for (; dllIdx < MAX_LOADED_DLLS - 1; ++dllIdx) {
-                if (loadedDlls[dllIdx + 1] == nullptr)
-                    break;
-
-                loadedDlls[dllIdx] = loadedDlls[dllIdx + 1];
+                for (; dllIdx < MAX_LOADED_DLLS; ++dllIdx) {
+                    if (dllIdx == MAX_LOADED_DLLS - 1 || 
+                        loadedDlls[dllIdx + 1].name == nullptr) {
+                        ClearDll(dllIdx);
+                        break;
+                    }
+                        
+                    loadedDlls[dllIdx] = loadedDlls[dllIdx + 1];
+                }
             }
-            loadedDlls[MAX_LOADED_DLLS - 1] = nullptr;
+#if LIBRARY_LOAD_DEBUG
+            else {
+                DPRINTF("Substracted %s! \n", dllName);
+            }
+#endif
             return;
         }
     }
@@ -85,20 +133,21 @@ extern "C" void FreeDll(const char* dllName) {
     DPRINTF("Library %s was not loaded! \n", dllName);
 #endif
 }
-extern "C" void FreeLoadedDlls()
-{
+extern "C" void FreeLoadedDlls() {
     // Free all the loaded code
     for (u8 dllIdx = 0; dllIdx < MAX_LOADED_DLLS; ++dllIdx)
     {
-        if (!loadedDlls[dllIdx])
-            break;;
+        if (loadedDlls[dllIdx].name == nullptr)
+            break;
 
-        k::dll::ReleaseLibrary(loadedDlls[dllIdx]);
+        k::dll::ReleaseLibrary(loadedDlls[dllIdx].name);
 #if LIBRARY_LOAD_DEBUG
-        DPRINTF("Released %s library!\n", loadedDlls[dllIdx]);
+        DPRINTF("Freed %s!\n", loadedDlls[dllIdx]);
 #endif
-        loadedDlls[dllIdx] = nullptr;
+        loadedDlls[dllIdx].name = nullptr;
+        loadedDlls[dllIdx].count = 0;
     }
+    ClearLoadedDlls();
 }
 
 extern "C" b32 SearchArray(const u32* const arr, const u32 arrSize, const u32 value) {
@@ -989,7 +1038,6 @@ extern "C" int THUMB_BRANCH_ServerFlow_ActOrderProcMain(ServerFlow * serverFlow,
 #if EXPAND_FIELD_EFFECTS
 
 // FIELD EFFECT EXPANSION
-#include "include/Terrains.h"
 
 // The battle engine stores 2 BattleField structs
 //  - One is dyanamically allocated using BattleField_Init
@@ -1412,15 +1460,6 @@ struct FieldEffectEventAddTableExt
     const char* dllName;
 };
 FieldEffectEventAddTableExt fieldEffectEventAddTableExt[] = {
-    { FLDEFF_WEATHER, EventAddFieldWeather, nullptr },
-    { FLDEFF_TRICK_ROOM, EventAddFieldTrickRoom, nullptr },
-    { FLDEFF_GRAVITY, EventAddFieldGravity, nullptr },
-    { FLDEFF_IMPRISON, EventAddFieldImprison, nullptr },
-    { FLDEFF_WATER_SPORT, EventAddFieldWaterSport, nullptr },
-    { FLDEFF_MUD_SPORT, EventAddFieldMudSport, nullptr },
-    { FLDEFF_WONDER_ROOM, EventAddFieldWonderRoom, nullptr },
-    { FLDEFF_MAGIC_ROOM, EventAddFieldMagicRoom, nullptr },
-    { FLDEFF_MAGIC_ROOM, EventAddFieldMagicRoom, nullptr },
     { FLDEFF_TERRAIN, EventAddFieldTerrain, "FieldEffects/Terrain" },
 #if EXPAND_ABILITIES
     { FLDEFF_DARK_AURA, EventAddFieldDarkAura, "FieldEffects/DarkAura" },
@@ -1432,10 +1471,17 @@ FieldEffectEventAddTableExt fieldEffectEventAddTableExt[] = {
 #endif // EXPAND_ABILITIES
 };
 
-// Add the Field Effect battle event handlers to the event pool
-extern "C" BattleEventItem * FieldEffectEvent_AddItem(FIELD_EFFECT fieldEffect, u32 pokemonSlot) {
+extern "C" BattleEventItem * AddFieldEffectEvent(FIELD_EFFECT fieldEffect, u32 pokemonSlot, FieldEffectEventAddFunc func) {
+    u32 handlerAmount = 0;
+    BattleEventHandlerTableEntry* battleEventEntry = func(&handlerAmount);
 
-    for (FIELD_EFFECT currentFieldEffect = 0; currentFieldEffect < FIELD_EFFECT_AMOUNT; ++currentFieldEffect) {
+    return BattleEvent_AddItem(EVENTITEM_FIELD, fieldEffect, EVENTPRI_FIELD_DEFAULT, 0, pokemonSlot, battleEventEntry, handlerAmount);
+}
+
+// Add the Field Effect battle event handlers to the event pool
+extern "C" BattleEventItem* FieldEffectEvent_AddItem(FIELD_EFFECT fieldEffect, u32 pokemonSlot) {
+    // Check for new or overriden field effects
+    for (FIELD_EFFECT currentFieldEffect = 0; currentFieldEffect < ARRAY_COUNT(fieldEffectEventAddTableExt); ++currentFieldEffect) {
         
         FieldEffectEventAddTableExt* fieldEffectAddEvent = &(fieldEffectEventAddTableExt[currentFieldEffect]);
         if (fieldEffect == fieldEffectAddEvent->fieldEffect) {
@@ -1443,10 +1489,16 @@ extern "C" BattleEventItem * FieldEffectEvent_AddItem(FIELD_EFFECT fieldEffect, 
             if (!LoadDll(fieldEffectAddEvent->dllName))
                 return 0;
             
-            u32 handlerAmount = 0;
-            BattleEventHandlerTableEntry* battleEventEntry = fieldEffectAddEvent->func(&handlerAmount);
+            return AddFieldEffectEvent(fieldEffect, pokemonSlot, fieldEffectAddEvent->func);
+        }
+    }
+    // Check for vanilla field effects
+    FieldEffectEventAddTable* fieldEffectEventAddTable = (FieldEffectEventAddTable*)0x0689D7D8;
+    for (FIELD_EFFECT currentFieldEffect = 0; currentFieldEffect < 8; ++currentFieldEffect) {
 
-            return BattleEvent_AddItem(EVENTITEM_FIELD, fieldEffect, EVENTPRI_FIELD_DEFAULT, 0, pokemonSlot, battleEventEntry, handlerAmount);
+        FieldEffectEventAddTable* fieldEffectAddEvent = &(fieldEffectEventAddTable[currentFieldEffect]);
+        if (fieldEffect == fieldEffectAddEvent->fieldEffect) {
+            return AddFieldEffectEvent(fieldEffect, pokemonSlot, fieldEffectAddEvent->func);
         }
     }
     return 0;
@@ -2440,24 +2492,35 @@ struct SideEffectEventAddTableExt
     const char* dllName;
 };
 SideEffectEventAddTableExt sideEffectEventAddTableExt[] = {
-    { SIDEEFF_REFLECT, EventAddSideReflect, 1, nullptr },
-    { SIDEEFF_LIGHT_SCREEN, EventAddSideLightScreen, 1, nullptr },
-    { SIDEEFF_SAFEGUARD, EventAddSideSafeguard, 1, nullptr },
-    { SIDEEFF_MIST, EventAddSideMist, 1, nullptr },
-    { SIDEEFF_TAILWIND, EventAddSideTailwind, 1, nullptr },
-    { SIDEEFF_LUCKY_CHANT, EventAddSideLuckyChant, 1, nullptr },
-    { SIDEEFF_SPIKES, EventAddSideSpikes, 3, nullptr },
-    { SIDEEFF_TOXIC_SPIKES, EventAddSideToxicSpikes, 2, nullptr },
-    { SIDEEFF_STEALTH_ROCK, EventAddSideStealthRock, 1, nullptr },
-    { SIDEEFF_WIDE_GUARD, EventAddSideWideGuard, 1, nullptr },
-    { SIDEEFF_QUICK_GUARD, EventAddSideQuickGuard, 1, nullptr },
-    { SIDEEFF_RAINBOW, EventAddSideRainbow, 1, nullptr },
-    { SIDEEFF_SEA_OF_FIRE, EventAddSideSeaOfFire, 1, nullptr },
-    { SIDEEFF_SWAMP, EventAddSideSwamp, 1, nullptr },
+#if EXPAND_ITEMS
+    { SIDEEFF_SPIKES, EventAddSideSpikesUpdated, 3, "SideEffects/Spikes"},
+    { SIDEEFF_TOXIC_SPIKES, EventAddSideToxicSpikesUpdated, 2, "SideEffects/ToxicSpikes" },
+    { SIDEEFF_STEALTH_ROCK, EventAddSideStealthRockUpdated, 1, "SideEffects/StealthRock" },
+#endif
+#if EXPAND_ABILITIES
+    { SIDEEFF_WIDE_GUARD, EventAddSideWideGuardUpdated, 1, "SideEffects/WideGuard" },
+    { SIDEEFF_QUICK_GUARD, EventAddSideQuickGuardUpdated, 1, "SideEffects/QuickGuard" },
+#endif
 };
 
-extern "C" BattleEventItem * THUMB_BRANCH_SAFESTACK_SideEffectEvent_AddItem_Core(u32 side, SIDE_EFFECT effect, ConditionData condData) {
+extern "C" BattleEventItem * AddSideEffectEvent(BattleSideEffectExt* sideEffect, u32 side, SIDE_EFFECT effect, ConditionData condData, SideEffectEventAddFunc func) {
+    u32 handlerAmout = 0;
+    BattleEventHandlerTableEntry* handlers = func(&handlerAmout);
+
+    BattleEventItem* item = BattleEvent_AddItem(EVENTITEM_SIDE, effect, EVENTPRI_SIDE_DEFAULT, 0, side, handlers, handlerAmout);
+    BattleEventItem_SetWorkValue(item, 6, *((u32*)(&condData)));
+    sideEffect->item = item;
+    sideEffect->condData = condData;
+    sideEffect->turnCounter = 0;
+    sideEffect->count = 1;
+
+    return item;
+}
+
+extern "C" BattleEventItem* THUMB_BRANCH_SAFESTACK_SideEffectEvent_AddItem_Core(u32 side, SIDE_EFFECT effect, ConditionData condData) {
     BattleSideEffectExt* sideEffect = &(g_SideManager.sides[side].effects[effect]);
+
+    // Check for new or overriden side effects
     for (u32 effectIdx = 0; effectIdx < ARRAY_COUNT(sideEffectEventAddTableExt); ++effectIdx) {
 
         SideEffectEventAddTableExt* sideEffectEvent = &(sideEffectEventAddTableExt[effectIdx]);
@@ -2467,19 +2530,24 @@ extern "C" BattleEventItem * THUMB_BRANCH_SAFESTACK_SideEffectEvent_AddItem_Core
                 if (!LoadDll(sideEffectEvent->dllName))
                     return 0;
 
-                u32 handlerAmout = 0;
-                BattleEventHandlerTableEntry* handlers = sideEffectEvent->func(&handlerAmout);
-
-                BattleEventItem* item = BattleEvent_AddItem(EVENTITEM_SIDE, effect, EVENTPRI_SIDE_DEFAULT, 0, side, handlers, handlerAmout);
-                BattleEventItem_SetWorkValue(item, 6, *((u32*)(&condData)));
-                sideEffect->item = item;
-                sideEffect->condData = condData;
-                sideEffect->turnCounter = 0;
-                sideEffect->count = 1;
-
-                return item;
+                return AddSideEffectEvent(sideEffect, side, effect, condData, sideEffectEvent->func);
             }
-            if (sideEffect->count < sideEffectEvent->maxCount) {
+            else if (sideEffect->count < sideEffectEvent->maxCount) {
+                ++sideEffect->count;
+                return sideEffect->item;
+            }
+        }
+    }
+    // Check for vanilla side effects
+    SideEffectEventAddTable* sideEffectEventAddTable = (SideEffectEventAddTable*)0x0689D908;
+    for (u32 effectIdx = 0; effectIdx < 14; ++effectIdx) {
+
+        SideEffectEventAddTable* sideEffectEvent = &(sideEffectEventAddTable[effectIdx]);
+        if (effect == sideEffectEvent->sideEffect) {
+            if (!sideEffect->count) {
+                return AddSideEffectEvent(sideEffect, side, effect, condData, sideEffectEvent->func);
+            }
+            else if (sideEffect->count < sideEffectEvent->maxCount) {
                 ++sideEffect->count;
                 return sideEffect->item;
             }
@@ -3174,7 +3242,6 @@ extern "C" u32 THUMB_BRANCH_SAFESTACK_ServerControl_AddConditionCheckFail(Server
 // and https://www.youtube.com/@mupokepedia
 //      CORROSION -> Implemented in [ServerControl_AddConditionCheckFail]
 //      COMATOSE -> Implemented in [ServerControl_AddConditionCheckFail], [BattleMon_CheckIfMoveCondition], [HandlerHex] & [CommonStatusReaction]
-#include "include/AbilityExpansion.h"
 
 // Called when a held item is consumed [ServerControl_ChangeHeldItem]
 extern "C" void ServerEvent_ConsumeItem(ServerFlow * serverFlow, u32 currentSlot, ITEM itemID) {
@@ -3320,208 +3387,40 @@ struct AbilityEventAddTableExt
     AbilityEventAddFunc func;
     const char* dllName;
 };
-
 AbilityEventAddTableExt abilityEventAddTableExt[]{
-    { ABIL_INTIMIDATE, EventAddIntimidate, nullptr },
-    { ABIL_CLEAR_BODY, EventAddClearBody, nullptr },
-    { ABIL_WHITE_SMOKE, EventAddClearBody, nullptr },
-    { ABIL_STEADFAST, EventAddSteadfast, nullptr },
-    { ABIL_THICK_FAT, EventAddThickFat, nullptr },
-    { ABIL_HYPER_CUTTER, EventAddHyperCutter, nullptr },
-    { ABIL_HUGE_POWER, EventAddHugePower, nullptr },
-    { ABIL_PURE_POWER, EventAddHugePower, nullptr },
-    { ABIL_TINTED_LENS, EventAddTintedLens, nullptr },
-    { ABIL_SPEED_BOOST, EventAddSpeedBoost, nullptr },
-    { ABIL_BLAZE, EventAddBlaze, nullptr },
-    { ABIL_TORRENT, EventAddTorrent, nullptr },
-    { ABIL_OVERGROW, EventAddOvergrow, nullptr },
-    { ABIL_SWARM, EventAddSwarm, nullptr },
-    { ABIL_GUTS, EventAddGuts, nullptr },
-    { ABIL_SKILL_LINK, EventAddSkillLink, nullptr },
-    { ABIL_SIMPLE, EventAddSimple, nullptr },
-    { ABIL_SOLID_ROCK, EventAddSolidRock, nullptr },
-    { ABIL_FILTER, EventAddSolidRock, nullptr },
-    { ABIL_MARVEL_SCALE, EventAddMarvelScale, nullptr },
-    { ABIL_RIVALRY, EventAddRivalry, nullptr },
-    { ABIL_LEAF_GUARD, EventAddLeafGuard, nullptr },
-    { ABIL_DRIZZLE, EventAddDrizzle, nullptr },
-    { ABIL_DROUGHT, EventAddDrought, nullptr },
-    { ABIL_SAND_STREAM, EventAddSandStream, nullptr },
-    { ABIL_SNOW_WARNING, EventAddSnowWarning, nullptr },
-    { ABIL_AIR_LOCK, EventAddAirLock, nullptr },
-    { ABIL_CLOUD_NINE, EventAddAirLock, nullptr },
-    { ABIL_TECHNICIAN, EventAddTechnician, nullptr },
-    { ABIL_HYDRATION, EventAddHydration, nullptr },
-    { ABIL_POISON_HEAL, EventAddPoisonHeal, nullptr },
-    { ABIL_ICE_BODY, EventAddIceBody, nullptr },
-    { ABIL_RAIN_DISH, EventAddRainDish, nullptr },
-    { ABIL_SHIELD_DUST, EventAddShieldDust, nullptr },
-    { ABIL_ADAPTABILITY, EventAddAdaptability, nullptr },
-    { ABIL_SERENE_GRACE, EventAddSereneGrace, nullptr },
-    { ABIL_SOLAR_POWER, EventAddSolarPower, nullptr },
-    { ABIL_SWIFT_SWIM, EventAddSwiftSwim, nullptr },
-    { ABIL_CHLOROPHYLL, EventAddChlorophyll, nullptr },
-    { ABIL_SHED_SKIN, EventAddShedSkin, nullptr },
-    { ABIL_TANGLED_FEET, EventAddTangledFeet, nullptr },
-    { ABIL_QUICK_FEET, EventAddQuickFeet, nullptr },
-    { ABIL_HUSTLE, EventAddHustle, nullptr },
-    { ABIL_BATTLE_ARMOR, EventAddBattleArmor, nullptr },
-    { ABIL_SHELL_ARMOR, EventAddBattleArmor, nullptr },
-    { ABIL_SUPER_LUCK, EventAddSuperLuck, nullptr },
-    { ABIL_ANGER_POINT, EventAddAngerPoint, nullptr },
-    { ABIL_SNIPER, EventAddSniper, nullptr },
-    { ABIL_IRON_FIST, EventAddIronFist, nullptr },
-    { ABIL_COMPOUND_EYES, EventAddCompoundEyes, nullptr },
-    { ABIL_ROCK_HEAD, EventAddRockHead, nullptr },
-    { ABIL_RECKLESS, EventAddReckless, nullptr },
-    { ABIL_STATIC, EventAddStatic, nullptr },
-    { ABIL_POISON_POINT, EventAddPoisonPoint, nullptr },
-    { ABIL_FLAME_BODY, EventAddFlameBody, nullptr },
-    { ABIL_EFFECT_SPORE, EventAddEffectSpore, nullptr },
-    { ABIL_PLUS, EventAddPlusMinus, nullptr },
-    { ABIL_MINUS, EventAddPlusMinus, nullptr },
-    { ABIL_CUTE_CHARM, EventAddCuteCharm, nullptr },
-    { ABIL_SAND_VEIL, EventAddSandVeil, nullptr },
-    { ABIL_SNOW_CLOAK, EventAddSnowCloak, nullptr },
-    { ABIL_ROUGH_SKIN, EventAddRoughSkin, nullptr },
-    { ABIL_NATURAL_CURE, EventAddNaturalCure, nullptr },
-    { ABIL_SYNCHRONIZE, EventAddSynchronize, nullptr },
-    { ABIL_DOWNLOAD, EventAddDownload, nullptr },
-    { ABIL_STURDY, EventAddSturdy, nullptr },
-    { ABIL_HEATPROOF, EventAddHeatproof, nullptr },
-    { ABIL_UNAWARE, EventAddUnaware, nullptr },
-    { ABIL_DRY_SKIN, EventAddDrySkin, nullptr },
-    { ABIL_VOLT_ABSORB, EventAddVoltAbsorb, nullptr },
-    { ABIL_WATER_ABSORB, EventAddWaterAbsorb, nullptr },
-    { ABIL_MOTOR_DRIVE, EventAddMotorDrive, nullptr },
-    { ABIL_LIMBER, EventAddLimber, nullptr },
-    { ABIL_INSOMNIA, EventAddInsomnia, nullptr },
-    { ABIL_VITAL_SPIRIT, EventAddInsomnia, nullptr },
-    { ABIL_MAGMA_ARMOR, EventAddMagmaArmor, nullptr },
-    { ABIL_WATER_VEIL, EventAddWaterVeil, nullptr },
-    { ABIL_IMMUNITY, EventAddImmunity, nullptr },
-    { ABIL_LEVITATE, EventAddLevitate, nullptr },
-    { ABIL_FLOWER_GIFT, EventAddFlowerGift, nullptr },
-    { ABIL_FLASH_FIRE, EventAddFlashFire, nullptr },
-    { ABIL_FOREWARN, EventAddForewarn, nullptr },
-    { ABIL_ANTICIPATION, EventAddAnticipation, nullptr },
-    { ABIL_AFTERMATH, EventAddAftermath, nullptr },
-    { ABIL_RUN_AWAY, EventAddRunAway, nullptr },
-    { ABIL_COLOR_CHANGE, EventAddColorChange, nullptr },
-    { ABIL_MOLD_BREAKER, EventAddMoldBreaker, nullptr },
-    { ABIL_TRUANT, EventAddTruant, nullptr },
-    { ABIL_STORM_DRAIN, EventAddStormDrain, nullptr },
-    { ABIL_SLOW_START, EventAddSlowStart, nullptr },
-    { ABIL_DAMP, EventAddDamp, nullptr },
-    { ABIL_WONDER_GUARD, EventAddWonderGuard, nullptr },
-    { ABIL_STALL, EventAddStall, nullptr },
-    { ABIL_FORECAST, EventAddForecast, nullptr },
-    { ABIL_SUCTION_CUPS, EventAddSuctionCups, nullptr },
-    { ABIL_LIQUID_OOZE, EventAddLiquidOoze, nullptr },
-    { ABIL_KLUTZ, EventAddKlutz, nullptr },
-    { ABIL_STICKY_HOLD, EventAddStickyHold, nullptr },
-    { ABIL_PRESSURE, EventAddPressure, nullptr },
-    { ABIL_MAGIC_GUARD, EventAddMagicGuard, nullptr },
-    { ABIL_BAD_DREAMS, EventAddBadDreams, nullptr },
-    { ABIL_PICKUP, EventAddPickup, nullptr },
-    { ABIL_UNBURDEN, EventAddUnburden, nullptr },
-    { ABIL_STENCH, EventAddStench, nullptr },
-    { ABIL_SHADOW_TAG, EventAddShadowTag, nullptr },
-    { ABIL_ARENA_TRAP, EventAddArenaTrap, nullptr },
-    { ABIL_MAGNET_PULL, EventAddMagnetPull, nullptr },
-    { ABIL_PICKPOCKET, EventAddPickpocket, nullptr },
-    { ABIL_SHEER_FORCE, EventAddSheerForce, nullptr },
-    { ABIL_DEFIANT, EventAddDefiant, nullptr },
-    { ABIL_DEFEATIST, EventAddDefeatist, nullptr },
-    { ABIL_MULTISCALE, EventAddMultiscale, nullptr },
-    { ABIL_HEAVY_METAL, EventAddHeavyMetal, nullptr },
-    { ABIL_LIGHT_METAL, EventAddLightMetal, nullptr },
-    { ABIL_CONTRARY, EventAddContrary, nullptr },
-    { ABIL_UNNERVE, EventAddUnnerve, nullptr },
-    { ABIL_CURSED_BODY, EventAddCursedBody, nullptr },
-    { ABIL_HEALER, EventAddHealer, nullptr },
-    { ABIL_FRIEND_GUARD, EventAddFriendGuard, nullptr },
-    { ABIL_WEAK_ARMOR, EventAddWeakArmor, nullptr },
-    { ABIL_TOXIC_BOOST, EventAddToxicBoost, nullptr },
-    { ABIL_FLARE_BOOST, EventAddFlareBoost, nullptr },
-    { ABIL_HARVEST, EventAddHarvest, nullptr },
-    { ABIL_TELEPATHY, EventAddTelepathy, nullptr },
-    { ABIL_MOODY, EventAddMoody, nullptr },
-    { ABIL_POISON_TOUCH, EventAddPoisonTouch, nullptr },
-    { ABIL_REGENERATOR, EventAddRegenerator, nullptr },
-    { ABIL_BIG_PECKS, EventAddBigPecks, nullptr },
-    { ABIL_SAND_RUSH, EventAddSandRush, nullptr },
-    { ABIL_WONDER_SKIN, EventAddWonderSkin, nullptr },
-    { ABIL_ANALYTIC, EventAddAnalytic, nullptr },
-    { ABIL_ILLUSION, EventAddIllusion, nullptr },
-    { ABIL_IMPOSTER, EventAddImposter, nullptr },
-    { ABIL_INFILTRATOR, EventAddInfiltrator, nullptr },
-    { ABIL_MUMMY, EventAddMummy, nullptr },
-    { ABIL_MOXIE, EventAddMoxie, nullptr },
-    { ABIL_JUSTIFIED, EventAddJustified, nullptr },
-    { ABIL_MAGIC_BOUNCE, EventAddMagicBounce, nullptr },
-    { ABIL_SAP_SIPPER, EventAddSapSipper, nullptr },
-    { ABIL_SAND_FORCE, EventAddSandForce, nullptr },
-    { ABIL_IRON_BARBS, EventAddRoughSkin, nullptr },
-    { ABIL_ZEN_MODE, EventAddZenMode, nullptr },
-    { ABIL_VICTORY_STAR, EventAddVictoryStar, nullptr },
-    { ABIL_TURBOBLAZE, EventAddMoldBreaker, nullptr },
-    { ABIL_TERAVOLT, EventAddMoldBreaker, nullptr },
 #if GEN9_INTIMIDATE_INTERACTIONS
     { ABIL_OBLIVIOUS, EventAddObliviousUpdated, "Abilities/Oblivious" },
     { ABIL_OWN_TEMPO, EventAddOwnTempoUpdated, "Abilities/OwnTempo" },
     { ABIL_INNER_FOCUS, EventAddInnerFocusUpdated, "Abilities/InnerFocus" },
     { ABIL_SCRAPPY, EventAddScrappyUpdated, "Abilities/Scrappy" },
     { ABIL_RATTLED, EventAddRattledUpdated, "Abilities/Rattled" },
-#else
-    { ABIL_OBLIVIOUS, EventAddOblivious, nullptr },
-    { ABIL_OWN_TEMPO, EventAddOwnTempo, nullptr },
-    { ABIL_INNER_FOCUS, EventAddInnerFocus, nullptr },
-    { ABIL_SCRAPPY, EventAddScrappy, nullptr },
-    { ABIL_RATTLED, EventAddRattled, nullptr },
 #endif
 #if GEN7_LIGHTNING_ROD
     { ABIL_LIGHTNING_ROD, EventAddLightningRodUpdated, "Abilities/LightningRod" },
-#else
-    { ABIL_LIGHTNING_ROD, EventAddLightningRod, nullptr },
 #endif
 #if GEN6_KEEN_EYE
     { ABIL_KEEN_EYE, EventAddKeenEyeUpdated, "Abilities/KeenEye" },
-#else
-    { ABIL_KEEN_EYE, EventAddKeenEye, nullptr },
 #endif
 #if GEN9_ILLUMINATE
     { ABIL_ILLUMINATE, EventAddKeenEyeUpdated, "Abilities/KeenEye" },
 #endif
 #if GEN6_TRACE
     { ABIL_TRACE, EventAddTraceUpdated, "Abilities/Trace" },
-#else
-    { ABIL_TRACE, EventAddTrace, nullptr },
 #endif
 #if GEN8_SOUNDPROOF
     { ABIL_SOUNDPROOF, EventAddSoundproofUpdated, "Abilities/Soundproof" },
-#else
-    { ABIL_SOUNDPROOF, EventAddSoundproof, nullptr },
 #endif
 #if GEN7_NORMALIZE
     { ABIL_NORMALIZE, EventAddNormalizeUpdated, "Abilities/Normalize" },
-#else
-    { ABIL_NORMALIZE, EventAddNormalize, nullptr },
 #endif
 #if GEN6_FRISK
     { ABIL_FRISK, EventAddFriskUpdated, "Abilities/Frisk" },
-#else
-    { ABIL_FRISK, EventAddFrisk, nullptr },
 #endif
 #if GEN6_OVERCOAT
     { ABIL_OVERCOAT, EventAddOvercoatUpdated, "Abilities/Overcoat" },
-#else
-    { ABIL_OVERCOAT, EventAddOvercoat, nullptr },
 #endif
 #if GEN7_PRANKSTER
     { ABIL_PRANKSTER, EventAddPranksterUpdated, "Abilities/Prankster" },
-#else
-    { ABIL_PRANKSTER, EventAddPrankster, nullptr },
 #endif
     { ABIL_AROMA_VEIL, EventAddAromaVeil, "Abilities/AromaVeil" },
     { ABIL_FLOWER_VEIL, EventAddFlowerVeil, "Abilities/FlowerVeil" },
@@ -3667,9 +3566,20 @@ AbilityEventAddTableExt abilityEventAddTableExt[]{
     { ABIL_POISON_PUPPETEE, EventAddPoisonPuppeteer, "Abilities/PoisonPuppeteer" },
 };
 
+extern "C" BattleEventItem * GetAbiltiyEvent(BattleMon * battleMon, ABILITY ability, AbilityEventAddFunc func) {
+    u32 handlerAmount = 0;
+    BattleEventHandlerTableEntry* battleHandlerItems = func(&handlerAmount);
+
+    BattleEventPriority mainPrio = GetHandlerMainPriority(&handlerAmount);
+    u32 subPrio = AbilityEvent_GetSubPriority(battleMon);
+    u32 pokemonSlot = BattleMon_GetID(battleMon);
+    return BattleEvent_AddItem(EVENTITEM_ABILITY, ability, mainPrio, subPrio, pokemonSlot, battleHandlerItems, handlerAmount);
+}
+
 extern "C" BattleEventItem* THUMB_BRANCH_AbilityEvent_AddItem(BattleMon* battleMon) {
     ABILITY ability = BattleMon_GetValue(battleMon, VALUE_ABILITY);
 
+    // Check for new or overriden abilities
     for (u32 abilityEvent = 0; abilityEvent < ARRAY_COUNT(abilityEventAddTableExt); ++abilityEvent) {
         
         AbilityEventAddTableExt* abilityAddEvent = &abilityEventAddTableExt[abilityEvent];
@@ -3678,13 +3588,16 @@ extern "C" BattleEventItem* THUMB_BRANCH_AbilityEvent_AddItem(BattleMon* battleM
             if (!LoadDll(abilityAddEvent->dllName))
                 return 0;
 
-            u32 handlerAmount = 0;
-            BattleEventHandlerTableEntry* battleHandlerItems = abilityAddEvent->func(&handlerAmount);
+            return GetAbiltiyEvent(battleMon, ability, abilityAddEvent->func);
+        }
+    }
+    // Check for vanilla abilities
+    AbilityEventAddTable* abilityEventAddTable = (AbilityEventAddTable*)0x21D7F38;
+    for (u32 abilityEvent = 0; abilityEvent < 158; ++abilityEvent) {
 
-            BattleEventPriority mainPrio = GetHandlerMainPriority(&handlerAmount);
-            u32 subPrio = AbilityEvent_GetSubPriority(battleMon);
-            u32 pokemonSlot = BattleMon_GetID(battleMon);
-            return BattleEvent_AddItem(EVENTITEM_ABILITY, ability, mainPrio, subPrio, pokemonSlot, battleHandlerItems, handlerAmount);
+        AbilityEventAddTable* abilityAddEvent = &abilityEventAddTable[abilityEvent];
+        if (ability == abilityAddEvent->ability) {
+            return GetAbiltiyEvent(battleMon, ability, abilityAddEvent->func);
         }
     }
     return 0;
@@ -4641,7 +4554,6 @@ extern "C" void THUMB_BRANCH_ServerEvent_AfterSwitchInPrevious(ServerFlow* serve
 }
 
 // Unseen Fist - Bypass Wide Guard and Quick Guard
-extern "C" b32 PML_MoveIsDamaging(MOVE_ID moveID);
 extern "C" b32 CheckUnseenFist(ServerFlow* serverFlow) {
     u32 attackingSlot = BattleEventVar_GetValue(VAR_ATTACKING_MON);
     BattleMon* attackingMon = Handler_GetBattleMon(serverFlow, attackingSlot);
@@ -4650,59 +4562,6 @@ extern "C" b32 CheckUnseenFist(ServerFlow* serverFlow) {
         return true;
     }
     return false;
-}
-extern "C" void THUMB_BRANCH_SAFESTACK_HandlerSideWideGuard(BattleEventItem* item, ServerFlow* serverFlow, u32 side, u32* work) {
-    u32 defendingSlot = BattleEventVar_GetValue(VAR_DEFENDING_MON);
-    if (side == GetSideFromMonID(defendingSlot)) {
-
-        MOVE_ID moveID = BattleEventVar_GetValue(VAR_MOVE_ID);
-        MoveTarget targetType = (MoveTarget)PML_MoveGetParam(moveID, MVDATA_TARGET);
-        if (PML_MoveIsDamaging(moveID) && targetType - TARGET_OTHER_ALL <= TARGET_ALLY_USER_SELECT) {
-
-            if (CheckUnseenFist)
-                return;
-
-            if (BattleEventVar_RewriteValue(VAR_NO_EFFECT_FLAG, 1)) {
-                HandlerParam_StrParams* strParam;
-                strParam = (HandlerParam_StrParams*)BattleEventVar_GetValue(VAR_WORK_ADDRESS);
-                BattleHandler_StrSetup(strParam, 2u, 797);
-                BattleHandler_AddArg(strParam, defendingSlot);
-            }
-        }
-    }
-}
-extern "C" void THUMB_BRANCH_SAFESTACK_HandlerSideQuickGuard(BattleEventItem* item, ServerFlow* serverFlow, u32 side, u32* work) {
-    u32 defendingSlot = BattleEventVar_GetValue(VAR_DEFENDING_MON);
-    if (side == GetSideFromMonID(defendingSlot)
-        && defendingSlot != BattleEventVar_GetValue(VAR_ATTACKING_MON)) {
-
-        ActionOrderWork* actionOrder = serverFlow->actionOrderWork;
-        u16 orderIdx = 0;
-
-        BattleMon* attackingMon = Handler_GetBattleMon(serverFlow, BattleEventVar_GetValue(VAR_ATTACKING_MON));
-        for (; orderIdx < 6; ++orderIdx)
-            if (actionOrder[orderIdx].battleMon == attackingMon)
-                break;
-
-        u32 priority = ACTION_ORDER_GET_PRIO(actionOrder, orderIdx);
-        priority -= 7;
-        // Special priority takes into account item & ability prio boosts (1 = no added prio)
-        u32 specialPriority = ACTION_ORDER_GET_SPECIAL_PRIO(actionOrder, orderIdx);
-        specialPriority -= 1;
-        priority += specialPriority;
-
-        if (priority > 0) {
-            if (CheckUnseenFist)
-                return;
-
-            if (BattleEventVar_RewriteValue(VAR_NO_EFFECT_FLAG, 1)) {
-                HandlerParam_StrParams* strParam;
-                strParam = (HandlerParam_StrParams*)BattleEventVar_GetValue(VAR_WORK_ADDRESS);
-                BattleHandler_StrSetup(strParam, 2u, 800);
-                BattleHandler_AddArg(strParam, defendingSlot);
-            }
-        }
-    }
 }
 
 // As One - Pass ability flag data to the server function
@@ -5101,7 +4960,7 @@ extern "C" TypeEffectiveness THUMB_BRANCH_SAFESTACK_ServerEvent_CheckDamageEffec
     BattleEventVar_SetConstValue(VAR_POKE_TYPE, pokemonType);
     BattleEventVar_SetConstValue(VAR_MOVE_TYPE, moveType);
     BattleEventVar_SetRewriteOnceValue(VAR_NO_TYPE_EFFECTIVENESS, 0);
-    BattleEventVar_SetRewriteOnceValue(VAR_SET_TYPE_EFFECTIVENESS, 0);
+    BattleEventVar_SetRewriteOnceValue(VAR_SET_TYPE_EFFECTIVENESS, DONT_OVERRIDE_EFFECTIVENESS);
     Condition_CheckUnaffectedByType(serverFlow, defendingMon);
     BattleEvent_CallHandlers(serverFlow, EVENT_CHECK_TYPE_EFFECTIVENESS);
     b32 overrideImmunity = BattleEventVar_GetValue(VAR_NO_TYPE_EFFECTIVENESS);
@@ -5109,26 +4968,34 @@ extern "C" TypeEffectiveness THUMB_BRANCH_SAFESTACK_ServerEvent_CheckDamageEffec
     BattleEventVar_Pop();
         
     TypeEffectiveness effectiveness = GetTypeEffectiveness(moveType, pokemonType);
+    if (effectiveness == EFFECTIVENESS_IMMUNE &&
+        overrideImmunity) {
+        effectiveness = EFFECTIVENESS_1;
+    }
+
     if (effectiveness != EFFECTIVENESS_IMMUNE) {
         switch (overrideEffectiveness) {
-        case 1:
-            return EFFECTIVENESS_1;
-        case 2:
+        case DONT_OVERRIDE_EFFECTIVENESS:
+            break;
+        case OVERRIDE_EFFECTIVENESS_1_2:
             return EFFECTIVENESS_1_2;
-        case 3:
+        case OVERRIDE_EFFECTIVENESS_1:
+            return EFFECTIVENESS_1;
+        case OVERRIDE_EFFECTIVENESS_2:
             return EFFECTIVENESS_2;
+        default: // COMPOUND_EFFECTIVENESS + (Effectiveness to compound)
+            effectiveness = GetTypeEffectivenessMultiplier(effectiveness, 
+                (TypeEffectiveness)(overrideEffectiveness - COMPOUND_EFFECTIVENESS));
+            break;
         }
     }
-    else if (overrideImmunity) {
-        return EFFECTIVENESS_1;
-    }
+
     return effectiveness;
 }
 
 #endif // EXPAND_ABILITIES || EXPAND_MOVES
 
 #if EXPAND_ITEMS
-#include "include/ItemExpansion.h"
 
 // Event called when a move misses due to accuracy
 // [ServerFlow_CheckMoveAvoid]
@@ -5168,178 +5035,6 @@ struct ItemEventAddTableExt
     const char* dllName;
 };
 ItemEventAddTableExt itemEventAddTableExt[] = {
-    { ITEM_CHERI_BERRY, EventAddCheriBerry, nullptr },
-    { ITEM_CHESTO_BERRY, EventAddChestoBerry, nullptr },
-    { ITEM_RAWST_BERRY, EventAddRawstBerry, nullptr },
-    { ITEM_ASPEAR_BERRY, EventAddAspearBerry, nullptr },
-    { ITEM_PERSIM_BERRY, EventAddPersimBerry, nullptr },
-    { ITEM_PECHA_BERRY, EventAddPechaBerry, nullptr },
-    { ITEM_LUM_BERRY, EventAddLumBerry, nullptr },
-    { ITEM_LEPPA_BERRY, EventAddLeppaBerry, nullptr },
-    { ITEM_ORAN_BERRY, EventAddOranBerry, nullptr },
-    { ITEM_BERRY_JUICE, EventAddBerryJuice, nullptr },
-    { ITEM_SITRUS_BERRY, EventAddSitrusBerry, nullptr },
-    { ITEM_FIGY_BERRY, EventAddFigyBerry, nullptr },
-    { ITEM_WIKI_BERRY, EventAddWikiBerry, nullptr },
-    { ITEM_MAGO_BERRY, EventAddMagoBerry, nullptr },
-    { ITEM_AGUAV_BERRY, EventAddAguavBerry, nullptr },
-    { ITEM_IAPAPA_BERRY, EventAddIapapaBerry, nullptr },
-    { ITEM_LIECHI_BERRY, EventAddLiechiBerry, nullptr },
-    { ITEM_GANLON_BERRY, EventAddGanlonBerry, nullptr },
-    { ITEM_SALAC_BERRY, EventAddSalacBerry, nullptr },
-    { ITEM_PETAYA_BERRY, EventAddPetayaBerry, nullptr },
-    { ITEM_APICOT_BERRY, EventAddApicotBerry, nullptr },
-    { ITEM_LANSAT_BERRY, EventAddLansatBerry, nullptr },
-    { ITEM_STARF_BERRY, EventAddStarfBerry, nullptr },
-    { ITEM_ENIGMA_BERRY, EventAddEnigmaBerry, nullptr },
-    { ITEM_OCCA_BERRY, EventAddOccaBerry, nullptr },
-    { ITEM_PASSHO_BERRY, EventAddPasshoBerry, nullptr },
-    { ITEM_WACAN_BERRY, EventAddWacanBerry, nullptr },
-    { ITEM_RINDO_BERRY, EventAddRindoBerry, nullptr },
-    { ITEM_YACHE_BERRY, EventAddYacheBerry, nullptr },
-    { ITEM_CHOPLE_BERRY, EventAddChopleBerry, nullptr },
-    { ITEM_KEBIA_BERRY, EventAddKebiaBerry, nullptr },
-    { ITEM_SHUCA_BERRY, EventAddShucaBerry, nullptr },
-    { ITEM_COBA_BERRY, EventAddCobaBerry, nullptr },
-    { ITEM_PAYAPA_BERRY, EventAddPayapaBerry, nullptr },
-    { ITEM_TANGA_BERRY, EventAddTangaBerry, nullptr },
-    { ITEM_CHARTI_BERRY, EventAddChartiBerry, nullptr },
-    { ITEM_KASIB_BERRY, EventAddKasibBerry, nullptr },
-    { ITEM_HABAN_BERRY, EventAddHabanBerry, nullptr },
-    { ITEM_COLBUR_BERRY, EventAddColburBerry, nullptr },
-    { ITEM_BABIRI_BERRY, EventAddBabiriBerry, nullptr },
-    { ITEM_CHILAN_BERRY, EventAddChilanBerry, nullptr },
-    { ITEM_CUSTAP_BERRY, EventAddCustapBerry, nullptr },
-    { ITEM_MICLE_BERRY, EventAddMicleBerry, nullptr },
-    { ITEM_JABOCA_BERRY, EventAddJabocaBerry, nullptr },
-    { ITEM_ROWAP_BERRY, EventAddRowapBerry, nullptr },
-    { ITEM_WHITE_HERB, EventAddWhiteHerb, nullptr },
-    { ITEM_MENTAL_HERB, EventAddMentalHerb, nullptr },
-    { ITEM_BRIGHT_POWDER, EventAddBrightPowder, nullptr },
-    { ITEM_MACHO_BRACE, EventAddMachoBrace, nullptr },
-    { ITEM_QUICK_CLAW, EventAddQuickClaw, nullptr },
-    { ITEM_LAGGING_TAIL, EventAddLaggingTail, nullptr },
-    { ITEM_FULL_INCENSE, EventAddLaggingTail, nullptr },
-    { ITEM_KING_S_ROCK, EventAddKingsRock, nullptr },
-    { ITEM_RAZOR_CLAW, EventAddScopeLens, nullptr },
-    { ITEM_WIDE_LENS, EventAddWideLens, nullptr },
-    { ITEM_SCOPE_LENS, EventAddScopeLens, nullptr },
-    { ITEM_ZOOM_LENS, EventAddZoomLens, nullptr },
-    { ITEM_LAX_INCENSE, EventAddLaxIncense, nullptr },
-    { ITEM_MUSCLE_BAND, EventAddMuscleBand, nullptr },
-    { ITEM_WISE_GLASSES, EventAddWiseGlasses, nullptr },
-    { ITEM_DEEP_SEA_TOOTH, EventAddDeepSeaTooth, nullptr },
-    { ITEM_DEEP_SEA_SCALE, EventAddDeepSeaScale, nullptr },
-    { ITEM_METAL_POWDER, EventAddMetalPowder, nullptr },
-    { ITEM_QUICK_POWDER, EventAddQuickPowder, nullptr },
-    { ITEM_LIGHT_BALL, EventAddLightBall, nullptr },
-    { ITEM_LUCKY_PUNCH, EventAddLuckyPunch, nullptr },
-    { ITEM_STICK, EventAddStick, nullptr },
-    { ITEM_SOUL_DEW, EventAddSoulDew, nullptr },
-    { ITEM_THICK_CLUB, EventAddThickClub, nullptr },
-    { ITEM_CHOICE_BAND, EventAddChoiceBand, nullptr },
-    { ITEM_BLACK_SLUDGE, EventAddBlackSludge, nullptr },
-    { ITEM_CHOICE_SPECS, EventAddChoiceSpecs, nullptr },
-    { ITEM_CHOICE_SCARF, EventAddChoiceScarf, nullptr },
-    { ITEM_SILVER_POWDER, EventAddSilverPowder, nullptr },
-    { ITEM_SOFT_SAND, EventAddSoftSand, nullptr },
-    { ITEM_HARD_STONE, EventAddHardStone, nullptr },
-    { ITEM_MIRACLE_SEED, EventAddMiracleSeed, nullptr },
-    { ITEM_BLACK_GLASSES, EventAddBlackGlasses, nullptr },
-    { ITEM_BLACK_BELT, EventAddBlackBelt, nullptr },
-    { ITEM_MAGNET, EventAddMagnet, nullptr },
-    { ITEM_METAL_COAT, EventAddMetalCoat, nullptr },
-    { ITEM_MYSTIC_WATER, EventAddMysticWater, nullptr },
-    { ITEM_SHARP_BEAK, EventAddSharpBeak, nullptr },
-    { ITEM_RAZOR_FANG, EventAddRazorFang, nullptr },
-    { ITEM_POISON_BARB, EventAddPoisonBarb, nullptr },
-    { ITEM_NEVER_MELT_ICE, EventAddNeverMeltIce, nullptr },
-    { ITEM_SPELL_TAG, EventAddSpellTag, nullptr },
-    { ITEM_TWISTED_SPOON, EventAddTwistedSpoon, nullptr },
-    { ITEM_CHARCOAL, EventAddCharcoal, nullptr },
-    { ITEM_DRAGON_FANG, EventAddDragonFang, nullptr },
-    { ITEM_SILK_SCARF, EventAddSilkScarf, nullptr },
-    { ITEM_ODD_INCENSE, EventAddOddIncense, nullptr },
-    { ITEM_ROCK_INCENSE, EventAddRockIncense, nullptr },
-    { ITEM_WAVE_INCENSE, EventAddWaveIncense, nullptr },
-    { ITEM_SEA_INCENSE, EventAddSeaIncense, nullptr },
-    { ITEM_ROSE_INCENSE, EventAddRoseIncense, nullptr },
-    { ITEM_FOCUS_SASH, EventAddFocusSash, nullptr },
-    { ITEM_FOCUS_BAND, EventAddFocusBand, nullptr },
-    { ITEM_EXPERT_BELT, EventAddExpertBelt, nullptr },
-    { ITEM_LIFE_ORB, EventAddLifeOrb, nullptr },
-    { ITEM_METRONOME, EventAddMetronomeItem, nullptr },
-    { ITEM_GRIP_CLAW, EventAddGripClaw, nullptr },
-    { ITEM_SHELL_BELL, EventAddShellBell, nullptr },
-    { ITEM_LIGHT_CLAY, EventAddLightClay, nullptr },
-    { ITEM_POWER_HERB, EventAddPowerHerb, nullptr },
-    { ITEM_LEFTOVERS, EventAddLeftovers, nullptr },
-    { ITEM_TOXIC_ORB, EventAddToxicOrb, nullptr },
-    { ITEM_FLAME_ORB, EventAddFlameOrb, nullptr },
-    { ITEM_LUSTROUS_ORB, EventAddLustrousOrb, nullptr },
-    { ITEM_ADAMANT_ORB, EventAddAdamantOrb, nullptr },
-    { ITEM_IRON_BALL, EventAddIronBall, nullptr },
-    { ITEM_DESTINY_KNOT, EventAddDestinyKnot, nullptr },
-    { ITEM_ICY_ROCK, EventAddIcyRock, nullptr },
-    { ITEM_SMOOTH_ROCK, EventAddSmoothRock, nullptr },
-    { ITEM_HEAT_ROCK, EventAddHeatRock, nullptr },
-    { ITEM_DAMP_ROCK, EventAddDampRock, nullptr },
-    { ITEM_STICKY_BARB, EventAddStickyBarb, nullptr },
-    { ITEM_POWER_BRACER, EventAddPowerBracer, nullptr },
-    { ITEM_POWER_BELT, EventAddPowerBelt, nullptr },
-    { ITEM_POWER_LENS, EventAddPowerLens, nullptr },
-    { ITEM_POWER_BAND, EventAddPowerBand, nullptr },
-    { ITEM_POWER_ANKLET, EventAddPowerAnklet, nullptr },
-    { ITEM_POWER_WEIGHT, EventAddPowerWeight, nullptr },
-    { ITEM_FLAME_PLATE, EventAddFlamePlate, nullptr },
-    { ITEM_SPLASH_PLATE, EventAddSplashPlate, nullptr },
-    { ITEM_ZAP_PLATE, EventAddZapPlate, nullptr },
-    { ITEM_MEADOW_PLATE, EventAddMeadowPlate, nullptr },
-    { ITEM_ICICLE_PLATE, EventAddIciclePlate, nullptr },
-    { ITEM_FIST_PLATE, EventAddFistPlate, nullptr },
-    { ITEM_TOXIC_PLATE, EventAddToxicPlate, nullptr },
-    { ITEM_EARTH_PLATE, EventAddEarthPlate, nullptr },
-    { ITEM_SKY_PLATE, EventAddSkyPlate, nullptr },
-    { ITEM_MIND_PLATE, EventAddMindPlate, nullptr },
-    { ITEM_INSECT_PLATE, EventAddInsectPlate, nullptr },
-    { ITEM_STONE_PLATE, EventAddStonePlate, nullptr },
-    { ITEM_SPOOKY_PLATE, EventAddSpookyPlate, nullptr },
-    { ITEM_DRACO_PLATE, EventAddDracoPlate, nullptr },
-    { ITEM_DREAD_PLATE, EventAddDreadPlate, nullptr },
-    { ITEM_IRON_PLATE, EventAddIronPlate, nullptr },
-    { ITEM_BIG_ROOT, EventAddBigRoot, nullptr },
-    { ITEM_SMOKE_BALL, EventAddSmokeBall, nullptr },
-    { ITEM_AMULET_COIN, EventAddAmuletCoin, nullptr },
-    { ITEM_LUCK_INCENSE, EventAddAmuletCoin, nullptr },
-    { ITEM_GRISEOUS_ORB, EventAddGriseousOrb, nullptr },
-    { ITEM_FLOAT_STONE, EventAddFloatStone, nullptr },
-    { ITEM_EVIOLITE, EventAddEviolite, nullptr },
-    { ITEM_ROCKY_HELMET, EventAddRockyHelmet, nullptr },
-    { ITEM_AIR_BALLOON, EventAddAirBalloon, nullptr },
-    { ITEM_RED_CARD, EventAddRedCard, nullptr },
-    { ITEM_RING_TARGET, EventAddRingTarget, nullptr },
-    { ITEM_BINDING_BAND, EventAddBindingBand, nullptr },
-    { ITEM_ABSORB_BULB, EventAddAbsorbBulb, nullptr },
-    { ITEM_CELL_BATTERY, EventAddCellBattery, nullptr },
-    { ITEM_EJECT_BUTTON, EventAddEjectButton, nullptr },
-    { ITEM_FIRE_GEM, EventAddFireGem, nullptr },
-    { ITEM_WATER_GEM, EventAddWaterGem, nullptr },
-    { ITEM_ELECTRIC_GEM, EventAddElectricGem, nullptr },
-    { ITEM_GRASS_GEM, EventAddGrassGem, nullptr },
-    { ITEM_ICE_GEM, EventAddIceGem, nullptr },
-    { ITEM_FIGHTING_GEM, EventAddFightingGem, nullptr },
-    { ITEM_POISON_GEM, EventAddPoisonGem, nullptr },
-    { ITEM_GROUND_GEM, EventAddGroundGem, nullptr },
-    { ITEM_FLYING_GEM, EventAddFlyingGem, nullptr },
-    { ITEM_PSYCHIC_GEM, EventAddPsychicGem, nullptr },
-    { ITEM_BUG_GEM, EventAddBugGem, nullptr },
-    { ITEM_ROCK_GEM, EventAddRockGem, nullptr },
-    { ITEM_GHOST_GEM, EventAddGhostGem, nullptr },
-    { ITEM_DRAGON_GEM, EventAddDragonGem, nullptr },
-    { ITEM_DARK_GEM, EventAddDarkGem, nullptr },
-    { ITEM_STEEL_GEM, EventAddSteelGem, nullptr },
-    { ITEM_NORMAL_GEM, EventAddNormalGem, nullptr },
-#if EXPAND_ITEMS
     { ITEM_WEAKNESS_POLICY, EventAddWeaknessPolicy, "Items/WeaknessPolicy" },
     { ITEM_ASSAULT_VEST, EventAddAssaultVest, "Items/AssaultVest" },
     { ITEM_PIXIE_PLATE, EventAddFairyFeather, "Items/FairyFeather" },
@@ -5368,10 +5063,19 @@ ItemEventAddTableExt itemEventAddTableExt[] = {
     { ITEM_GRASSY_SEED, EventAddGrassySeed, "Items/TerrainSeeds" },
     { ITEM_MISTY_SEED, EventAddMistySeed, "Items/TerrainSeeds" },
     { ITEM_PSYCHIC_SEED, EventAddPsychicSeed, "Items/TerrainSeeds" },
-#endif
 };
 
-extern "C" BattleEventItem * THUMB_BRANCH_ItemEvent_AddItemCore(BattleMon * battleMon, ITEM itemID) {
+extern "C" BattleEventItem* GetItemEvent(BattleMon* battleMon, ITEM itemID, ItemEventAddFunc func) {
+    u32 speed = BattleMon_GetRealStat(battleMon, VALUE_SPEED_STAT);
+    u32 battleSlot = BattleMon_GetID(battleMon);
+
+    u32 handlerAmount = 0;
+    BattleEventHandlerTableEntry* handlers = func(&handlerAmount);
+    return BattleEvent_AddItem(EVENTITEM_ITEM, itemID, EVENTPRI_ITEM_DEFAULT, speed, battleSlot, handlers, handlerAmount);
+}
+
+extern "C" BattleEventItem* THUMB_BRANCH_ItemEvent_AddItemCore(BattleMon * battleMon, ITEM itemID) {
+    // Check for new or overriden items
     for (u32 itemEvent = 0; itemEvent < ARRAY_COUNT(itemEventAddTableExt); ++itemEvent) {
 
         ItemEventAddTableExt* itemAddEvent = &(itemEventAddTableExt[itemEvent]);
@@ -5380,12 +5084,16 @@ extern "C" BattleEventItem * THUMB_BRANCH_ItemEvent_AddItemCore(BattleMon * batt
             if (!LoadDll(itemAddEvent->dllName))
                 return 0;
 
-            u32 speed = BattleMon_GetRealStat(battleMon, VALUE_SPEED_STAT);
-            u32 battleSlot = BattleMon_GetID(battleMon);
+            return GetItemEvent(battleMon, itemID, itemAddEvent->func);
+        }
+    }
+    // Check for vanilla items
+    ItemEventAddTable* itemEventAddTable = (ItemEventAddTable*)0x21D8F68;
+    for (u32 itemEvent = 0; itemEvent < 172; ++itemEvent) {
 
-            u32 handlerAmount = 0;
-            BattleEventHandlerTableEntry* handlers = itemAddEvent->func(&handlerAmount);
-            return BattleEvent_AddItem(EVENTITEM_ITEM, itemID, EVENTPRI_ITEM_DEFAULT, speed, battleSlot, handlers, handlerAmount);
+        ItemEventAddTable* itemAddEvent = &(itemEventAddTable[itemEvent]);
+        if (itemID == itemAddEvent->itemID) {
+            return GetItemEvent(battleMon, itemID, itemAddEvent->func);
         }
     }
     return 0;
@@ -5423,112 +5131,6 @@ extern "C" b32 CheckDisableEntryHazards(BattleMon* battleMon) {
         return 1;
     }
     return 0;
-}
-
-extern "C" void THUMB_BRANCH_SAFESTACK_HandlerSideStealthRock(BattleEventItem* item, ServerFlow* serverFlow, u32 side, u32* work) {
-    u32 currentSlot = BattleEventVar_GetValue(VAR_MON_ID);
-    if (side == GetSideFromMonID(currentSlot)) {
-        BattleMon* currentMon = Handler_GetBattleMon(serverFlow, currentSlot);
-        if (CheckDisableEntryHazards(currentMon))
-            return;
-
-        u32 typePair = BattleMon_GetPokeType(currentMon);
-        TypeEffectiveness effectiveness = GetTypeEffectivenessVsMon(TYPE_ROCK, typePair);
-
-        u32 damageFraction = 32;
-        switch (effectiveness)
-        {
-        case EFFECTIVENESS_1_2:
-            damageFraction = 16;
-            break;
-        case EFFECTIVENESS_1:
-            damageFraction = 8;
-            break;
-        case EFFECTIVENESS_2:
-            damageFraction = 4;
-            break;
-        case EFFECTIVENESS_4:
-            damageFraction = 2;
-            break;
-        }
-
-        HandlerParam_Damage* damage;
-        damage = (HandlerParam_Damage*)BattleHandler_PushWork(serverFlow, EFFECT_DAMAGE, BATTLE_MAX_SLOTS);
-        damage->pokeID = currentSlot;
-        damage->damage = DivideMaxHPZeroCheck(currentMon, damageFraction);
-        BattleHandler_StrSetup(&damage->exStr, 2u, 854);
-        BattleHandler_AddArg(&damage->exStr, currentSlot);
-        BattleHandler_PopWork(serverFlow, damage);
-    }
-}
-extern "C" void THUMB_BRANCH_SAFESTACK_HandlerSideSpikes(BattleEventItem* item, ServerFlow* serverFlow, u32 side, u32* work) {
-    u32 currentSlot = BattleEventVar_GetValue(VAR_MON_ID);
-    BattleMon* currentMon = Handler_GetBattleMon(serverFlow, currentSlot);
-    if (side == GetSideFromMonID(currentSlot) &&
-        currentMon &&
-        !ServerEvent_CheckFloating(serverFlow, currentMon, 1)) {
-        if (CheckDisableEntryHazards(currentMon))
-            return;
-
-        u32 damageFraction = 8;
-        switch (BattleSideStatus_GetCountFromBattleEventItem(item, side))
-        {
-        case 2:
-            damageFraction = 6;
-            break;
-        case 3:
-            damageFraction = 4;
-            break;
-        }
-
-        HandlerParam_Damage* damage;
-        damage = (HandlerParam_Damage*)BattleHandler_PushWork(serverFlow, EFFECT_DAMAGE, BATTLE_MAX_SLOTS);
-        damage->pokeID = currentSlot;
-        damage->damage = DivideMaxHPZeroCheck(currentMon, damageFraction);
-        BattleHandler_StrSetup(&damage->exStr, 2u, 851);
-        BattleHandler_AddArg(&damage->exStr, currentSlot);
-        BattleHandler_PopWork(serverFlow, damage);
-    }
-}
-extern "C" void THUMB_BRANCH_SAFESTACK_HandlerSideToxicSpikes(BattleEventItem* item, ServerFlow* serverFlow, u32 side, u32* work) {
-    u32 currentSlot = BattleEventVar_GetValue(VAR_MON_ID);
-    BattleMon* currentMon = Handler_GetBattleMon(serverFlow, currentSlot);
-    if (side == GetSideFromMonID(currentSlot) &&
-        currentMon &&
-        !ServerEvent_CheckFloating(serverFlow, currentMon, 1)) {
-        if (BattleMon_HasType(currentMon, TYPE_POIS)) {
-            HandlerParam_RemoveSideEffect* removeSideEffect;
-            removeSideEffect = (HandlerParam_RemoveSideEffect*)BattleHandler_PushWork(serverFlow, EFFECT_REMOVE_SIDE_EFFECT, currentSlot);
-            removeSideEffect->side = side;
-            REMOVE_SIDE_EFFECT_SETUP(removeSideEffect->flags);
-            SET_REMOVE_SIDE_EFFEC_FLAG(SIDEEFF_TOXIC_SPIKES, removeSideEffect->flags);
-            BattleHandler_PopWork(serverFlow, removeSideEffect);
-        }
-        else {
-            if (CheckDisableEntryHazards(currentMon))
-                return;
-
-            ConditionData condData;
-            switch (BattleSideStatus_GetCountFromBattleEventItem(item, side))
-            {
-            case 1:
-                condData = Condition_MakePermanent();
-                break;
-            case 2:
-                condData = Condition_MakeBadlyPoisoned();
-                break;
-            default:
-                return;
-            }
-
-            HandlerParam_AddCondition* addCondition;
-            addCondition = (HandlerParam_AddCondition*)BattleHandler_PushWork(serverFlow, EFFECT_ADD_CONDITION, BATTLE_MAX_SLOTS);
-            addCondition->condition = CONDITION_POISON;
-            addCondition->condData = condData;
-            addCondition->pokeID = currentSlot;
-            BattleHandler_PopWork(serverFlow, addCondition);
-        }
-    }
 }
 
 // Blunder Policy - Add event after accuracy miss
@@ -5760,6 +5362,16 @@ extern "C" b32 THUMB_BRANCH_HandlerCommon_IsUnremovableItem(BattleMon* battleMon
 
 #if EXPAND_MOVES
 
+struct MoveEventAddTableExt
+{
+    MOVE_ID moveID;
+    MoveEventAddFunc func;
+    const char* dllName;
+};
+MoveEventAddTableExt moveEventAddTableExt[] = {
+    {MOVE_FLYING_PRESS, EventAddFlyingPress, "Moves/FlyingPress"},
+};
+
 extern "C" void CMD_ACT_MoveAnimStart(BtlvScu * btlvScu, u32 attckViewPos, u32 defViewPos, u16 moveID, u32 moveTarget, u8 effectIndex, u8 zero);
 extern "C" void THUMB_BRANCH_SAFESTACK_BattleViewCmd_MoveEffect_Start(BtlvCore * btlCore, u32 attackingPos, u32 targetPos, u16 moveID, u32 moveTarget, u32 effectIndex, u8 zero) {
     u32 attckViewPos = MainModule_BattlePosToViewPos(btlCore->mainModule, attackingPos);
@@ -5776,6 +5388,120 @@ extern "C" void THUMB_BRANCH_SAFESTACK_BattleViewCmd_MoveEffect_Start(BtlvCore *
     CMD_ACT_MoveAnimStart(btlCore->btlvScu, attckViewPos, defViewPos, moveID, moveTarget, effectIndex, zero);
 }
 
+extern "C" bool GetMoveEvent(BattleMon * battleMon, MOVE_ID moveID, u32 speed, MoveEventAddFunc func) {
+    u32 battleSlot = BattleMon_GetID(battleMon);
+    u8 alreadyRegistered = 0;
+    if (!MoveEvent_CanEffectBeRegistered(battleSlot, moveID, &alreadyRegistered)) {
+        return false;
+    }
+
+    u32 handlerAmount = 0;
+    BattleEventHandlerTableEntry* handlers = func(&handlerAmount);
+    if (handlers == nullptr) {
+        return false;
+    }
+
+    BattleEvent_AddItem(EVENTITEM_MOVE, moveID, EVENTPRI_MOVE_DEFAULT, speed, battleSlot, handlers, handlerAmount);
+    return true;
+}
+
+extern "C" bool THUMB_BRANCH_MoveEvent_AddItem(BattleMon * battleMon, MoveID moveID, u32 speed) {
+    // Check for new or overriden moves
+    for (u32 moveEvent = 0; moveEvent < ARRAY_COUNT(moveEventAddTableExt); ++moveEvent) {
+
+        MoveEventAddTableExt* moveAddEvent = &(moveEventAddTableExt[moveEvent]);
+        if (moveID == moveAddEvent->moveID) {
+            // Load the DLL with the code for the ability if needed
+            if (!LoadDll(moveAddEvent->dllName))
+                return 0;
+
+            return GetMoveEvent(battleMon, moveID, speed, moveAddEvent->func);
+        }
+    }
+    
+    // Check for vanilla moves
+    MoveEventAddTable* moveEventAddTable = (MoveEventAddTable*)0x21DA0F4;
+    for (u32 moveEvent = 0; moveEvent < 258; ++moveEvent) {
+
+        MoveEventAddTable* moveAddEvent = &(moveEventAddTable[moveEvent]);
+        if (moveID == moveAddEvent->moveID) {
+            return GetMoveEvent(battleMon, moveID, speed, moveAddEvent->func);
+        }
+    }
+    return 0;
+}
+
 #endif // EXPAND_MOVES
+
+#if EXPAND_FIELD_EFFECTS
+
+extern "C" void THUMB_BRANCH_LINK_BattleEventItem_Remove_0x44(BattleEventItem * item) {
+    switch (item->factorType)
+    {
+#if EXPAND_MOVES
+    case EVENTITEM_MOVE:
+        for (u32 moveIdx = 0; moveIdx < ARRAY_COUNT(moveEventAddTableExt); ++moveIdx) {
+
+            MoveEventAddTableExt* moveEvent = &(moveEventAddTableExt[moveIdx]);
+            if (item->subID == moveEvent->moveID) {
+                FreeDll(moveEvent->dllName);
+                break;
+            }
+        }
+        break;
+#endif
+    case EVENTITEM_POS:
+        break;
+    case EVENTITEM_SIDE:
+        for (u32 effectIdx = 0; effectIdx < ARRAY_COUNT(sideEffectEventAddTableExt); ++effectIdx) {
+
+            SideEffectEventAddTableExt* sideEffectEvent = &(sideEffectEventAddTableExt[effectIdx]);
+            if (item->subID == sideEffectEvent->sideEffect) {
+                FreeDll(sideEffectEvent->dllName);
+                break;
+            }
+        }
+        break;
+    case EVENTITEM_FIELD:
+        for (u32 effectIdx = 0; effectIdx < ARRAY_COUNT(fieldEffectEventAddTableExt); ++effectIdx) {
+
+            FieldEffectEventAddTableExt* fieldEffectEvent = &(fieldEffectEventAddTableExt[effectIdx]);
+            if (item->subID == fieldEffectEvent->fieldEffect) {
+                FreeDll(fieldEffectEvent->dllName);
+                break;
+            }
+        }
+        break;
+#if EXPAND_ABILITIES
+    case EVENTITEM_ABILITY:
+        for (u32 abilityIdx = 0; abilityIdx < ARRAY_COUNT(abilityEventAddTableExt); ++abilityIdx) {
+
+            AbilityEventAddTableExt* abilityEvent = &(abilityEventAddTableExt[abilityIdx]);
+            if (item->subID == abilityEvent->ability) {
+                FreeDll(abilityEvent->dllName);
+                break;
+            }
+        }
+        break;
+#endif
+#if EXPAND_ITEMS
+    case EVENTITEM_ITEM:
+        for (u32 itemIdx = 0; itemIdx < ARRAY_COUNT(itemEventAddTableExt); ++itemIdx) {
+
+            ItemEventAddTableExt* itemEvent = &(itemEventAddTableExt[itemIdx]);
+            if (item->subID == itemEvent->itemID) {
+                FreeDll(itemEvent->dllName);
+                break;
+            }
+        }
+        break;
+#endif
+    default:
+        break;
+    }
+    BattleEvent_PopItem(item);
+}
+
+#endif // EXPAND_FIELD_EFFECTS
 
 // WARNING BattleHandler_ChangeAbility is used in BattleUpgrade.S

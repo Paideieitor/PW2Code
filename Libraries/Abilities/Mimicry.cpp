@@ -1,7 +1,7 @@
 #include "settings.h"
 #if EXPAND_ABILITIES
 
-#include "Patches/BattleUpgrade/include/Terrains.h"
+#include "Patches/BattleUpgrade/include/FieldEffectExpansion.h"
 #include "Patches/BattleUpgrade/BattleEngine.h"
 
 #include "server_flow.h"

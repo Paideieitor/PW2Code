@@ -2,7 +2,7 @@
 #if EXPAND_ABILITIES
 
 #include "Patches/BattleUpgrade/BattleEngine.h"
-#include "Patches/BattleUpgrade/include/Terrains.h"
+#include "Patches/BattleUpgrade/include/FieldEffectExpansion.h"
 
 #include "server_flow.h"
 

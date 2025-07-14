@@ -33,7 +33,7 @@ typedef BattleEventHandlerTableEntry* (*FieldEffectEventAddFunc)(u32*);
 struct FieldEffectEventAddTable
 {
     FIELD_EFFECT fieldEffect;
-    FieldEffectEventAddFunc handlers;
+    FieldEffectEventAddFunc func;
 };
 
 extern "C" BattleEventHandlerTableEntry * EventAddFieldWeather(u32 * handlerAmount);
