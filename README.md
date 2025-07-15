@@ -79,16 +79,20 @@ To personalize the patch modify the ``settings.h`` file (I don't recomend modify
     - All new moves use the *Pound* animation
     - Especial secondary effects have not been implemented yet
 
-## How to Install
-### Installing tools
+## How to Build
   - Download [PW2Builder](https://github.com/Paideieitor/PW2Builder/releases)
-  - Set up the builder following this [instructions](https://github.com/Paideieitor/PW2Builder)
-  - Copy the ``Assets``, ``Global``, ``Headers``, ``Libraries`` and ``Patches`` folders to the ``PW2Builder`` folder
-  - Copy the ``ESDB.yml`` and ``settings.h`` files to the ``PW2Builder`` folder
-
-### Building the patch
-  - Open a Command Prompt in the ``Builder`` folder and execute the following command:  
-    ``PW2Builder.exe -build -whitelist-all``
+  - Install PW2Builder following this [instructions](https://github.com/Paideieitor/PW2Builder)
+  - Open a command prompt in a dedicated folder and clone this repository with this command:
+    ``git clone --recursive git@github.com:Paideieitor/PW2Code.git``
+  - Open a command prompt in the ``PW2Builder`` folder and input the following commands:  
+    ``PW2Builder.exe -install <Folder where you cloned PW2Code>``
+  - Open ``PW2Builder\Builder\buildSettings.txt``
+    - Write the path to your CTRMap project after ``SET PROJECT_DIR=`` (Ex. ``SET PROJECT_DIR=MyFolder\MyCTRMapProject\``)
+    - Write the path to your CTRMap.jar file after ``SET CTRMAP_DIR=`` (Ex. ``SET CTRMAP_DIR=MyFolder\CTRMap\``)
+    - Write the path to your ARM GNU Toolchain bin folder after ``SET ARM_NONE_EABI_DIR=`` (leave like it is if you set that folder in the systems path)
+    - Write the path to your Java after ``SET JAVA_DIR=`` (leave like it is if you set that folder in the systems path)
+  - Open a command prompt in the ``PW2Builder`` folder and input the following commands:  
+    ``PW2Builder.exe -build <Folder where you cloned PW2Code> -whitelist-all``  
 
 ## Reporting Issues/Contributing
 You can message me through Discord, @dararoraro
