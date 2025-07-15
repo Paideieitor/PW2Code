@@ -1,0 +1,12 @@
+[submodule "Externals/swan"]
+	path = Externals/swan
+	url = https://github.com/ds-pokemon-hacking/swan
+[submodule "Externals/NitroKernel"]
+	path = Externals/NitroKernel
+	url = https://github.com/HelloOO7/NitroKernel
+[submodule "Externals/libRPM"]
+	path = Externals/libRPM
+	url = https://github.com/HelloOO7/libRPM
+[submodule "Externals/ExtLib"]
+	path = Externals/ExtLib
+	url = https://github.com/HelloOO7/ExtLib
