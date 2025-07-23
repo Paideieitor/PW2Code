@@ -3538,3 +3538,6 @@ Symbols:
   - Name: SetPkmnMetLocation
     Segment: 0x0
     Address: 0x2035fd9
+  - Name: EventAddHex
+    Segment: 0xA7
+    Address: 0x21cc881

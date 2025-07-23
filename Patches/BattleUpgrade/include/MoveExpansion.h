@@ -5,4 +5,6 @@
 
 extern "C" BattleEventHandlerTableEntry * EventAddFlyingPress(u32 * handlerAmount);
 
+extern "C" BattleEventHandlerTableEntry * EventAddCeaselessEdge(u32 * handlerAmount);
+
 #endif // MOVE_EXPANSION_H

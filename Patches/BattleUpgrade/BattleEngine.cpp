@@ -4684,35 +4684,6 @@ extern "C" u32 THUMB_BRANCH_ServerEvent_CheckForceSwitch(ServerFlow* serverFlow,
     return failFlag;
 }
 
-// Toxic Debris - Added toxic spikes animation when activated
-extern "C" b32 SideEvent_AddItem(u32 side, SIDE_EFFECT sideEffect, ConditionData condData);
-extern "C" b32 THUMB_BRANCH_BattleHandler_AddSideEffect(ServerFlow* serverFlow, HandlerParam_AddSideEffect* params) {
-    u8 side = params->side;
-    ConditionData condData = params->condData;
-    u32 pokemonSlot = params->header.flags << 19 >> 27;
-
-    ServerEvent_CheckSideEffectParam(serverFlow, pokemonSlot, params->sideEffect, side, &condData);
-    if (!SideEvent_AddItem(params->side, params->sideEffect, condData)) {
-        return 0;
-    }
-    BattleMon* battleMon = PokeCon_GetBattleMon(serverFlow->pokeCon, params->header.flags << 19 >> 27);
-    if ((params->header.flags & HANDLER_ABILITY_POPUP_FLAG) != 0) {
-        ServerDisplay_AbilityPopupAdd(serverFlow, battleMon);
-
-        u32 pokePos = MainModule_PokeIDToPokePos(serverFlow->mainModule, serverFlow->pokeCon, pokemonSlot);
-        switch (params->sideEffect) {
-        case SIDEEFF_TOXIC_SPIKES:
-            ServerDisplay_AddCommon(serverFlow->serverCommandQueue, SCID_MoveAnim, pokePos, 0, MOVE_TOXIC_SPIKES, 0, 0);
-            break;
-        }
-    }
-    BattleHandler_SetString(serverFlow, &params->exStr);
-    if ((params->header.flags & HANDLER_ABILITY_POPUP_FLAG) != 0) {
-        ServerDisplay_AbilityPopupRemove(serverFlow, battleMon);
-    }
-    return 1;
-}
-
 #endif // EXPAND_ABILITIES
 
 #if GEN7_INFILTRATOR
@@ -4991,6 +4962,46 @@ extern "C" TypeEffectiveness THUMB_BRANCH_SAFESTACK_ServerEvent_CheckDamageEffec
     }
 
     return effectiveness;
+}
+
+// Toxic Debris & Ceaseless Edge - Added toxic spikes animation when activated
+extern "C" b32 SideEvent_AddItem(u32 side, SIDE_EFFECT sideEffect, ConditionData condData);
+extern "C" b32 THUMB_BRANCH_BattleHandler_AddSideEffect(ServerFlow * serverFlow, HandlerParam_AddSideEffect * params) {
+    u8 side = params->side;
+    ConditionData condData = params->condData;
+    u32 pokemonSlot = params->header.flags << 19 >> 27;
+
+    ServerEvent_CheckSideEffectParam(serverFlow, pokemonSlot, params->sideEffect, side, &condData);
+    if (!SideEvent_AddItem(params->side, params->sideEffect, condData)) {
+        return 0;
+    }
+    BattleMon* battleMon = PokeCon_GetBattleMon(serverFlow->pokeCon, params->header.flags << 19 >> 27);
+    if ((params->header.flags & HANDLER_ABILITY_POPUP_FLAG) != 0) {
+        ServerDisplay_AbilityPopupAdd(serverFlow, battleMon);
+    }
+
+    // If the side effect is triggered by secondary effects
+    if (((params->header.flags & HANDLER_ABILITY_POPUP_FLAG) != 0) ||
+        ((params->header.flags & SIDE_HANDLER_MOVE_POPUP_FLAG) != 0)) {
+        u32 pokePos = MainModule_PokeIDToPokePos(serverFlow->mainModule, serverFlow->pokeCon, pokemonSlot);
+        switch (params->sideEffect) {
+        case SIDEEFF_SPIKES:
+            ServerDisplay_AddCommon(serverFlow->serverCommandQueue, SCID_MoveAnim, pokePos, 0, MOVE_SPIKES, 0, 0);
+            break;
+        case SIDEEFF_TOXIC_SPIKES:
+            ServerDisplay_AddCommon(serverFlow->serverCommandQueue, SCID_MoveAnim, pokePos, 0, MOVE_TOXIC_SPIKES, 0, 0);
+            break;
+        case SIDEEFF_STEALTH_ROCK:
+            ServerDisplay_AddCommon(serverFlow->serverCommandQueue, SCID_MoveAnim, pokePos, 0, MOVE_STEALTH_ROCK, 0, 0);
+            break;
+        }
+    }
+
+    BattleHandler_SetString(serverFlow, &params->exStr);
+    if ((params->header.flags & HANDLER_ABILITY_POPUP_FLAG) != 0) {
+        ServerDisplay_AbilityPopupRemove(serverFlow, battleMon);
+    }
+    return 1;
 }
 
 #endif // EXPAND_ABILITIES || EXPAND_MOVES
@@ -5370,6 +5381,8 @@ struct MoveEventAddTableExt
 };
 MoveEventAddTableExt moveEventAddTableExt[] = {
     {MOVE_FLYING_PRESS, EventAddFlyingPress, "Moves/FlyingPress"},
+    {MOVE_INFERNAL_PARADE, EventAddHex, nullptr},
+    {MOVE_CEASELESS_EDGE, EventAddCeaselessEdge, "Moves/CeaselessEdge"},
 };
 
 extern "C" void CMD_ACT_MoveAnimStart(BtlvScu * btlvScu, u32 attckViewPos, u32 defViewPos, u16 moveID, u32 moveTarget, u8 effectIndex, u8 zero);
