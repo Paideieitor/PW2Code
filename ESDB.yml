@@ -3529,3 +3529,12 @@ Symbols:
   - Name: GetTypeEffectivenessMultiplier
     Segment: 0xA7
     Address: 0x21bd23d
+  - Name: ZoneData_GetPlaceNameID
+    Segment: 0x0
+    Address: 0x2018cad
+  - Name: LoadZoneBanner
+    Segment: 0x24
+    Address: 0x21b5699
+  - Name: SetPkmnMetLocation
+    Segment: 0x0
+    Address: 0x2035fd9
