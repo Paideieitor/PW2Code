@@ -10,16 +10,7 @@
 #include "stat_stage.h"
 #include "moves.h"
 
-#include "pml/poke_party.h"
-
-extern "C" u32 PokeParty_GetParam(PartyPkm* pPkm, PkmField field, void* extra);
-extern "C" void PokeParty_SetParam(PartyPkm * pPkm, PkmField field, u32 data);
-extern "C" void PokeParty_RecalcStats(PartyPkm * pPoke);
-
-extern "C" u32 PML_PkmGetParamCore(BoxPkm * boxPkm, PkmField field, void* extra);
-extern "C" void PML_PkmSetParamCore(BoxPkm * pPkmBlock, PkmField field, u32 value);
-
-extern "C" void* PML_PkmGetParamBlockCore(BoxPkm * pkm, u32 pid, int blockNum);
+#include "poke_party.h"
 
 struct BattleAction_Fight;
 

@@ -3544,3 +3544,18 @@ Symbols:
   - Name: TrainerUtil_LoadParty
     Segment: 0x0
     Address: 0x20308ed
+  - Name: TrainerUtil_CalcBasePID
+    Segment: 0x0
+    Address: 0x2030dcd
+  - Name: PokeParty_CreatePkm
+    Segment: 0x0
+    Address: 0x201c491
+  - Name: PokeParty_SetMove
+    Segment: 0x0
+    Address: 0x201d251
+  - Name: PokeParty_AddPkm
+    Segment: 0x0
+    Address: 0x201fd99
+  - Name: GFL_RandomLC
+    Segment: 0x0
+    Address: 0x2005749
