@@ -3541,3 +3541,6 @@ Symbols:
   - Name: EventAddHex
     Segment: 0xA7
     Address: 0x21cc881
+  - Name: TrainerUtil_LoadParty
+    Segment: 0x0
+    Address: 0x20308ed
