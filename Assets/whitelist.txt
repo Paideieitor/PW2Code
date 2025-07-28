@@ -183,3 +183,6 @@
 	a\0\2\1\552 // Fiery Dance
 	a\0\2\1\555 // Snarl
 #endif
+#if EXPAND_FIELD_EFFECTS
+	patches\NitroKernel.dll
+#endif
