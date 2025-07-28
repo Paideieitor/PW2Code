@@ -33,15 +33,16 @@ extern "C" void THUMB_BRANCH_LINK_TrainerUtil_LoadParty_0x4C8(PokeParty* party, 
 
 	if (trainerData->trainerType == PERFECT_TRAINER) {
 		for (u32 slot = 0; slot < trainerData->pokemonCount; ++slot) {
-			
 			u32 PID = 0;
-			TrainerUtil_CalcBasePID(team[slot].species, team[slot].form, GET_TRPOKE_SEX(team[slot]), &PID, 0x76/*HEAPID_BATTLE_LOAD*/);
+			TrainerUtil_CalcBasePID(team[slot].species, team[slot].form, GET_TRPOKE_SEX(team[slot]), &PID, 0x1/*HEAPID_BATTLE_LOAD*/);
 			PID += (team[slot].species + team[slot].form + team[slot].level + GFL_RandomLC(0xFF)) << 8;
 
 			PokeParty_CreatePkm(partyPkm, team[slot].species, team[slot].level, 0, -1, GET_TRPOKE_IV(team[slot]), PID, 0);
 		
+			
 			PokeParty_SetParam(partyPkm, PF_Item, team[slot].heldItem);
 			for (u32 moveSlot = 0; moveSlot < 4; ++moveSlot) {
+				
 				PokeParty_SetParam(partyPkm, (PkmField)(PF_Move1PPMax + moveSlot), GET_TRMOVE_PPMAX(team[slot], moveSlot));
 				PokeParty_SetMove(partyPkm, GET_TRMOVE_ID(team[slot], moveSlot), moveSlot);
 			}
@@ -56,12 +57,28 @@ extern "C" void THUMB_BRANCH_LINK_TrainerUtil_LoadParty_0x4C8(PokeParty* party, 
 
 			PokeParty_RecalcStats(partyPkm);
 
+
 			PokeParty_SetParam(partyPkm, PF_StatusCond, team[slot].status);
 			
 			u32 maxHP = PokeParty_GetParam(partyPkm, PF_MaxHP, nullptr);
 			PokeParty_SetParam(partyPkm, PF_NowHP, (team[slot].hp * maxHP) / 100);
 			
 			PokeParty_AddPkm(party, partyPkm);
+#if 0
+			DPRINTF("--- TEAM SLOT %d --- \n", slot);
+			DPRINTF("SPECIES: %d \n", team[slot].species);
+			DPRINTF("FORM: %d \n", team[slot].form);
+			DPRINTF("LEVEL: %d \n", team[slot].level);
+			DPRINTF("ITEM: %d \n", team[slot].heldItem);
+			DPRINTF("ABILITY: %d \n", team[slot].ability);
+			DPRINTF("NATURE: %d \n", team[slot].nature);
+			DPRINTF("HAPPINESS: %d \n", team[slot].happiness);
+			DPRINT("MOVES: \n");
+			for (u32 moveSlot = 0; moveSlot < 4; ++moveSlot)
+				DPRINTF("    %d (%d) \n", GET_TRMOVE_ID(team[slot], moveSlot), GET_TRMOVE_PPMAX(team[slot], moveSlot));
+			DPRINTF("STATUS: %d \n", team[slot].status);
+			DPRINTF("HP: %d \n", (team[slot].hp * maxHP) / 100);
+#endif
 		}
 	}
 

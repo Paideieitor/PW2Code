@@ -1462,12 +1462,12 @@ struct FieldEffectEventAddTableExt
 FieldEffectEventAddTableExt fieldEffectEventAddTableExt[] = {
     { FLDEFF_TERRAIN, EventAddFieldTerrain, "FieldEffects/Terrain" },
 #if EXPAND_ABILITIES
-    { FLDEFF_DARK_AURA, EventAddFieldDarkAura, "FieldEffects/DarkAura" },
-    { FLDEFF_FAIRY_AURA, EventAddFieldFairyAura, "FieldEffects/FairyAura" },
-    { FLDEFF_VESSEL_OF_RUIN, EventAddFieldVesselOfRuin, "FieldEffects/VesselOfRuin" },
-    { FLDEFF_SWORD_OF_RUIN, EventAddFieldSwordOfRuin, "FieldEffects/SwordOfRuin" },
-    { FLDEFF_TABLETS_OF_RUIN, EventAddFieldTabletsOfRuin, "FieldEffects/TabletsOfRuin" },
-    { FLDEFF_BEADS_OF_RUIN, EventAddFieldBeadsOfRuin, "FieldEffects/BeadsOfRuin" },
+    { FLDEFF_DARK_AURA, EventAddFieldDarkAura, "FieldEffects/AuraField" },
+    { FLDEFF_FAIRY_AURA, EventAddFieldFairyAura, "FieldEffects/AuraField" },
+    { FLDEFF_VESSEL_OF_RUIN, EventAddFieldVesselOfRuin, "FieldEffects/RuinField" },
+    { FLDEFF_SWORD_OF_RUIN, EventAddFieldSwordOfRuin, "FieldEffects/RuinField" },
+    { FLDEFF_TABLETS_OF_RUIN, EventAddFieldTabletsOfRuin, "FieldEffects/RuinField" },
+    { FLDEFF_BEADS_OF_RUIN, EventAddFieldBeadsOfRuin, "FieldEffects/RuinField" },
 #endif // EXPAND_ABILITIES
 };
 

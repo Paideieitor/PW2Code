@@ -3559,3 +3559,9 @@ Symbols:
   - Name: GFL_RandomLC
     Segment: 0x0
     Address: 0x2005749
+  - Name: PML_PersonalLoad
+    Segment: 0x0
+    Address: 0x20202a1
+  - Name: PML_PersonalFree
+    Segment: 0x0
+    Address: 0x20202d1

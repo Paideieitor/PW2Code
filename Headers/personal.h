@@ -92,6 +92,9 @@ struct PersonalData
 	u32 specialTutors[4];
 };
 
-u32 PML_PersonalGetParamSingle(u16 species, u16 form, PersonalField field);
+extern "C" u32 PML_PersonalGetParamSingle(u16 species, u16 form, PersonalField field);
+extern "C" PersonalData* PML_PersonalLoad(u16 species, u16 form, u16 heapId);
+extern "C" u32 PML_PersonalGetParam(PersonalData* personal, PersonalField field);
+extern "C" void PML_PersonalFree(PersonalData* personal);
 
 #endif // __PERSONAL_H
