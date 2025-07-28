@@ -22,6 +22,12 @@ To personalize the patch modify the ``settings.h`` file (I don't recomend modify
   - The item ID for this is 623
 ### Repel Effect Removes Shaking Grass
   - Removes the chance of a shaking grass or a fishing spot appearing while the repel effect is active
+### Removed Location Limits
+  - Removes the location limit
+  - Compatibility feature for [PW2Editor](https://github.com/Paideieitor/PW2Editor)
+### Added Perfect Trainers
+  - Allows for the creation of fully customized trainer teams
+  - Compatibility feature for [PW2Editor](https://github.com/Paideieitor/PW2Editor)
 ### Dynamic Speed
   - Instead of calculating action order at the begining of every turn, the game updates it depending on the most actualized speed stats and priority
   - Fully functional with speed/priority items and the moves After You and Quash
