@@ -5373,6 +5373,24 @@ extern "C" b32 THUMB_BRANCH_HandlerCommon_IsUnremovableItem(BattleMon* battleMon
 
 #if EXPAND_MOVES
 
+extern "C" void GetSideBattleSlots(ServerFlow* serverFlow, u32 side, u8 battleSlots[3]) {
+    for (u32 allyIdx = 0; allyIdx < 3; ++allyIdx)
+        battleSlots[allyIdx] = BATTLE_MAX_SLOTS;
+
+    u32 count = 0;
+    for (u8 i = 0; i < 24; ++i) {
+        BattleMon* battleMon = PokeCon_GetBattleMon(serverFlow->pokeCon, i);
+        if (battleMon) {
+
+            u32 battleSlot = BattleMon_GetID(battleMon);
+            if (side == GetSideFromMonID(battleSlot)) {
+                battleSlots[count] = battleSlot;
+                ++count;
+            }
+        }
+    }
+}
+
 struct MoveEventAddTableExt
 {
     MOVE_ID moveID;
@@ -5381,6 +5399,8 @@ struct MoveEventAddTableExt
 };
 MoveEventAddTableExt moveEventAddTableExt[] = {
     {MOVE_FLYING_PRESS, EventAddFlyingPress, "Moves/FlyingPress"},
+    {MOVE_MAT_BLOCK, EventAddMatBlock, "Moves/MatBlock"},
+
     {MOVE_INFERNAL_PARADE, EventAddHex, nullptr},
     {MOVE_CEASELESS_EDGE, EventAddCeaselessEdge, "Moves/CeaselessEdge"},
 };
@@ -5442,6 +5462,32 @@ extern "C" bool THUMB_BRANCH_MoveEvent_AddItem(BattleMon * battleMon, MoveID mov
         }
     }
     return 0;
+}
+
+MOVE_ID protectMoves[] = {
+    MOVE_PROTECT, 
+    MOVE_DETECT, 
+    MOVE_ENDURE, 
+    MOVE_WIDE_GUARD, 
+    MOVE_QUICK_GUARD,
+    MOVE_MAT_BLOCK,
+};
+// Protect Moves
+extern "C" void THUMB_BRANCH_HandlerProtectStart(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work) {
+    if (pokemonSlot == BattleEventVar_GetValue(VAR_ATTACKING_MON)) {
+        BattleMon* currentMon = Handler_GetBattleMon(serverFlow, pokemonSlot);
+        MOVE_ID previousMove = BattleMon_GetPreviousMoveID(currentMon);
+        if (SEARCH_ARRAY(protectMoves, previousMove)) {
+        //if (getMoveFlag(previousMove, FLAG_PROTECT)) {
+        // TODO: add protect flag to Editor and all protect moves
+            HandlerParam_SetCounter* setCounter;
+            setCounter = (HandlerParam_SetCounter*)BattleHandler_PushWork(serverFlow, EFFECT_COUNTER, pokemonSlot);
+            setCounter->pokeID = pokemonSlot;
+            setCounter->counterID = COUNTER_PROTECT;
+            setCounter->value = 0;
+            BattleHandler_PopWork(serverFlow, setCounter);
+        }
+    }
 }
 
 #endif // EXPAND_MOVES

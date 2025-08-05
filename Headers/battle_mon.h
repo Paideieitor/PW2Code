@@ -183,6 +183,7 @@ extern "C" CONDITION_FLAG BattleMon_GetHideCondition(BattleMon * battleMon);
 extern "C" void BattleMon_ChangeAbility(BattleMon* battleMon, u16 ability);
 extern "C" void BattleMon_SetMovesAndPP(BattleMon* battleMon);
 extern "C" u32 BattleMon_GetRealStat(BattleMon* battleMon, BattleMonValue statStage);
+extern "C" u16 BattleMon_GetPreviousMoveID(BattleMon* battleMon);
 
 extern "C" void CureStatusCondition(BattleMon* battleMon);
 

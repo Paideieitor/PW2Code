@@ -8,6 +8,7 @@
 #include "handler_params.h"
 #include "field_effects.h"
 #include "battle_events.h"
+#include "turn_flag.h"
 
 typedef u32 MOVE_ID;
 typedef u32 WEATHER;
@@ -15,26 +16,6 @@ typedef u32 SIDE_EFFECT;
 
 struct ServerCommandQueue;
 struct ArcTool;
-
-enum TurnFlag : u32
-{
-    TURNFLAG_ACTIONSTART = 0x0,
-    TURNFLAG_ACTIONDONE = 0x1,
-    TURNFLAG_DAMAGED = 0x2,
-    TURNFLAG_MOVEPROCDONE = 0x3,
-    TURNFLAG_FLINCH = 0x4,
-    TURNFLAG_FOCUSPUNCHREADY = 0x5,
-    TURNFLAG_FOCUSPUNCHFAIL = 0x6,
-    TURNFLAG_PROTECT = 0x7,
-    TURNFLAG_ITEMCONSUMED = 0x8,
-    TURNFLAG_CANTUSEITEM = 0x9,
-    TURNFLAG_COMBOMOVEREADY = 0xA,
-    TURNFLAG_HIDEMOVEOFF = 0xB,
-    TURNFLAG_MOVED = 0xC,
-    TURNFLAG_TURNCHECKCONDITIONPASSED = 0xD,
-    TURNFLAG_ACCURACYUP = 0xE,
-    TURNFLAG_USINGFLING = 0xF,
-};
 
 struct SWAN_ALIGNED(4) m_record
 {
@@ -540,6 +521,8 @@ extern "C" void Condition_CheckUnaffectedByType(ServerFlow* serverFlow, BattleMo
 extern "C" void TurnFlag_Set(BattleMon* battleMon, TurnFlag flag);
 extern "C" void Turnflag_Clear(BattleMon* battleMon, TurnFlag flag);
 extern "C" b32 BattleMon_GetTurnFlag(BattleMon* battleMon, TurnFlag turnFlag);
+
+extern "C" void IncrementProtectCounter(ServerFlow * serverFlow, u32 battleSlot, bool isSideEffect);
 
 extern "C" void FaintRecord_Add(FaintRecord * faintRecord, u8 battleSlot);
 

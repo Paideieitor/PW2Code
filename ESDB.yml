@@ -3565,3 +3565,18 @@ Symbols:
   - Name: PML_PersonalFree
     Segment: 0x0
     Address: 0x20202d1
+  - Name: IncrementProtectCounter
+    Segment: 0xA7
+    Address: 0x21c94d5
+  - Name: HandlerProtectCheckFail
+    Segment: 0xA7
+    Address: 0x21c93dd
+  - Name: HandlerProtectResetCounter
+    Segment: 0xA7
+    Address: 0x21c9435
+  - Name: HandlerProtectStart
+    Segment: 0xA7
+    Address: 0x21c938d
+  - Name: BattleMon_GetPreviousMoveID
+    Segment: 0xA7
+    Address: 0x21bbfe9

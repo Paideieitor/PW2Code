@@ -646,6 +646,7 @@ enum MoveFlag : u32
     FLAG_DANCE = 0x13,
     FLAG_WIND = 0x14,
     FLAG_SHARP = 0x15,
+    FLAG_PROTECT = 0x16,
 };
 
 enum MoveField : u32
@@ -703,6 +704,9 @@ extern "C" b32 IsComboMove(MOVE_ID moveID);
 extern "C" b32 getMoveFlag(MOVE_ID moveID, MoveFlag moveFlag);
 
 extern "C" void HandlerThiefStart(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work);
+extern "C" void HandlerProtectCheckFail(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work);
+extern "C" void HandlerProtectResetCounter(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work);
+extern "C" void HandlerProtectStart(BattleEventItem * item, ServerFlow * serverFlow, u32 pokemonSlot, u32 * work);
 
 extern "C" BattleEventHandlerTableEntry * EventAddHex(u32 * handlerAmount);
 

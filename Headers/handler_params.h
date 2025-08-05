@@ -7,6 +7,7 @@
 #include "conditions.h"
 #include "field_effects.h"
 #include "side_effects.h"
+#include "turn_flag.h"
 
 typedef u32 ABILITY;
 
@@ -294,6 +295,32 @@ struct HandlerParam_AddSideEffect
     u8 side;
     HandlerParam_StrParams exStr;
 };
+
+struct SWAN_ALIGNED(4) HandlerParam_SetTurnFlag
+{
+    HandlerParam_Header header;
+    TurnFlag flag;
+    u8 pokeID;
+};
+
+typedef u8 COUNTER;
+enum Counter : u8
+{
+    COUNTER_STOCKPILE = 0x0,
+    COUNTER_STOCKPILE_DEF = 0x1,
+    COUNTER_STOCKPILE_SPDEF = 0x2,
+    COUNTER_PROTECT = 0x3,
+    COUNTER_SKYDROP = 0x4,
+};
+
+struct SWAN_ALIGNED(2) HandlerParam_SetCounter
+{
+    HandlerParam_Header header;
+    u8 pokeID;
+    COUNTER counterID;
+    u8 value;
+};
+
 
 extern "C" HandlerParam_Header* BattleHandler_PushWork(ServerFlow* serverFlow, BattleHandlerEffect battleHandler, u32 currentSlot);
 extern "C" void BattleHandler_PopWork(ServerFlow* serverFlow, void* handlerParms);
