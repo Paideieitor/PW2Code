@@ -19,13 +19,16 @@ struct SWAN_PACKED TrainerPokemonExt
 	u8 evs[6]; // (HP, ATK, DEF, SPE, SPA, SPD)
 	u8 nature;
 	u8 happiness;
-	u8 status;
-	u8 hp;
+	u16 state; // 1 bit [shiny] + 3 bits [status] + 7 bits [hp]
 };
 #define GET_TRPOKE_SEX(trainerPokemon) (trainerPokemon.genetic >> 30)
 #define GET_TRPOKE_IV(trainerPokemon) (trainerPokemon.genetic & 0x3FFFFFFF)
 #define GET_TRMOVE_PPMAX(trainerPokemon, slot) (trainerPokemon.moves[slot] & 0x8000 != 0) 
 #define GET_TRMOVE_ID(trainerPokemon, slot) (trainerPokemon.moves[slot] & 0x7FFF) 
+
+#define GET_TRPOKE_SHINY(trainerPokemon) ((trainerPokemon.state & 0x0400) != 0)
+#define GET_TRPOKE_STATUS(trainerPokemon) ((trainerPokemon.state & 0x0380) >> 7)
+#define GET_TRPOKE_HP(trainerPokemon) (trainerPokemon.state & 0x007F)
 
 extern "C" void TrainerUtil_CalcBasePID(u16 species, u16 form, u8 abilAndSex, u32* dest, HeapID heapId);
 extern "C" void THUMB_BRANCH_LINK_TrainerUtil_LoadParty_0x4C8(PokeParty* party, PartyPkm* partyPkm, 
@@ -57,11 +60,19 @@ extern "C" void THUMB_BRANCH_LINK_TrainerUtil_LoadParty_0x4C8(PokeParty* party, 
 
 			PokeParty_RecalcStats(partyPkm);
 
+			if (GET_TRPOKE_SHINY(team[slot])) {
+				// This ensures the Pokémon being shiny
+				PokeParty_SetParam(partyPkm, PF_IdSet, PokeParty_GetParam(partyPkm, PF_PID, nullptr));
+			}
+			else {
+				// This ensures the Pokémon not being shiny
+				PokeParty_SetParam(partyPkm, PF_IdSet, 0xFFFF0000);
+			}
 
-			PokeParty_SetParam(partyPkm, PF_StatusCond, team[slot].status);
+			PokeParty_SetParam(partyPkm, PF_StatusCond, GET_TRPOKE_STATUS(team[slot]));
 			
 			u32 maxHP = PokeParty_GetParam(partyPkm, PF_MaxHP, nullptr);
-			PokeParty_SetParam(partyPkm, PF_NowHP, (team[slot].hp * maxHP) / 100);
+			PokeParty_SetParam(partyPkm, PF_NowHP, (GET_TRPOKE_HP(team[slot]) * maxHP) / 100);
 			
 			PokeParty_AddPkm(party, partyPkm);
 #if 0
