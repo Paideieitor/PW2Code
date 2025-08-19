@@ -50,6 +50,7 @@ extern "C" void ClearLoadedDlls() {
 #if LIBRARY_LOAD_DEBUG
 extern "C" void PrintLoadedDlls() {
     for (u8 dllIdx = 0; dllIdx < 24; ++dllIdx) {
+
         if (loadedDlls[dllIdx].name == nullptr) {
             DPRINT("--- \n");
         }
