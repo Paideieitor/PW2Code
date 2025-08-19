@@ -1,9 +1,13 @@
 .thumb
 
-.type THUMB_BRANCH_LINK_CALCDMG_Set_0xFA, %function
-.type THUMB_BRANCH_LINK_LoadAnimationScriptFile_0xB6, %function
-
 #include "settings.h"
+
+#if GEN7_INFILTRATOR
+.type THUMB_BRANCH_LINK_CALCDMG_Set_0xFA, %function
+#endif
+#if EXPAND_MOVES
+.type THUMB_BRANCH_LINK_LoadAnimationScriptFile_0xB6, %function
+#endif
 
 #if WEATHER_ABILITY_TURNS != 255
 

@@ -344,7 +344,7 @@ extern "C" b32 CanItemWithBattleStatsBeUsed(ItemData* itemData, PartyPkm* partyP
                 levelCap = GetLvlCap();
 #else
             if (!RARE_CANDY_IGNORE_LVL_CAP)
-                level_cap = GetLvlCap();
+                levelCap = GetLvlCap();
 #endif
             u32 level = PokeParty_GetParam(partyPkm, PF_Level, 0);
             if (level < levelCap) {

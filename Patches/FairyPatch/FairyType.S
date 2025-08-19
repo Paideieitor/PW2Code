@@ -1,13 +1,13 @@
 .thumb
 
+#include "settings.h"
+
+#if ADD_FAIRY_TYPE
+
 .equ TypeCount, 0x12
 .equ NewTagStart, 0x20
 
 .type THUMB_BRANCH_LINK_255_0x21CF574, %function
-
-#include "settings.h"
-
-#if ADD_FAIRY_TYPE
 
 @ TYPE_NULL redefinitions
 

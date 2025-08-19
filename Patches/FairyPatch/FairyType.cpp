@@ -1,4 +1,7 @@
 #include "settings.h"
+
+#if ADD_FAIRY_TYPE
+
 #include "FileSystem.h"
 
 #include "types.h"
@@ -58,3 +61,5 @@ extern "C" u32 THUMB_BRANCH_GetPokemonTypeIconPalette(POKE_TYPE type)
 {
     return ReadByteFromFile("type_palette_map.bin", type);
 }
+
+#endif // ADD_FAIRY_TYPE
