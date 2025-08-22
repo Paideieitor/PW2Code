@@ -24,7 +24,7 @@
 #include "personal.h"
 #include "items.h"
 
-#define MAX_LOADED_DLLS 128
+#define MAX_LOADED_DLLS 72
 struct LoadedDll
 {
     const char* name;
@@ -86,7 +86,8 @@ extern "C" b32 LoadDll(const char* dllName)
             loadedDlls[dllIdx].count = 1;
             break;
         }
-        if (strcmp(loadedDlls[dllIdx].name, dllName) == 0) {
+        if (strcmp(loadedDlls[dllIdx].name, dllName) == 0)
+        {
 #if LIBRARY_LOAD_DEBUG
             DPRINTF("Added %s! \n", dllName);
 #endif
@@ -1284,6 +1285,18 @@ extern "C" b32 SwitchedInThisTurn(ServerFlow * serverFlow, BattleMon * battleMon
 
 #endif // EXPAND_ABILITIES
 
+#if EXPAND_MOVES
+
+extern "C" b32 BattleField_CheckConsumedBerryFlag(u32 battleSlot) {
+    return (g_BattleField->consumedBerryFlags >> battleSlot) & 1;
+}
+extern "C" void BattleField_SetConsumedBerryFlag(u32 battleSlot) {
+    g_BattleField->consumedBerryFlags |= (1 << battleSlot);
+}
+
+#endif // EXPAND_MOVES
+
+
 extern "C" TERRAIN BattleField_GetTerrain(BattleFieldExt * battleField) {
     return battleField->terrain;
 }
@@ -1645,6 +1658,12 @@ extern "C" void THUMB_BRANCH_BattleField_InitCore(BattleFieldExt * battleField, 
 
     battleField->supersweetSyrupFlag = 0;
 #endif
+
+#if EXPAND_MOVES
+
+    battleField->consumedBerryFlags = 0;
+
+#endif 
 }
 
 // Allocates the memory for the Extended BattleField struct
@@ -1653,6 +1672,7 @@ extern "C" BattleFieldExt * THUMB_BRANCH_BattleField_Init(u16 heapID) {
         g_BattleField = (BattleFieldExt*)GFL_HeapAllocate(heapID, sizeof(BattleFieldExt), 1, "btl_field.c", 268u);
         BattleField_InitCore(g_BattleField, WEATHER_NULL);
     }
+    
     return g_BattleField;
 }
 
@@ -1966,26 +1986,24 @@ extern "C" b32 THUMB_BRANCH_BattleHandler_AddFieldEffect(ServerFlow * serverFlow
 
 extern "C" void THUMB_BRANCH_ServerControl_FieldEffectEnd(ServerFlow * serverFlow, FIELD_EFFECT fieldEffect) {
     u16 msgID = 0xFFFF;
-    if (fieldEffect <= FLDEFF_TERRAIN) {
-        switch (fieldEffect) {
-        case FLDEFF_TRICK_ROOM:
-            msgID = 116;
-            break;
-        case FLDEFF_GRAVITY:
-            msgID = 118;
-            break;
-        case FLDEFF_WONDER_ROOM:
-            msgID = 179;
-            break;
-        case FLDEFF_MAGIC_ROOM:
-            msgID = 181;
-            break;
-        case FLDEFF_TERRAIN:
-            msgID = BATTLE_TERRAIN_END_MSGID;
-            break;
-        default:
-            break;
-        }
+    switch (fieldEffect) {
+    case FLDEFF_TRICK_ROOM:
+        msgID = 116;
+        break;
+    case FLDEFF_GRAVITY:
+        msgID = 118;
+        break;
+    case FLDEFF_WONDER_ROOM:
+        msgID = 179;
+        break;
+    case FLDEFF_MAGIC_ROOM:
+        msgID = 181;
+        break;
+    case FLDEFF_TERRAIN:
+        msgID = BATTLE_TERRAIN_END_MSGID;
+        break;
+    default:
+        break;
     }
     if (msgID != 0xFFFF) {
         ServerDisplay_AddMessageImpl(serverFlow->serverCommandQueue, SCID_MessageStandard, msgID, 0xFFFF0000);
@@ -2502,6 +2520,9 @@ SideEffectEventAddTableExt sideEffectEventAddTableExt[] = {
     { SIDEEFF_WIDE_GUARD, EventAddSideWideGuardUpdated, 1, "SideEffects/WideGuard" },
     { SIDEEFF_QUICK_GUARD, EventAddSideQuickGuardUpdated, 1, "SideEffects/QuickGuard" },
 #endif
+#if EXPAND_MOVES
+    { SIDEEFF_STICKY_WEB, EventAddSideStickyWeb, 1, "SideEffects/StickyWebSide" },
+#endif
 };
 
 extern "C" BattleEventItem * AddSideEffectEvent(BattleSideEffectExt* sideEffect, u32 side, SIDE_EFFECT effect, ConditionData condData, SideEffectEventAddFunc func) {
@@ -2584,7 +2605,7 @@ extern "C" u32 THUMB_BRANCH_SAFESTACK_BattleSideStatus_GetCountFromBattleEventIt
     return 0;
 }
 
-extern "C" b32 THUMB_BRANCH_SAFESTACK_SideEffectEvent_RemoveItem(u32 side, SideEffect effect) {
+extern "C" b32 THUMB_BRANCH_SAFESTACK_SideEffectEvent_RemoveItem(u32 side, SIDE_EFFECT effect) {
     BattleSideEffectExt* sideEffect = &(g_SideManager.sides[side].effects[effect]);
     if (!sideEffect->item) {
         return 0;
@@ -2613,6 +2634,61 @@ extern "C" void THUMB_BRANCH_SAFESTACK_BattleSideStatus_TurnCheck(void(* endMess
             }
         }
     }
+}
+
+extern "C" void THUMB_BRANCH_ServerControl_SideEffectEndMessageCore(ServerFlow* serverFlow, SIDE_EFFECT sideEffect, u32 side) {
+    u16 msgID = 0xFFFF;
+    switch (sideEffect)
+    {
+    case SIDEEFF_REFLECT:
+        msgID = 126;
+        break;
+    case SIDEEFF_LIGHT_SCREEN:
+        msgID = 130;
+        break;
+    case SIDEEFF_SAFEGUARD:
+        msgID = 134;
+        break;
+    case SIDEEFF_MIST:
+        msgID = 138;
+        break;
+    case SIDEEFF_TAILWIND:
+        msgID = 142;
+        break;
+    case SIDEEFF_LUCKY_CHANT:
+        msgID = 146;
+        break;
+    case SIDEEFF_SPIKES:
+        msgID = 150;
+        break;
+    case SIDEEFF_TOXIC_SPIKES:
+        msgID = 154;
+        break;
+    case SIDEEFF_STEALTH_ROCK:
+        msgID = 158;
+        break;
+    case SIDEEFF_RAINBOW:
+        msgID = 166;
+        break;
+    case SIDEEFF_SEA_OF_FIRE:
+        msgID = 170;
+        break;
+    case SIDEEFF_SWAMP:
+        msgID = 174;
+        break;
+    case SIDEEFF_STICKY_WEB:
+        msgID = BATTLE_STICKY_WEB_REMOVE_MSGID + side;
+        side = 0xFFFF0000;
+        break;
+    default:
+        break;
+    }
+    
+    if (msgID == 0xFFFF) {
+        return;  
+    }
+
+    ServerDisplay_AddMessageImpl(serverFlow->serverCommandQueue, SCID_MessageStandard, msgID, side);
 }
 
 #endif // EXPAND_FIELD_EFFECTS
@@ -2675,7 +2751,6 @@ extern "C" u32 THUMB_BRANCH_SAFESTACK_ServerEvent_CalcDamage(ServerFlow * server
             ) {
             damage = fixed_round(damage, weatherDmgRatio);
         }
-
 #if EXPAND_FIELD_EFFECTS
         u32 terrain = ServerEvent_GetTerrain(serverFlow);
         u32 terrainDmgRatio = TerrainPowerMod(serverFlow, attackingMon, defendingMon, terrain, moveParam->moveType);
@@ -2714,6 +2789,7 @@ extern "C" u32 THUMB_BRANCH_SAFESTACK_ServerEvent_CalcDamage(ServerFlow * server
         if (!damageAfterType) {
             damageAfterType = 1;
         }
+
 
         BattleEventVar_SetMulValue(VAR_RATIO, 4096, 41, 0x20000);
         BattleEventVar_SetValue(VAR_DAMAGE, damageAfterType);
@@ -3244,34 +3320,6 @@ extern "C" u32 THUMB_BRANCH_SAFESTACK_ServerControl_AddConditionCheckFail(Server
 //      CORROSION -> Implemented in [ServerControl_AddConditionCheckFail]
 //      COMATOSE -> Implemented in [ServerControl_AddConditionCheckFail], [BattleMon_CheckIfMoveCondition], [HandlerHex] & [CommonStatusReaction]
 
-// Called when a held item is consumed [ServerControl_ChangeHeldItem]
-extern "C" void ServerEvent_ConsumeItem(ServerFlow * serverFlow, u32 currentSlot, ITEM itemID) {
-    BattleEventVar_Push();
-    SET_UP_NEW_EVENT;
-    BattleEventVar_SetConstValue(NEW_VAR_MON_ID, currentSlot);
-    BattleEventVar_SetValue(VAR_ITEM, itemID);
-    BattleEvent_CallHandlers(serverFlow, EVENT_CONSUME_ITEM);
-    BattleEventVar_Pop();
-}
-// Called after using a held item [ServerEvent_EquipItem]
-extern "C" void ServerEvent_UseItemAfter(ServerFlow * serverFlow, u32 currentSlot, ITEM itemID) {
-    BattleEventVar_Push();
-    SET_UP_NEW_EVENT;
-    BattleEventVar_SetConstValue(NEW_VAR_MON_ID, currentSlot);
-    BattleEventVar_SetValue(VAR_ITEM, itemID);
-    BattleEvent_CallHandlers(serverFlow, EVENT_USE_ITEM_AFTER);
-    BattleEventVar_Pop();
-}
-// Called after using a temp item [ServerEvent_EquipTempItem]
-extern "C" void ServerEvent_UseTempItemAfter(ServerFlow * serverFlow, u32 currentSlot, u32 attackingSlot, ITEM itemID) {
-    BattleEventVar_Push();
-    SET_UP_NEW_EVENT;
-    BattleEventVar_SetValue(NEW_VAR_MON_ID, currentSlot);
-    BattleEventVar_SetValue(NEW_VAR_ATTACKING_MON, attackingSlot);
-    BattleEventVar_SetValue(VAR_ITEM, itemID);
-    BattleEvent_ForceCallHandlers(serverFlow, EVENT_USE_TEMP_ITEM_AFTER);
-    BattleEventVar_Pop();
-}
 // Called when the ability of a Pokemon stops being nullifyed [ServerControl_CureCondition]
 extern "C" void ServerEvent_AbilityNullifyCured(ServerFlow * serverFlow, BattleMon * battleMon) {
     BattleEventVar_Push();
@@ -3712,77 +3760,6 @@ extern "C" BattleEventItem * THUMB_BRANCH_ItemEvent_AddTempItem(BattleMon * batt
 
     g_BattleField->tempItem = itemID; // store the temp item ID
     return itemEvents;
-}
-
-// Cheek Pouch & Symbiosis - Add event right after consuming an item
-extern "C" void THUMB_BRANCH_ServerControl_ChangeHeldItem(ServerFlow * serverFlow, BattleMon * battleMon, ITEM itemID, b32 consumeItem)
-{
-    u32 battleSlot = BattleMon_GetID(battleMon);
-    ITEM usedItem = BattleMon_GetHeldItem(battleMon);
-
-    u32 HEID = HEManager_PushState(&serverFlow->HEManager);
-    ServerEvent_ItemSetDecide(serverFlow, battleMon, itemID);
-    HEManager_PopState(&serverFlow->HEManager, HEID);
-
-    if (!itemID) {
-        ServerDisplay_SetConditionFlag(serverFlow, battleMon, CONDITIONFLAG_NULL);
-    }
-    ItemEvent_RemoveItem(battleMon);
-    ServerDisplay_AddCommon(serverFlow->serverCommandQueue, SCID_SetItem, battleSlot, itemID);
-    BattleMon_SetItem(battleMon, itemID);
-    if (itemID) {
-        ItemEvent_AddItem(battleMon);
-    }
-
-    HEID = HEManager_PushState(&serverFlow->HEManager);
-    ServerEvent_ItemRewriteDone(serverFlow, battleMon);
-    HEManager_PopState(&serverFlow->HEManager, HEID);
-
-    if (consumeItem) {
-        BattleMon_ConsumeItem(battleMon, usedItem);
-        ServerDisplay_AddCommon(serverFlow->serverCommandQueue, SCID_ConsumeItem, battleSlot, usedItem);
-        ServerDisplay_SetTurnFlag(serverFlow, battleMon, TURNFLAG_ITEMCONSUMED);
-
-        HEID = HEManager_PushState(&serverFlow->HEManager);
-        ServerEvent_ConsumeItem(serverFlow, BattleMon_GetID(battleMon), usedItem); // Added consume item event
-        HEManager_PopState(&serverFlow->HEManager, HEID);
-    }
-}
-
-// Cheek Pouch - Add event right after equiping an item
-extern "C" void THUMB_BRANCH_ServerEvent_EquipItem(ServerFlow * serverFlow, BattleMon * currentMon) {
-    ITEM itemID = BattleMon_GetHeldItem(currentMon);
-
-    BattleEventVar_Push();
-    u32 currentSlot = BattleMon_GetID(currentMon);
-    BattleEventVar_SetConstValue(VAR_MON_ID, currentSlot);
-    BattleEventVar_SetValue(VAR_ITEM, itemID);
-    BattleEvent_CallHandlers(serverFlow, EVENT_USE_ITEM);
-    BattleEventVar_Pop();
-
-    // Call the use item after event after using the item
-    ServerEvent_UseItemAfter(serverFlow, currentSlot, itemID);
-}
-// Cheek Pouch - Add event right after equiping a temporary item
-extern "C" void THUMB_BRANCH_ServerEvent_EquipTempItem(ServerFlow * serverFlow, BattleMon * currentMon, u32 attackingSlot)
-{
-    ITEM itemID = g_BattleField->tempItem;
-    g_BattleField->tempItem = ITEM_NULL;
-
-    u32 currentSlot = BattleMon_GetID(currentMon);
-
-    // Call the use item event before using the item
-    ServerEvent_UseTempItemBefore(serverFlow, currentSlot, attackingSlot, itemID);
-
-    BattleEventVar_Push();
-    BattleEventVar_SetValue(VAR_MON_ID, currentSlot);
-    BattleEventVar_SetValue(VAR_ATTACKING_MON, attackingSlot);
-    BattleEventVar_SetValue(VAR_ITEM, itemID);
-    BattleEvent_ForceCallHandlers(serverFlow, EVENT_USE_ITEM_TEMP);
-    BattleEventVar_Pop();
-
-    // Call the use item event after using the item
-    ServerEvent_UseTempItemAfter(serverFlow, currentSlot, attackingSlot, itemID);
 }
 
 MOVE_ID movesThatIgnoreParentalBond[]{
@@ -4923,6 +4900,125 @@ extern "C" void THUMB_BRANCH_ServerControl_UnnerveAction(ServerFlow * serverFlow
 
 #if EXPAND_ABILITIES || EXPAND_MOVES
 
+// Called when a held item is consumed [ServerControl_ChangeHeldItem]
+extern "C" void ServerEvent_ConsumeItem(ServerFlow* serverFlow, u32 currentSlot, ITEM itemID) {
+    BattleEventVar_Push();
+    SET_UP_NEW_EVENT;
+    BattleEventVar_SetConstValue(NEW_VAR_MON_ID, currentSlot);
+    BattleEventVar_SetValue(VAR_ITEM, itemID);
+    BattleEvent_CallHandlers(serverFlow, EVENT_CONSUME_ITEM);
+    BattleEventVar_Pop();
+}
+// Called after using a held item [ServerEvent_EquipItem]
+extern "C" void ServerEvent_UseItemAfter(ServerFlow* serverFlow, u32 currentSlot, ITEM itemID) {
+    BattleEventVar_Push();
+    SET_UP_NEW_EVENT;
+    BattleEventVar_SetConstValue(NEW_VAR_MON_ID, currentSlot);
+    BattleEventVar_SetValue(VAR_ITEM, itemID);
+    BattleEvent_CallHandlers(serverFlow, EVENT_USE_ITEM_AFTER);
+    BattleEventVar_Pop();
+}
+// Called after using a temp item [ServerEvent_EquipTempItem]
+extern "C" void ServerEvent_UseTempItemAfter(ServerFlow* serverFlow, u32 currentSlot, u32 attackingSlot, ITEM itemID) {
+    BattleEventVar_Push();
+    SET_UP_NEW_EVENT;
+    BattleEventVar_SetValue(NEW_VAR_MON_ID, currentSlot);
+    BattleEventVar_SetValue(NEW_VAR_ATTACKING_MON, attackingSlot);
+    BattleEventVar_SetValue(VAR_ITEM, itemID);
+    BattleEvent_ForceCallHandlers(serverFlow, EVENT_USE_TEMP_ITEM_AFTER);
+    BattleEventVar_Pop();
+}
+
+// Cheek Pouch & Symbiosis - Add event right after consuming an item
+// Belch - Records if a berry has been consumed
+#if EXPAND_MOVES
+extern "C" int THUMB_BRANCH_BattleHandler_ConsumeItem(ServerFlow* serverFlow, HandlerParam_ConsumeItem* params) {
+    BattleMon* battleMon = PokeCon_GetBattleMon(serverFlow->pokeCon, params->header.flags << 19 >> 27);
+    if (!params->dontUse) {
+        ServerDisplay_UseHeldItem(serverFlow, battleMon);
+        BattleHandler_SetString(serverFlow, &params->exStr);
+    }
+    // pass the dontUse value to discriminate for Belch
+    ServerControl_ChangeHeldItem(serverFlow, battleMon, ITEM_NULL, 1 + params->dontUse);
+    return 1;
+}
+#endif
+extern "C" void THUMB_BRANCH_ServerControl_ChangeHeldItem(ServerFlow* serverFlow, BattleMon* battleMon, ITEM itemID, b32 consumeItem)
+{
+    u32 battleSlot = BattleMon_GetID(battleMon);
+    ITEM usedItem = BattleMon_GetHeldItem(battleMon);
+
+    u32 HEID = HEManager_PushState(&serverFlow->HEManager);
+    ServerEvent_ItemSetDecide(serverFlow, battleMon, itemID);
+    HEManager_PopState(&serverFlow->HEManager, HEID);
+
+    if (!itemID) {
+        ServerDisplay_SetConditionFlag(serverFlow, battleMon, CONDITIONFLAG_NULL);
+    }
+    ItemEvent_RemoveItem(battleMon);
+    ServerDisplay_AddCommon(serverFlow->serverCommandQueue, SCID_SetItem, battleSlot, itemID);
+    BattleMon_SetItem(battleMon, itemID);
+    if (itemID) {
+        ItemEvent_AddItem(battleMon);
+    }
+
+    HEID = HEManager_PushState(&serverFlow->HEManager);
+    ServerEvent_ItemRewriteDone(serverFlow, battleMon);
+    HEManager_PopState(&serverFlow->HEManager, HEID);
+
+    if (consumeItem) {
+        BattleMon_ConsumeItem(battleMon, usedItem);
+        ServerDisplay_AddCommon(serverFlow->serverCommandQueue, SCID_ConsumeItem, battleSlot, usedItem);
+        ServerDisplay_SetTurnFlag(serverFlow, battleMon, TURNFLAG_ITEMCONSUMED);
+
+        HEID = HEManager_PushState(&serverFlow->HEManager);
+        ServerEvent_ConsumeItem(serverFlow, battleSlot, usedItem); // Added consume item event
+        HEManager_PopState(&serverFlow->HEManager, HEID);
+
+#if EXPAND_MOVES
+        if (consumeItem != 2 && PML_ItemIsBerry(itemID)) {
+            BattleField_SetConsumedBerryFlag(battleSlot);
+        }
+#endif
+    }
+}
+
+extern "C" void THUMB_BRANCH_ServerEvent_EquipItem(ServerFlow* serverFlow, BattleMon* currentMon) {
+    ITEM itemID = BattleMon_GetHeldItem(currentMon);
+
+    BattleEventVar_Push();
+    u32 currentSlot = BattleMon_GetID(currentMon);
+    BattleEventVar_SetConstValue(VAR_MON_ID, currentSlot);
+    BattleEventVar_SetValue(VAR_ITEM, itemID);
+    BattleEvent_CallHandlers(serverFlow, EVENT_USE_ITEM);
+    BattleEventVar_Pop();
+
+    // Call the use item after event after using the item
+    ServerEvent_UseItemAfter(serverFlow, currentSlot, itemID);
+}
+// Cheek Pouch - Add event right after equiping a temporary item
+// Belch - Records if a berry has been consumed as a temporary item
+extern "C" void THUMB_BRANCH_ServerEvent_EquipTempItem(ServerFlow* serverFlow, BattleMon* currentMon, u32 attackingSlot)
+{
+    ITEM itemID = g_BattleField->tempItem;
+    g_BattleField->tempItem = ITEM_NULL;
+
+    u32 currentSlot = BattleMon_GetID(currentMon);
+
+    // Call the use item event before using the item
+    ServerEvent_UseTempItemBefore(serverFlow, currentSlot, attackingSlot, itemID);
+
+    BattleEventVar_Push();
+    BattleEventVar_SetValue(VAR_MON_ID, currentSlot);
+    BattleEventVar_SetValue(VAR_ATTACKING_MON, attackingSlot);
+    BattleEventVar_SetValue(VAR_ITEM, itemID);
+    BattleEvent_ForceCallHandlers(serverFlow, EVENT_USE_ITEM_TEMP);
+    BattleEventVar_Pop();
+
+    // Call the use item event after using the item
+    ServerEvent_UseTempItemAfter(serverFlow, currentSlot, attackingSlot, itemID);
+}
+
 extern "C" TypeEffectiveness THUMB_BRANCH_SAFESTACK_ServerEvent_CheckDamageEffectiveness(ServerFlow* serverFlow, BattleMon* attackingMon, BattleMon* defendingMon, PokeType moveType, u8 pokemonType) {
     BattleEventVar_Push();
     u32 attackingSlot = BattleMon_GetID(attackingMon);
@@ -5111,31 +5207,6 @@ extern "C" BattleEventItem* THUMB_BRANCH_ItemEvent_AddItemCore(BattleMon * battl
     return 0;
 }
 
-// Assault Vest - Disable non-attacking moves
-// WARNING IsUnselectableMove is used in BattleUpgrade.S
-extern "C" b32 THUMB_BRANCH_LINK_IsUnselectableMove_0xC0(BattleMon * battleMon, Btlv_StringParam * strParam) {
-
-    ITEM heldItem = BattleMon_GetHeldItem(battleMon);
-    if (heldItem == ITEM_ASSAULT_VEST) {
-        if (strParam) {
-            Btlv_StringParam_Setup(strParam, 1, BATTLE_ASSAULTVEST_MSGID);
-            u32 battleSlot = BattleMon_GetID(battleMon);
-            Btlv_StringParam_AddArg(strParam, battleSlot);
-            Btlv_StringParam_AddArg(strParam, heldItem);
-        }
-        return 1;
-    }
-    if (BattleMon_CheckIfMoveCondition(battleMon, CONDITION_TAUNT)) {
-        if (strParam) {
-            Btlv_StringParam_Setup(strParam, 2, 571);
-            u32 battleSlot = BattleMon_GetID(battleMon);
-            Btlv_StringParam_AddArg(strParam, battleSlot);
-        }
-        return 1;
-    }
-    return 0;
-}
-
 // Heavy-Duty Boots - Disable entry hazards effects
 extern "C" b32 CheckDisableEntryHazards(BattleMon* battleMon) {
     if (battleMon &&
@@ -5319,6 +5390,136 @@ extern "C" void THUMB_BRANCH_LINK_ServerEvent_CheckMultihitHits_0x5A() {
 
 #endif // EXPAND_ITEMS
 
+#if EXPAND_ITEMS || EXPAND_MOVES
+
+// Assault Vest - Blocks the use of Status moves
+// Belch - Blocks its use if a berry has not been consumed
+extern "C" b32 THUMB_BRANCH_SAFESTACK_IsUnselectableMove(BtlClientWk* client, BattleMon* battleMon, MOVE_ID moveID, Btlv_StringParam* strparam) {
+    if (moveID != MOVE_STRUGGLE) {
+
+        if (BattleMon_GetUsableItem(battleMon) && BattleMon_CheckIfMoveCondition(battleMon, CONDITION_CHOICELOCK)) {
+            ConditionData choiceLock = BattleMon_GetMoveCondition(battleMon, CONDITION_CHOICELOCK);
+            MOVE_ID choicedMove = Condition_GetParam(choiceLock);
+            if (Move_IsUsable(battleMon, choicedMove) && choicedMove != moveID) {
+                if (strparam) {
+                    Btlv_StringParam_Setup(strparam, 1, 99);
+                    ITEM heldItem = BattleMon_GetHeldItem(battleMon);
+                    Btlv_StringParam_AddArg(strparam, heldItem);
+                    Btlv_StringParam_AddArg(strparam, choicedMove);
+                }
+                return 1;
+            }
+        }
+
+        if (BattleMon_CheckIfMoveCondition(battleMon, CONDITION_ENCORE)) {
+            ConditionData encore = BattleMon_GetMoveCondition(battleMon, CONDITION_ENCORE);
+            MOVE_ID previousMove = Condition_GetParam(encore);
+            if (moveID != previousMove) {
+                if (strparam) {
+                    Btlv_StringParam_Setup(strparam, 1, 100);
+                    u32 battleSlot = BattleMon_GetID(battleMon);
+                    Btlv_StringParam_AddArg(strparam, battleSlot);
+                    Btlv_StringParam_AddArg(strparam, previousMove);
+                }
+                return 1;
+            }
+        }
+
+        if (!PML_MoveIsDamaging(moveID)) {
+#if EXPAND_ITEMS
+            ITEM heldItem = BattleMon_GetHeldItem(battleMon);
+            if (heldItem == ITEM_ASSAULT_VEST) {
+                if (strparam) {
+                    Btlv_StringParam_Setup(strparam, 1, BATTLE_ASSAULTVEST_MSGID);
+                    u32 battleSlot = BattleMon_GetID(battleMon);
+                    Btlv_StringParam_AddArg(strparam, battleSlot);
+                    Btlv_StringParam_AddArg(strparam, heldItem);
+                }
+                return 1;
+            }
+#endif
+            if (BattleMon_CheckIfMoveCondition(battleMon, CONDITION_TAUNT)) {
+                if (strparam) {
+                    Btlv_StringParam_Setup(strparam, 2, 571);
+                    u32 battleSlot = BattleMon_GetID(battleMon);
+                    Btlv_StringParam_AddArg(strparam, battleSlot);
+                }
+                return 1;
+            }
+        }
+
+        if (BattleMon_CheckIfMoveCondition(battleMon, CONDITION_TORMENT) && moveID == BattleMon_GetPreviousMove(battleMon)) {
+            if (strparam) {
+                Btlv_StringParam_Setup(strparam, 2, 580);
+                u32 battleSlot = BattleMon_GetID(battleMon);
+                Btlv_StringParam_AddArg(strparam, battleSlot);
+                Btlv_StringParam_AddArg(strparam, moveID);
+            }
+            return 1;
+        }
+
+        if (BattleMon_CheckIfMoveCondition(battleMon, CONDITION_DISABLE)
+            && moveID == BattleMon_GetConditionAffectedMove(battleMon, CONDITION_DISABLE)
+            && moveID != MOVE_STRUGGLE) {
+            if (strparam) {
+                Btlv_StringParam_Setup(strparam, 2, 595);
+                u32 battleSlot = BattleMon_GetID(battleMon);
+                Btlv_StringParam_AddArg(strparam, battleSlot);
+                Btlv_StringParam_AddArg(strparam, moveID);
+            }
+            return 1;
+        }
+
+        if (BattleMon_CheckIfMoveCondition(battleMon, CONDITION_HEALBLOCK) && 
+            getMoveFlag(moveID, FLAG_HEALING)) {
+            if (strparam) {
+                Btlv_StringParam_Setup(strparam, 2, 890);
+                u32 battleSlot = BattleMon_GetID(battleMon);
+                Btlv_StringParam_AddArg(strparam, battleSlot);
+                Btlv_StringParam_AddArg(strparam, moveID);
+            }
+            return 1;
+        }
+
+        if (BattleField_CheckEffect(FLDEFF_IMPRISON) && 
+            BattleField_CheckImprison(client->pokeCon, battleMon, moveID)) {
+            if (strparam) {
+                Btlv_StringParam_Setup(strparam, 2, 589);
+                u32 battleSlot = BattleMon_GetID(battleMon);
+                Btlv_StringParam_AddArg(strparam, battleSlot);
+                Btlv_StringParam_AddArg(strparam, moveID);
+            }
+            return 1;
+        }
+
+        if (BattleField_CheckEffect(FLDEFF_GRAVITY) &&
+            getMoveFlag(moveID, FLAG_GROUNDED_BY_GRAVITY)) {
+            if (strparam) {
+                Btlv_StringParam_Setup(strparam, 2, 1086);
+                u32 battleSlot = BattleMon_GetID(battleMon);
+                Btlv_StringParam_AddArg(strparam, battleSlot);
+                Btlv_StringParam_AddArg(strparam, moveID);
+            }
+            return 1;
+        }
+#if EXPAND_MOVES
+        if (moveID == MOVE_BELCH) {
+            u32 battleSlot = BattleMon_GetID(battleMon);
+            if (!BattleField_CheckConsumedBerryFlag(battleSlot)) {
+                if (strparam) {
+                    Btlv_StringParam_Setup(strparam, 1, BATTLE_BELCH_MSGID);
+                    Btlv_StringParam_AddArg(strparam, battleSlot);
+                }
+                return 1;
+            }
+        }
+#endif
+    }
+    return 0;
+}
+
+#endif // EXPAND_ITEMS || EXPAND_MOVES
+
 #if ADD_MEGA_EVOLUTION || (EXPAND_ABILITIES && EXPAND_ITEMS)
 
 #if ADD_MEGA_EVOLUTION
@@ -5370,7 +5571,7 @@ extern "C" b32 THUMB_BRANCH_HandlerCommon_IsUnremovableItem(BattleMon* battleMon
     return 0;
 }
 
-#endif // EXPAND_ABILITIES || EXPAND_ITEMS || ADD_MEGA_EVOLUTION
+#endif // ADD_MEGA_EVOLUTION || (EXPAND_ABILITIES && EXPAND_ITEMS)
 
 #if EXPAND_MOVES
 
@@ -5399,8 +5600,14 @@ struct MoveEventAddTableExt
     const char* dllName;
 };
 MoveEventAddTableExt moveEventAddTableExt[] = {
+    {MOVE_RAPID_SPIN, EventAddRapidSpinUpdated, "Moves/RapidSpin"},
+    {MOVE_DEFOG, EventAddDefogUpdated, "Moves/Defog"},
     {MOVE_FLYING_PRESS, EventAddFlyingPress, "Moves/FlyingPress"},
     {MOVE_MAT_BLOCK, EventAddMatBlock, "Moves/MatBlock"},
+    {MOVE_ROTOTILLER, EventAddRototiller, "Moves/Rototiller"},
+    {MOVE_STICKY_WEB, EventAddStickyWeb, "Moves/StickyWeb"},
+    {MOVE_FELL_STINGER, EventAddFellStinger, "Moves/FellStinger"},
+    {MOVE_PHANTOM_FORCE, EventAddShadowForce, nullptr},
 
     {MOVE_INFERNAL_PARADE, EventAddHex, nullptr},
     {MOVE_CEASELESS_EDGE, EventAddCeaselessEdge, "Moves/CeaselessEdge"},
@@ -5465,22 +5672,12 @@ extern "C" bool THUMB_BRANCH_MoveEvent_AddItem(BattleMon * battleMon, MoveID mov
     return 0;
 }
 
-MOVE_ID protectMoves[] = {
-    MOVE_PROTECT, 
-    MOVE_DETECT, 
-    MOVE_ENDURE, 
-    MOVE_WIDE_GUARD, 
-    MOVE_QUICK_GUARD,
-    MOVE_MAT_BLOCK,
-};
 // Protect Moves
 extern "C" void THUMB_BRANCH_HandlerProtectStart(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work) {
     if (pokemonSlot == BattleEventVar_GetValue(VAR_ATTACKING_MON)) {
         BattleMon* currentMon = Handler_GetBattleMon(serverFlow, pokemonSlot);
         MOVE_ID previousMove = BattleMon_GetPreviousMoveID(currentMon);
-        if (SEARCH_ARRAY(protectMoves, previousMove)) {
-        //if (getMoveFlag(previousMove, FLAG_PROTECT)) {
-        // TODO: add protect flag to Editor and all protect moves
+        if (!getMoveFlag(previousMove, FLAG_PROTECT)) {
             HandlerParam_SetCounter* setCounter;
             setCounter = (HandlerParam_SetCounter*)BattleHandler_PushWork(serverFlow, EFFECT_COUNTER, pokemonSlot);
             setCounter->pokeID = pokemonSlot;
@@ -5493,7 +5690,7 @@ extern "C" void THUMB_BRANCH_HandlerProtectStart(BattleEventItem* item, ServerFl
 
 #endif // EXPAND_MOVES
 
-#if EXPAND_FIELD_EFFECTS
+#if 0 // EXPAND_FIELD_EFFECTS
 
 extern "C" void THUMB_BRANCH_LINK_BattleEventItem_Remove_0x44(BattleEventItem * item) {
     switch (item->factorType)

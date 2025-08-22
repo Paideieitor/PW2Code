@@ -9,6 +9,7 @@
 #include "species.h"
 #include "stat_stage.h"
 #include "moves.h"
+#include "counters.h"
 
 #include "poke_party.h"
 
@@ -151,7 +152,7 @@ struct BattleParty
 
 extern "C" u32 BattleMon_GetID(BattleMon* battleMon);
 extern "C" b32 BattleMon_IsFainted(BattleMon* battleMon);
-extern "C" ItemID BattleMon_GetHeldItem(BattleMon* battleMon);
+extern "C" ITEM BattleMon_GetHeldItem(BattleMon* battleMon);
 extern "C" u32 BattleMon_GetValue(BattleMon* battleMon, BattleMonValue value);
 extern "C" CONDITION BattleMon_GetStatus(BattleMon* battleMon);
 extern "C" u32 BattleMon_GetConfrontRecCount(BattleMon* battleMon);
@@ -184,6 +185,10 @@ extern "C" void BattleMon_ChangeAbility(BattleMon* battleMon, u16 ability);
 extern "C" void BattleMon_SetMovesAndPP(BattleMon* battleMon);
 extern "C" u32 BattleMon_GetRealStat(BattleMon* battleMon, BattleMonValue statStage);
 extern "C" u16 BattleMon_GetPreviousMoveID(BattleMon* battleMon);
+extern "C" u8 BattleMon_GetCount(BattleMon* battleMon, COUNTER counter);
+extern "C" MOVE_ID BattleMon_GetPreviousMove(BattleMon* battleMon);
+extern "C" u32 BattleMon_GetConditionAffectedMove(BattleMon* battleMon, CONDITION condition);
+extern "C" u32 BattleMon_GetStatStageVolumeToMax(BattleMon* battleMon, StatStage stat);
 
 extern "C" void CureStatusCondition(BattleMon* battleMon);
 

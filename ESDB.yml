@@ -3580,3 +3580,34 @@ Symbols:
   - Name: BattleMon_GetPreviousMoveID
     Segment: 0xA7
     Address: 0x21bbfe9
+  - Name: BattleMon_GetCount
+    Segment: 0xA7
+    Address: 0x21bc1ed
+  - Name: HandlerCommon_IsMonLastInTurnOrder
+    Segment: 0xA7
+    Address: 0x21cdea5
+  - Name: Condition_GetParam
+    Segment: 0xA7
+    Address: 0x21ce401
+  - Name: BattleMon_GetPreviousMove
+    Segment: 0xA7
+    Address: 0x21bbff9
+  - Name: BattleMon_GetConditionAffectedMove
+    Segment: 0xA7
+    Address: 0x21bbb19
+  - Name: BattleHandler_ConsumeItem
+    Segment: 0xA7
+    Address: 0x21ada4d
+  - Name: ServerDisplay_UseHeldItem
+    Segment: 0xA7
+    Address: 0x21a9c2d
+  - Name: BattleMon_GetStatStageVolumeToMax
+    Segment: 0xA7   
+    Address: 0x21bb591
+  - Name: ServerControl_SideEffectEndMessageCore
+    Segment: 0xA7
+    Address: 0x21a86ad
+  - Name: EventAddShadowForce
+    Segment: 0xA7
+    Address: 0x21cba8d
+    

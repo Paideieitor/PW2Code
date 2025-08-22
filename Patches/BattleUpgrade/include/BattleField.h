@@ -83,6 +83,10 @@ struct BattleFieldExt
     // Each bit represents a battle slot, 1 means the mon has already used Supersweet Syrup
     u32 supersweetSyrupFlag;
 #endif // EXPAND_ABILITIES
+
+#if EXPAND_MOVES
+    u32 consumedBerryFlags;
+#endif // EXPAND_MOVES
 };
 
 extern "C" BattleFieldExt * BattleField_Init(u16 heapID);
@@ -98,6 +102,7 @@ extern "C" b32 BattleField_AddEffectCore(BattleFieldExt * battleField, FIELD_EFF
 extern "C" b32 BattleField_RemoveEffectCore(BattleFieldExt * battleField, FIELD_EFFECT fieldEffect);
 extern "C" void BattleField_RemoveDependPokeEffectCore(BattleFieldExt * battleField, u32 pokemonSlot);
 extern "C" b32 BattleField_CheckImprisonCore(BattleFieldExt * battleField, PokeCon * pokeCon, BattleMon * battleMon, MOVE_ID moveID);
+extern "C" b32 BattleField_CheckImprison(PokeCon* pokeCon, BattleMon* battleMon, MOVE_ID moveID);
 extern "C" void BattleField_TurnCheckCore(BattleFieldExt * battleField, void(*callback)(FIELD_EFFECT, ServerFlow*), ServerFlow * serverFlow);
 extern "C" WEATHER BattleField_GetWeather();
 extern "C" u32 BattleField_GetWeatherTurns();
@@ -181,6 +186,13 @@ extern "C" void ServerEvent_UseTempItemBefore(ServerFlow * serverFlow, u32 curre
 extern "C" void ServerEvent_SwitchInPriority(ServerFlow * serverFlow);
 
 #endif // EXPAND_ABILITIES
+
+#if EXPAND_MOVES
+
+extern "C" b32 BattleField_CheckConsumedBerryFlag(u32 battleSlot);
+extern "C" void BattleField_SetConsumedBerryFlag(u32 battleSlot);
+
+#endif // EXPAND_MOVES
 
 extern "C" WEATHER Handler_CheckWeather(ServerFlow * serverFlow, u32 pokemonSlot, WEATHER weather);
 

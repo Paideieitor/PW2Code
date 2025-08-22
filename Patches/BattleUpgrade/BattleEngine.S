@@ -7,6 +7,7 @@
 #endif
 #if EXPAND_MOVES
 .type THUMB_BRANCH_LINK_LoadAnimationScriptFile_0xB6, %function
+.type THUMB_BRANCH_LINK_BtlvEffect_LoadAnimationScript_0x1A, %function
 #endif
 
 #if WEATHER_ABILITY_TURNS != 255
@@ -19,11 +20,11 @@ FULL_COPY_CommonWeatherChangeAbility_0x2A:
 #endif // WEATHER_ABILITY_TURNS != 255
 
 #if EXPAND_FIELD_EFFECTS
-
+ 
 FULL_COPY_BattleHandler_RemoveSideEffectCore_0x58:
     cmp     r4, #MAX_SIDE_EFFECT_AMOUNT
     .size FULL_COPY_BattleHandler_RemoveSideEffectCore_0x58, . - FULL_COPY_BattleHandler_RemoveSideEffectCore_0x58
-
+ 
 #endif // EXPAND_FIELD_EFFECTS
 
 #if EXPAND_ABILITIES || ADD_MEGA_EVOLUTION
@@ -97,14 +98,6 @@ Exit_CALCDMG_Set:
 #endif // GEN7_INFILTRATOR
 
 #if EXPAND_ITEMS
-
-FULL_COPY_IsUnselectableMove_0xBE:
-    movs    r1, r4
-    .size FULL_COPY_IsUnselectableMove_0xBE, . - FULL_COPY_IsUnselectableMove_0xBE
-
-FULL_COPY_IsUnselectableMove_0xD2:
-    cmp    r0, #0
-    .size FULL_COPY_IsUnselectableMove_0xD2, . - FULL_COPY_IsUnselectableMove_0xD2
 
 FULL_COPY_HandlerDrySkinWeather_0x1A:
     movs    r0, r5

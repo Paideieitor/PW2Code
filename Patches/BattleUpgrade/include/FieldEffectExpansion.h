@@ -41,5 +41,6 @@ extern "C" BattleEventHandlerTableEntry * EventAddSideToxicSpikesUpdated(u32 * h
 extern "C" BattleEventHandlerTableEntry * EventAddSideStealthRockUpdated(u32 * handlerAmount);
 extern "C" BattleEventHandlerTableEntry * EventAddSideWideGuardUpdated(u32 * handlerAmount);
 extern "C" BattleEventHandlerTableEntry * EventAddSideQuickGuardUpdated(u32 * handlerAmount);
+extern "C" BattleEventHandlerTableEntry* EventAddSideStickyWeb(u32* handlerAmount);
 
 #endif // __FIELD_EFFECT_EXPANSION_H

@@ -159,7 +159,6 @@ extern "C" BattleEventHandlerTableEntry * EventAddSoundproofUpdated(u32 * handle
 extern "C" BattleEventHandlerTableEntry * EventAddNormalizeUpdated(u32 * handlerAmount);
 extern "C" BattleEventHandlerTableEntry * EventAddFriskUpdated(u32 * handlerAmount);
 extern "C" BattleEventHandlerTableEntry * EventAddOvercoatUpdated(u32 * handlerAmount);
-extern "C" BattleEventHandlerTableEntry * EventAddInfiltratorUpdated(u32 * handlerAmount);
 extern "C" BattleEventHandlerTableEntry * EventAddPranksterUpdated(u32 * handlerAmount);
 
 extern "C" void HandlerIgnoreIntimidate(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work);

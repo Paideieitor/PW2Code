@@ -6,7 +6,6 @@
 #include "server_flow.h"
 
 // TOXIC DEBRIS
-extern "C" void CommonCreateSideEffect(BattleEventItem * item, ServerFlow * serverFlow, u32 currentSlot, u32 * work, u8 opposingSide, SideEffect effect, ConditionData condData, u16 msgID);
 extern "C" void HandlerToxicDebris(BattleEventItem * item, ServerFlow * serverFlow, u32 pokemonSlot, u32 * work) {
     if (pokemonSlot == BattleEventVar_GetValue(VAR_DEFENDING_MON) &&
         !BattleEventVar_GetValue(VAR_SUBSTITUTE_FLAG) &&

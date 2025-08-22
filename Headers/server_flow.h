@@ -470,6 +470,8 @@ extern "C" void ServerDisplay_AddCondition(ServerFlow * serverFlow, BattleMon * 
 extern "C" void ServerDisplay_MoveFail(ServerFlow * serverFlow);
 extern "C" void ServerDisplay_MoveAvoid(ServerFlow* serverFlow, BattleMon* attackingMon);
 extern "C" void ServerDisplay_ResetConditionFlag(ServerFlow* serverFlow, BattleMon* battleMon, CONDITION_FLAG conditionFlag);
+extern "C" void ServerDisplay_UseHeldItem(ServerFlow* serverFlow, BattleMon* battleMon);
+extern "C" void ServerControl_ChangeHeldItem(ServerFlow* serverFlow, BattleMon* battleMon, ITEM itemID, u32 consumeItem);
 
 extern "C" BattleMon* PokeCon_GetBattleMon(PokeCon* pokeCon, u32 index);
 extern "C" BattleParty* PokeCon_GetBattleParty(PokeCon* pokeCon, u32 idx);
@@ -497,6 +499,7 @@ extern "C" b32 Handler_IsSideEffectActive(ServerFlow* serverFlow, u32 side, SIDE
 extern "C" u32 Handler_GetExistFrontPokePos(ServerFlow* serverFlow, u32 pokemonSlot);
 extern "C" u8* Handler_GetTempWork(ServerFlow* serverFlow);
 extern "C" u32 Handler_GetAllOpponentFrontPokeID(ServerFlow * serverFlow, u32 pokemonSlot, u8 * frontSlots);
+extern "C" b32 HandlerCommon_IsMonLastInTurnOrder(ServerFlow* serverFlow, u32 battleSlot);
 
 extern "C" u32 AddConditionCheckFailOverwrite(ServerFlow * serverFlow, BattleMon * defendingMon, CONDITION condition, ConditionData condData, u8 overrideMode);
 extern "C" u32 AddConditionCheckFailStandard(ServerFlow * serverFlow, BattleMon * defendingMon, u32 failStatus, CONDITION condition);

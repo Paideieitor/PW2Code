@@ -1,6 +1,8 @@
 #ifndef __CONDITIONS_H
 #define __CONDITIONS_H
 
+#include "defs.h"
+
 struct BattleMon;
 
 typedef u32 CONDITION;
@@ -87,5 +89,6 @@ extern "C" ConditionData Condition_MakePermanent();
 extern "C" ConditionData MakeCondition(CONDITION condition, BattleMon* battleMon, ConditionData* condData);
 extern "C" ConditionData ConditionData_MakePoke(u32 battleSlot);
 extern "C" ConditionData Condition_MakeBadlyPoisoned();
+extern "C" u16 Condition_GetParam(ConditionData condData);
 
 #endif // __CONDITIONS_H

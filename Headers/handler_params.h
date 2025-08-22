@@ -8,6 +8,7 @@
 #include "field_effects.h"
 #include "side_effects.h"
 #include "turn_flag.h"
+#include "counters.h"
 
 typedef u32 ABILITY;
 
@@ -138,6 +139,12 @@ struct SWAN_ALIGNED(4) HandlerParam_AddFieldEffect
     u8 field_E;
     u8 field_F;
     HandlerParam_StrParams exStr;
+};
+
+struct HandlerParam_RemoveFieldEffect
+{
+    HandlerParam_Header header;
+    FIELD_EFFECT effect;
 };
 
 struct SWAN_ALIGNED(4) HandlerParam_ChangeType
@@ -303,16 +310,6 @@ struct SWAN_ALIGNED(4) HandlerParam_SetTurnFlag
     u8 pokeID;
 };
 
-typedef u8 COUNTER;
-enum Counter : u8
-{
-    COUNTER_STOCKPILE = 0x0,
-    COUNTER_STOCKPILE_DEF = 0x1,
-    COUNTER_STOCKPILE_SPDEF = 0x2,
-    COUNTER_PROTECT = 0x3,
-    COUNTER_SKYDROP = 0x4,
-};
-
 struct SWAN_ALIGNED(2) HandlerParam_SetCounter
 {
     HandlerParam_Header header;
@@ -321,6 +318,12 @@ struct SWAN_ALIGNED(2) HandlerParam_SetCounter
     u8 value;
 };
 
+struct SWAN_ALIGNED(4) HandlerParam_ConsumeItem
+{
+    HandlerParam_Header header;
+    u32 dontUse;
+    HandlerParam_StrParams exStr;
+};
 
 extern "C" HandlerParam_Header* BattleHandler_PushWork(ServerFlow* serverFlow, BattleHandlerEffect battleHandler, u32 currentSlot);
 extern "C" void BattleHandler_PopWork(ServerFlow* serverFlow, void* handlerParms);

@@ -51,6 +51,7 @@ extern "C" BattleEventHandlerTableEntry* EventAddSideSwamp(u32 * handlerAmount);
 struct BattleEventItem;
 
 extern "C" u32 BattleSideStatus_GetCountFromBattleEventItem(BattleEventItem* item, u32 side);
+extern "C" void CommonCreateSideEffect(BattleEventItem* item, ServerFlow* serverFlow, u32 currentSlot, u32* work, u8 opposingSide, SIDE_EFFECT effect, ConditionData condData, u16 msgID);
 
 #define REMOVE_SIDE_EFFECT_SETUP(flags) flags[0] = 3; flags[1] = 0; flags[2] = 0
 #define SET_REMOVE_SIDE_EFFEC_FLAG(sideEffect, flags) flags[(sideEffect >> 3) + 1] = flags[(sideEffect >> 3) + 1] | (1 << (sideEffect & 7))

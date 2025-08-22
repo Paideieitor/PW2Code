@@ -37,7 +37,7 @@ extern "C" void HandlerMatBlock(BattleEventItem * item, ServerFlow * serverFlow,
 }
 BattleEventHandlerTableEntry MatBlockHandlers[]{
     {EVENT_MOVE_SEQUENCE_START, HandlerProtectStart},
-    {EVENT_MOVE_EXECUTE_CHECK2, HandlerProtectCheckFail},
+    {EVENT_MOVE_EXECUTE_CHECK2, HandlerProtectCheckFail },
     {EVENT_MOVE_EXECUTE_FAIL, HandlerProtectResetCounter},
     {EVENT_UNCATEGORIZED_MOVE, HandlerMatBlock},
 };
