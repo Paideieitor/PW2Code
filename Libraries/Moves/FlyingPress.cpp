@@ -9,7 +9,7 @@
 extern "C" void HandlerFlyingPress(BattleEventItem * item, ServerFlow * serverFlow, u32 pokemonSlot, u32 * work) {
     if (pokemonSlot == BattleEventVar_GetValue(VAR_ATTACKING_MON)) {
         
-        TypeEffectiveness effectiveness = GetTypeEffectiveness(TYPE_FLY, BattleEventVar_GetValue(VAR_POKE_TYPE));
+        EFFECTIVENESS effectiveness = (EFFECTIVENESS)GetTypeEffectiveness(TYPE_FLY, BattleEventVar_GetValue(VAR_POKE_TYPE));
         BattleEventVar_RewriteValue(VAR_SET_TYPE_EFFECTIVENESS, COMPOUND_EFFECTIVENESS + effectiveness);
     }
 }

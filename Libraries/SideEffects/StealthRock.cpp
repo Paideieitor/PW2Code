@@ -13,7 +13,7 @@ extern "C" void HandlerSideStealthRock(BattleEventItem * item, ServerFlow * serv
             return;
 
         u32 typePair = BattleMon_GetPokeType(currentMon);
-        TypeEffectiveness effectiveness = GetTypeEffectivenessVsMon(TYPE_ROCK, typePair);
+        EFFECTIVENESS effectiveness = GetTypeEffectivenessVsMon(TYPE_ROCK, typePair);
 
         u32 damageFraction = 32;
         switch (effectiveness)

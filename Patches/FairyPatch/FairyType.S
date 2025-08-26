@@ -43,10 +43,12 @@ FULL_COPY_splitTypeCore_0x4C:
     .byte 0x00, 0xDB @ blt #0x4
     .size FULL_COPY_splitTypeCore_0x4C, . - FULL_COPY_splitTypeCore_0x4C
 
+#if !EXPAND_MOVES
 FULL_COPY_BattleMon_HasType_0x6:
     .byte 0x12, 0x2C @ cmp r4, #TypeCount
     .byte 0x0E, 0xDA @ bge #0x20
     .size FULL_COPY_BattleMon_HasType_0x6, . - FULL_COPY_BattleMon_HasType_0x6
+#endif
 
 FULL_COPY_HandlerColorChange_0x36:
     .byte 0x12, 0x2E @ cmp r6, #TypeCount

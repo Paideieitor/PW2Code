@@ -5,7 +5,7 @@
 
 // WEAKNESS POLICY
 extern "C" void HandlerWeaknessPolicyDamageReaction(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work) {
-    TypeEffectiveness typeEffectiveness = (TypeEffectiveness)BattleEventVar_GetValue(VAR_TYPE_EFFECTIVENESS);
+    EFFECTIVENESS typeEffectiveness = (EFFECTIVENESS)BattleEventVar_GetValue(VAR_TYPE_EFFECTIVENESS);
     
     if (pokemonSlot == BattleEventVar_GetValue(VAR_DEFENDING_MON)
         && !BattleEventVar_GetValue(VAR_SUBSTITUTE_FLAG)

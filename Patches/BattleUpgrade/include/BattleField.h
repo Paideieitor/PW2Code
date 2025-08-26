@@ -85,7 +85,11 @@ struct BattleFieldExt
 #endif // EXPAND_ABILITIES
 
 #if EXPAND_MOVES
+    // Keeps track if a Pokémon has eaten a berry this match (used by Belch)
     u32 consumedBerryFlags;
+
+    // Extra type added by moves like Trick-or-Treat or Forest's Curse
+    u8 extraTypes[BATTLE_MAX_SLOTS];
 #endif // EXPAND_MOVES
 };
 
@@ -191,6 +195,9 @@ extern "C" void ServerEvent_SwitchInPriority(ServerFlow * serverFlow);
 
 extern "C" b32 BattleField_CheckConsumedBerryFlag(u32 battleSlot);
 extern "C" void BattleField_SetConsumedBerryFlag(u32 battleSlot);
+
+extern "C" POKE_TYPE BattleField_GetExtraType(u32 battleSlot);
+extern "C" void BattleField_SetExtraType(u32 battleSlot, POKE_TYPE type);
 
 #endif // EXPAND_MOVES
 

@@ -8,7 +8,7 @@
 
 #define TYPE_CHART_SIZE 0x144
 
-extern "C" TypeEffectiveness THUMB_BRANCH_GetTypeEffectiveness(POKE_TYPE moveType, POKE_TYPE pokeType) {
+extern "C" EFFECTIVENESS THUMB_BRANCH_GetTypeEffectiveness(POKE_TYPE moveType, POKE_TYPE pokeType) {
     if (moveType >= TYPE_NULL || pokeType >= TYPE_NULL) {
         return EFFECTIVENESS_1;
     }

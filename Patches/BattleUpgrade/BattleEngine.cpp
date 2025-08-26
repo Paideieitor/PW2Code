@@ -1294,6 +1294,13 @@ extern "C" void BattleField_SetConsumedBerryFlag(u32 battleSlot) {
     g_BattleField->consumedBerryFlags |= (1 << battleSlot);
 }
 
+extern "C" POKE_TYPE BattleField_GetExtraType(u32 battleSlot) {
+    return g_BattleField->extraTypes[battleSlot];
+}
+extern "C" void BattleField_SetExtraType(u32 battleSlot, POKE_TYPE type) {
+    g_BattleField->extraTypes[battleSlot] = (u8)type;
+}
+
 #endif // EXPAND_MOVES
 
 
@@ -1662,6 +1669,8 @@ extern "C" void THUMB_BRANCH_BattleField_InitCore(BattleFieldExt * battleField, 
 #if EXPAND_MOVES
 
     battleField->consumedBerryFlags = 0;
+
+    sys_memset(battleField->extraTypes, BATTLE_MAX_SLOTS, TYPE_NULL);
 
 #endif 
 }
@@ -2697,7 +2706,7 @@ extern "C" void THUMB_BRANCH_ServerControl_SideEffectEndMessageCore(ServerFlow* 
 
 extern "C" u32 CalcBaseDamage(u32 power, u32 attack, u32 level, u32 defense);
 extern "C" u32 WeatherPowerMod(u32 weather, u32 subProcID);
-extern "C" u32 TypeEffectivenessPowerMod(u32 damage, u32 typeEffectiveness);
+extern "C" u32 TypeEffectivenessPowerMod(u32 damage, EFFECTIVENESS typeEffectiveness);
 
 extern "C" ITEM BattleMon_GetUsableItem(BattleMon * battleMon) {
     if (BattleField_CheckEffect(FLDEFF_MAGIC_ROOM) ||
@@ -2709,8 +2718,23 @@ extern "C" ITEM BattleMon_GetUsableItem(BattleMon * battleMon) {
     return BattleMon_GetHeldItem(battleMon);
 }
 
+#if EXPAND_MOVES
+extern "C" u32 ExtraTypeEffectivenessPowerMod(u32 damage, EFFECTIVENESS effectiveness) {
+    switch (effectiveness)
+    {
+    case EFFECTIVENESS_IMMUNE: return 0;
+    case EFFECTIVENESS_1_8: return damage >> 3;
+    case EFFECTIVENESS_1_4: return damage >> 2;
+    case EFFECTIVENESS_1_2: return damage >> 1;
+    case EFFECTIVENESS_2: return damage * 2;
+    case EFFECTIVENESS_4: return damage * 4;
+    case EFFECTIVENESS_8: return damage * 8;
+    }
+    return damage;
+}
+#endif
 extern "C" u32 THUMB_BRANCH_SAFESTACK_ServerEvent_CalcDamage(ServerFlow * serverFlow, BattleMon * attackingMon, BattleMon * defendingMon,
-    MoveParam * moveParam, u32 typeEffectiveness, u32 targetDmgRatio, u32 critFlag, u32 battleDebugMode, u16 * destDamage) {
+    MoveParam * moveParam, EFFECTIVENESS typeEffectiveness, u32 targetDmgRatio, u32 critFlag, u32 battleDebugMode, u16 * destDamage) {
     u32 category = PML_MoveGetCategory(moveParam->moveID);
     u32 isFixedDamage = 0;
     BattleEventVar_Push();
@@ -2780,19 +2804,23 @@ extern "C" u32 THUMB_BRANCH_SAFESTACK_ServerEvent_CalcDamage(ServerFlow * server
             damage = fixed_round(damage, stab);
         }
 
-        u32 damageAfterType = TypeEffectivenessPowerMod(damage, typeEffectiveness);
+#if EXPAND_MOVES
+        damage = ExtraTypeEffectivenessPowerMod(damage, typeEffectiveness);
+#else
+        damage = TypeEffectivenessPowerMod(damage, typeEffectiveness);
+#endif
+
         if (category == CATEGORY_PHYSICAL
             && BattleMon_GetStatus(attackingMon) == CONDITION_BURN
             && BattleMon_GetValue(attackingMon, VALUE_EFFECTIVE_ABILITY) != ABIL_GUTS) {
-            damageAfterType = 50 * damageAfterType / 100u;
+            damage = 50 * damage / 100u;
         }
-        if (!damageAfterType) {
-            damageAfterType = 1;
+        if (!damage) {
+            damage = 1;
         }
-
 
         BattleEventVar_SetMulValue(VAR_RATIO, 4096, 41, 0x20000);
-        BattleEventVar_SetValue(VAR_DAMAGE, damageAfterType);
+        BattleEventVar_SetValue(VAR_DAMAGE, damage);
         BattleEvent_CallHandlers(serverFlow, EVENT_MOVE_DAMAGE_PROCESSING_2);
         int damageRatio = BattleEventVar_GetValue(VAR_RATIO);
         int damageAfterProc2 = BattleEventVar_GetValue(VAR_DAMAGE);
@@ -2834,8 +2862,9 @@ extern "C" void THUMB_BRANCH_LINK_HandlerEffectSpore_0x44(ServerFlow* serverFlow
 #if GHOST_IGNORES_TRAPS
 
 extern "C" b32 THUMB_BRANCH_LINK_ServerControl_RunCore_0x5C(ServerFlow * serverFlow, BattleMon * battleMon) {
-    if (BattleMon_HasType(battleMon, TYPE_GHOST))
+    if (BattleMon_HasType(battleMon, TYPE_GHOST)) {
         return false;
+    }
     return ServerEvent_CheckRunPrevent(serverFlow, battleMon);
 }
 
@@ -4794,57 +4823,6 @@ extern "C" void THUMB_BRANCH_LINK_ServerFlow_SetupBeforeFirstTurn_0x6E(ServerFlo
 #endif
 }
 
-// Mega-Evolution - Prevent Mega-Evolution form changes to be reverted when switching
-// Abilities - Prevent certain form changes to be reverted when switching
-ABILITY abilityDontChangeFormOnSwitchOut[] = {
-    ABIL_BATTLE_BOND,
-    ABIL_DISGUISE,
-    ABIL_ICE_FACE,
-    ABIL_POWER_CONSTRUCT,
-    ABIL_ZERO_TO_HERO,
-    ABIL_TERA_SHIFT,
-    ABIL_TERA_SHELL,
-    ABIL_TERAFORM_ZERO,
-};
-extern "C" b32 AbilityDontChangeFormOnSwitchOut(ABILITY ability) {
-    return SEARCH_ARRAY(abilityDontChangeFormOnSwitchOut, ability); }
-extern "C" void THUMB_BRANCH_BattleMon_ClearForSwitchOut(BattleMon* battleMon) {
-    sys_memset(battleMon->turnFlag, 0, 2u);
-    BattleMon_ClearTransformChange(battleMon);
-    MoveWork_ClearSurface(battleMon);
-    BattleMon_ClearUsedMoveFlag(battleMon);
-    ClearCounter(battleMon);
-    BattleMon_ClearComboMoveData(battleMon);
-    BattleMon_IllusionBreak(battleMon);
-    if (!BattleMon_GetConditionFlag(battleMon, CONDITIONFLAG_BATONPASS))
-    {
-        BattleMon_RemoveSubstitute(battleMon);
-        ClearMoveStatusWork(battleMon, 0);
-        ResetStatStages(&battleMon->statStageParam);
-        sys_memset(battleMon->conditionFlag, 0, 2u);
-    }
-
-    // Don't reset battle-permanent form changes
-#if ADD_MEGA_EVOLUTION
-    u8 megaevolution = CanMegaEvolve(battleMon);
-#else
-    u8 megaevolution = 0;
-#endif
-    if (!AbilityDontChangeFormOnSwitchOut(battleMon->currentAbility) &&
-        (!megaevolution || megaevolution != battleMon->form)) {
-        battleMon->form = battleMon->flags & 0x1F;
-        battleMon->currentAbility = battleMon->ability;
-    }
-    else
-    {
-        // Reset to the ability of the current form if the Pokémon doesn't revert to base
-        battleMon->currentAbility = PokeParty_GetParam(battleMon->partySrc, PF_Ability, 0);
-    }
-
-    PokeParty_SetParam(battleMon->partySrc, PF_Forme, battleMon->form);
-    PokeParty_RecalcStats(battleMon->partySrc);
-}
-
 // Mega-Evolution - Reset the ability when returning to base form
 extern "C" void THUMB_BRANCH_BattleMon_UpdateData(BattleMon * battleMon, bool resetForm)
 {
@@ -4897,6 +4875,73 @@ extern "C" void THUMB_BRANCH_ServerControl_UnnerveAction(ServerFlow * serverFlow
 }
 
 #endif // EXPAND_ABILITIES || ADD_MEGA_EVOLUTION
+
+#if EXPAND_ABILITIES || ADD_MEGA_EVOLUTION || EXPAND_MOVES
+
+// Mega-Evolution - Prevent Mega-Evolution form changes to be reverted when switching
+// Abilities - Prevent certain form changes to be reverted when switching
+// Moves - Reset the extra typing when switching out
+ABILITY abilityDontChangeFormOnSwitchOut[] = {
+    ABIL_BATTLE_BOND,
+    ABIL_DISGUISE,
+    ABIL_ICE_FACE,
+    ABIL_POWER_CONSTRUCT,
+    ABIL_ZERO_TO_HERO,
+    ABIL_TERA_SHIFT,
+    ABIL_TERA_SHELL,
+    ABIL_TERAFORM_ZERO,
+};
+extern "C" b32 AbilityDontChangeFormOnSwitchOut(ABILITY ability) {
+    return SEARCH_ARRAY(abilityDontChangeFormOnSwitchOut, ability);
+}
+extern "C" void THUMB_BRANCH_BattleMon_ClearForSwitchOut(BattleMon* battleMon) {
+    sys_memset(battleMon->turnFlag, 0, 2u);
+    BattleMon_ClearTransformChange(battleMon);
+    MoveWork_ClearSurface(battleMon);
+    BattleMon_ClearUsedMoveFlag(battleMon);
+    ClearCounter(battleMon);
+    BattleMon_ClearComboMoveData(battleMon);
+    BattleMon_IllusionBreak(battleMon);
+    if (!BattleMon_GetConditionFlag(battleMon, CONDITIONFLAG_BATONPASS))
+    {
+        BattleMon_RemoveSubstitute(battleMon);
+        ClearMoveStatusWork(battleMon, 0);
+        ResetStatStages(&battleMon->statStageParam);
+        sys_memset(battleMon->conditionFlag, 0, 2u);
+    }
+
+    // Don't reset battle-permanent form changes
+#if ADD_MEGA_EVOLUTION
+    u8 megaevolution = CanMegaEvolve(battleMon);
+#else
+    u8 megaevolution = 0;
+#endif
+
+#if EXPAND_ABILITIES
+    if (!AbilityDontChangeFormOnSwitchOut(battleMon->currentAbility) &&
+        (!megaevolution || megaevolution != battleMon->form)) {
+        battleMon->form = battleMon->flags & 0x1F;
+        battleMon->currentAbility = battleMon->ability;
+    }
+    else
+    {
+        // Reset to the ability of the current form if the Pokémon doesn't revert to base
+        battleMon->currentAbility = PokeParty_GetParam(battleMon->partySrc, PF_Ability, 0);
+    }
+#else
+    battleMon->form = battleMon->flags & 0x1F;
+    battleMon->currentAbility = battleMon->ability;
+#endif
+
+#if EXPAND_MOVES
+    BattleField_SetExtraType(battleMon->battleSlot, TYPE_NULL);
+#endif
+
+    PokeParty_SetParam(battleMon->partySrc, PF_Forme, battleMon->form);
+    PokeParty_RecalcStats(battleMon->partySrc);
+}
+
+#endif // EXPAND_ABILITIES || ADD_MEGA_EVOLUTION || MOVE_EXPANSION
 
 #if EXPAND_ABILITIES || EXPAND_MOVES
 
@@ -5019,7 +5064,7 @@ extern "C" void THUMB_BRANCH_ServerEvent_EquipTempItem(ServerFlow* serverFlow, B
     ServerEvent_UseTempItemAfter(serverFlow, currentSlot, attackingSlot, itemID);
 }
 
-extern "C" TypeEffectiveness THUMB_BRANCH_SAFESTACK_ServerEvent_CheckDamageEffectiveness(ServerFlow* serverFlow, BattleMon* attackingMon, BattleMon* defendingMon, PokeType moveType, u8 pokemonType) {
+extern "C" EFFECTIVENESS THUMB_BRANCH_SAFESTACK_ServerEvent_CheckDamageEffectiveness(ServerFlow* serverFlow, BattleMon* attackingMon, BattleMon* defendingMon, PokeType moveType, u8 pokemonType) {
     BattleEventVar_Push();
     u32 attackingSlot = BattleMon_GetID(attackingMon);
     BattleEventVar_SetConstValue(VAR_ATTACKING_MON, attackingSlot);
@@ -5035,7 +5080,7 @@ extern "C" TypeEffectiveness THUMB_BRANCH_SAFESTACK_ServerEvent_CheckDamageEffec
     u32 overrideEffectiveness = BattleEventVar_GetValue(VAR_SET_TYPE_EFFECTIVENESS);
     BattleEventVar_Pop();
         
-    TypeEffectiveness effectiveness = GetTypeEffectiveness(moveType, pokemonType);
+    EFFECTIVENESS effectiveness = GetTypeEffectiveness(moveType, pokemonType);
     if (effectiveness == EFFECTIVENESS_IMMUNE &&
         overrideImmunity) {
         effectiveness = EFFECTIVENESS_1;
@@ -5052,8 +5097,7 @@ extern "C" TypeEffectiveness THUMB_BRANCH_SAFESTACK_ServerEvent_CheckDamageEffec
         case OVERRIDE_EFFECTIVENESS_2:
             return EFFECTIVENESS_2;
         default: // COMPOUND_EFFECTIVENESS + (Effectiveness to compound)
-            effectiveness = GetTypeEffectivenessMultiplier(effectiveness, 
-                (TypeEffectiveness)(overrideEffectiveness - COMPOUND_EFFECTIVENESS));
+            effectiveness = GetTypeEffectivenessMultiplier(effectiveness, (overrideEffectiveness - COMPOUND_EFFECTIVENESS));
             break;
         }
     }
@@ -5608,6 +5652,9 @@ MoveEventAddTableExt moveEventAddTableExt[] = {
     {MOVE_STICKY_WEB, EventAddStickyWeb, "Moves/StickyWeb"},
     {MOVE_FELL_STINGER, EventAddFellStinger, "Moves/FellStinger"},
     {MOVE_PHANTOM_FORCE, EventAddShadowForce, nullptr},
+    {MOVE_TRICK_OR_TREAT, EventAddTrickOrTreat, "Moves/ExtraType"},
+
+    {MOVE_FOREST_S_CURSE, EventAddForestsCurse, "Moves/ExtraType"},
 
     {MOVE_INFERNAL_PARADE, EventAddHex, nullptr},
     {MOVE_CEASELESS_EDGE, EventAddCeaselessEdge, "Moves/CeaselessEdge"},
@@ -5685,6 +5732,122 @@ extern "C" void THUMB_BRANCH_HandlerProtectStart(BattleEventItem* item, ServerFl
             setCounter->value = 0;
             BattleHandler_PopWork(serverFlow, setCounter);
         }
+    }
+}
+
+// Trick-or-Treat & Forest's Curse - Report the extra type
+extern "C" void splitTypeCore(BattleMon* battleMon, u8* type1, u8* type2);
+extern "C" b32 THUMB_BRANCH_BattleMon_HasType(BattleMon* battleMon, POKE_TYPE type) {
+    if (type != TYPE_NULL) {
+        u8 type1 = (u8)TYPE_NULL;
+        u8 type2 = (u8)TYPE_NULL;
+        splitTypeCore(battleMon, &type1, &type2);
+        if (type1 == type || type2 == type ||
+            BattleField_GetExtraType(battleMon->battleSlot) == type) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+// Trick-or-Treat & Forest's Curse - Calculate triple weakness/resistance with extra type
+u8 effectivenessMultiplier[] = { 0, 2, 4, 8, 16, 32 };
+extern "C" EFFECTIVENESS THUMB_BRANCH_GetTypeEffectivenessMultiplier(EFFECTIVENESS effectiveness1, EFFECTIVENESS effectiveness2) {
+
+    u32 multiplier = effectivenessMultiplier[effectiveness1] * effectivenessMultiplier[effectiveness2] / 4;
+    switch (multiplier)
+    {
+    case 0: return EFFECTIVENESS_IMMUNE;
+    case 2: return EFFECTIVENESS_1_8;
+    case 4: return EFFECTIVENESS_1_4;
+    case 8: return EFFECTIVENESS_1_2;
+    case 32: return EFFECTIVENESS_2;
+    case 64: return EFFECTIVENESS_4;
+    case 128: return EFFECTIVENESS_8;
+    }
+    return EFFECTIVENESS_1;
+}
+
+// Trick-or-Treat & Forest's Curse - Add extra type to the effectiveness calculation
+extern "C" EFFECTIVENESS THUMB_BRANCH_LINK_ServerEvent_CheckMoveDamageEffectiveness_0x32(ServerFlow* serverFlow, BattleMon* attackingMon, BattleMon* defendingMon, PokeType moveType) {
+
+    u16 pokeType = BattleMon_GetPokeType(defendingMon);
+    POKE_TYPE type = PokeTypePair_GetType1(pokeType);
+    EFFECTIVENESS effectiveness = ServerEvent_CheckDamageEffectiveness(serverFlow, attackingMon,
+        defendingMon, moveType, type);
+
+    POKE_TYPE extraType = BattleField_GetExtraType(defendingMon->battleSlot);
+    if (extraType != TYPE_NULL)
+    {
+        EFFECTIVENESS extraEffectiveness = ServerEvent_CheckDamageEffectiveness(serverFlow, attackingMon,
+            defendingMon, moveType, extraType);
+        effectiveness = GetTypeEffectivenessMultiplier(effectiveness, extraEffectiveness);
+    }
+
+    return effectiveness;
+}
+
+// Trick-or-Treat & Forest's Curse - Fix message for triple weakness/resistance with extra type
+extern "C" void THUMB_BRANCH_ServerDisplay_DamageEffectiveness(ServerFlow* serverFlow, EFFECTIVENESS effectiveness) {
+    if (effectiveness < EFFECTIVENESS_1 || effectiveness == EFFECTIVENESS_1_8) {
+        ServerDisplay_AddMessageImpl(serverFlow->serverCommandQueue, SCID_MessageStandard, 79, 0xFFFF0000);
+    }
+    else {
+        ServerDisplay_AddMessageImpl(serverFlow->serverCommandQueue, SCID_MessageStandard, 78, 0xFFFF0000);
+    }
+}
+extern "C" void DisplayMultiEffectiveMessage(ServerFlow* serverFlow, u32 hitMonCount, EFFECTIVENESS* effectiveRecord, BattleMon** battleMons, u32 effectivenessCount, u16 msgID) {
+    u8 hitSlots[3] = { BATTLE_MAX_SLOTS };
+    u32 hitCount = 0;
+    for (u32 idx = 0; idx < hitMonCount; ++idx) {
+        if (effectiveRecord[idx] > EFFECTIVENESS_1 &&
+            effectiveRecord[idx] != EFFECTIVENESS_1_8) {
+
+            hitSlots[hitCount] = BattleMon_GetID(battleMons[idx]);
+            ++hitCount;
+        }
+    }
+    switch (effectivenessCount)
+    {
+    case 1u:
+        ServerDisplay_AddMessageImpl(serverFlow->serverCommandQueue, SCID_SetMessage, msgID, hitSlots[0], 0xFFFF0000);
+        break;
+    case 2u:
+        ServerDisplay_AddMessageImpl(serverFlow->serverCommandQueue, SCID_SetMessage, msgID + 3, hitSlots[0], hitSlots[1], 0xFFFF0000);
+        break;
+    case 3u:
+        ServerDisplay_AddMessageImpl(serverFlow->serverCommandQueue, SCID_SetMessage, msgID + 6, hitSlots[0], hitSlots[1], hitSlots[2], 0xFFFF0000);
+        break;
+    }
+}
+extern "C" void THUMB_BRANCH_SAFESTACK_ServerDisplay_MoveEffectivenessMessage(ServerFlow* serverFlow, u32 hitMonCount, EFFECTIVENESS* effectiveRecord, BattleMon** battleMons, b32 multipleTargets) {
+    u32 notEffective = 0;
+    u32 superEffective = 0;
+    for (u32 effectiveIdx = 0; effectiveIdx < hitMonCount; ++effectiveIdx)
+    {
+        EFFECTIVENESS effectiveness = effectiveRecord[effectiveIdx];
+        if (effectiveness < EFFECTIVENESS_1 || effectiveness == EFFECTIVENESS_1_8) {
+            ++notEffective;
+        }
+        else if (effectiveness > EFFECTIVENESS_1) {
+            ++superEffective;
+        }
+    }
+
+    if (multipleTargets)
+    {
+        if (superEffective) {
+            DisplayMultiEffectiveMessage(serverFlow, hitMonCount, effectiveRecord, battleMons, superEffective, 6);
+        }
+        if (notEffective) {
+            DisplayMultiEffectiveMessage(serverFlow, hitMonCount, effectiveRecord, battleMons, notEffective, 15);
+        }
+    }
+    else if (superEffective) {
+        ServerDisplay_AddMessageImpl(serverFlow->serverCommandQueue, SCID_MessageStandard, 78, 0xFFFF0000);
+    }
+    else if (notEffective) {
+        ServerDisplay_AddMessageImpl(serverFlow->serverCommandQueue, SCID_MessageStandard, 79, 0xFFFF0000);
     }
 }
 

@@ -31,15 +31,18 @@ enum PokeType : u32
 #endif
 };
 
+typedef u32 EFFECTIVENESS;
 enum TypeEffectiveness : u32
 {
-	EFFECTIVENESS_IMMUNE = 0x0,
-	EFFECTIVENESS_1_4 = 0x1,
-	EFFECTIVENESS_1_2 = 0x2,
-	EFFECTIVENESS_1 = 0x3,
-	EFFECTIVENESS_2 = 0x4,
-	EFFECTIVENESS_4 = 0x5,
+	EFFECTIVENESS_IMMUNE = 0,
+	EFFECTIVENESS_1_4 = 1,
+	EFFECTIVENESS_1_2 = 2,
+	EFFECTIVENESS_1 = 3,
+	EFFECTIVENESS_2 = 4,
+	EFFECTIVENESS_4 = 5,
 };
+#define EFFECTIVENESS_1_8 6
+#define EFFECTIVENESS_8 7
 
 // Type effectiveness labels.
 #define NOT_EFFECTIVE 0
@@ -49,8 +52,9 @@ enum TypeEffectiveness : u32
 
 extern "C" u16 PokeTypePair_MakeMonotype(u16 type);
 extern "C" u16 PokeTypePair_Make(u16 type1, u16 type2);
-extern "C" TypeEffectiveness GetTypeEffectiveness(POKE_TYPE moveType, POKE_TYPE pokemonType);
-extern "C" TypeEffectiveness GetTypeEffectivenessVsMon(POKE_TYPE type, u32 typePair);
-extern "C" TypeEffectiveness GetTypeEffectivenessMultiplier(TypeEffectiveness effectiveness1, TypeEffectiveness effectiveness2);
+extern "C" EFFECTIVENESS GetTypeEffectiveness(POKE_TYPE moveType, POKE_TYPE pokemonType);
+extern "C" EFFECTIVENESS GetTypeEffectivenessVsMon(POKE_TYPE type, u32 typePair);
+extern "C" EFFECTIVENESS GetTypeEffectivenessMultiplier(EFFECTIVENESS effectiveness1, EFFECTIVENESS effectiveness2);
+extern "C" POKE_TYPE PokeTypePair_GetType1(u16 typePair);
 
 #endif // __TYPES_H

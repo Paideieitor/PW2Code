@@ -3610,4 +3610,12 @@ Symbols:
   - Name: EventAddShadowForce
     Segment: 0xA7
     Address: 0x21cba8d
-    
+  - Name: PokeTypePair_GetType1
+    Segment: 0xA7
+    Address: 0x21ce57d
+  - Name: ServerDisplay_DamageEffectiveness
+    Segment: 0xA7
+    Address: 0x21a508d
+  - Name: ServerDisplay_MoveEffectivenessMessage
+    Segment: 0xA7
+    Address: 0x21a9399

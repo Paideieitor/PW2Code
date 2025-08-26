@@ -8,6 +8,9 @@ extern "C" BattleEventHandlerTableEntry * EventAddMatBlock(u32 * handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddRototiller(u32* handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddStickyWeb(u32* handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddFellStinger(u32* handlerAmount);
+extern "C" BattleEventHandlerTableEntry* EventAddTrickOrTreat(u32* handlerAmount);
+
+extern "C" BattleEventHandlerTableEntry* EventAddForestsCurse(u32* handlerAmount);
 
 extern "C" BattleEventHandlerTableEntry * EventAddCeaselessEdge(u32 * handlerAmount);
 
