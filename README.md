@@ -7,6 +7,7 @@ To personalize the patch modify the ``settings.h`` file (I don't recomend modify
   - Limits the maximum level a Pokémon can be
   - If the level cap variable is set to 0 the level cap is ignored (0 is the default value)
   - Rare Candies ignore the level cap, you can change that in the ``settings.h`` file
+  - The Day Care respects the level cap, you can change that in the ``settings.h`` file
   - Set the game variable 16415 to the level cap you want using CTRMap or some other editor:
     - To change the levelcap use the command WorkSet ``EventWorks.Set(16415, <new level cap>)`` in a script
 ### Disable EVs
@@ -79,11 +80,12 @@ To personalize the patch modify the ``settings.h`` file (I don't recomend modify
   - You can check the item IDs for the new items in ``BattleUpgrade.h``
   - Known Issues:
     - Items don't currectly have the correct sprites
-### Move Expansion (BETA)
+### Move Expansion (In Progress)
   - The data of every single move from Gen6, Gen7, Gen8 and Gen9 has been added to the game
   - Known Issues:
     - All new moves use the *Pound* animation
-    - Especial secondary effects have not been implemented yet
+    - Most special secondary effects have not been implemented yet
+    - You can check the ``NEW MOVES`` section in the ``BattleEngine.h`` file to see the currently implemented moves
 
 ## How to Build
   - Download [PW2Builder](https://github.com/Paideieitor/PW2Builder/releases)
