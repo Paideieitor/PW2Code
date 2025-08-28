@@ -9,6 +9,7 @@
 #include "side_effects.h"
 #include "turn_flag.h"
 #include "counters.h"
+#include "pos_effects.h"
 
 typedef u32 ABILITY;
 
@@ -323,6 +324,15 @@ struct SWAN_ALIGNED(4) HandlerParam_ConsumeItem
     HandlerParam_Header header;
     u32 dontUse;
     HandlerParam_StrParams exStr;
+};
+
+struct SWAN_ALIGNED(4) HandlerParam_AddPosEffect
+{
+    HandlerParam_Header header;
+    POS_EFFECT posEffect;
+    u32 targetPos;
+    u32 workToCopy[4];
+    u32 workCount;
 };
 
 extern "C" HandlerParam_Header* BattleHandler_PushWork(ServerFlow* serverFlow, BattleHandlerEffect battleHandler, u32 currentSlot);

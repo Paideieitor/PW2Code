@@ -23,6 +23,7 @@
 #include "side_effects.h"
 #include "personal.h"
 #include "items.h"
+#include "pos_effects.h"
 
 #define MAX_LOADED_DLLS 72
 struct LoadedDll
@@ -4088,41 +4089,6 @@ extern "C" b32 THUMB_BRANCH_BattleMon_AddSubstituteDamage(BattleMon * battleMon,
     return result;
 }
 
-// Liquid Voice - Added move ID to check for move flags
-extern "C" void THUMB_BRANCH_ServerEvent_GetMoveParam(ServerFlow* serverFlow, MOVE_ID moveID, BattleMon* battleMon, MoveParam* moveParam) {
-    BattleEventVar_Push();
-
-    u32 currentSlot = BattleMon_GetID(battleMon);
-    POKE_TYPE moveType = PML_MoveGetType(moveID);
-    POKE_TYPE pokeType = BattleMon_GetPokeType(battleMon);
-    MoveCategory category = PML_MoveGetCategory(moveID);
-    u32 targetType = PML_MoveGetParam(moveID, MVDATA_TARGET);
-
-    BattleEventVar_SetConstValue(VAR_MON_ID, currentSlot);
-    // Added move ID
-    BattleEventVar_SetConstValue(VAR_MOVE_ID, moveID);
-    BattleEventVar_SetRewriteOnceValue(VAR_MOVE_TYPE, moveType);
-    BattleEventVar_SetValue(VAR_USER_TYPE, pokeType);
-    BattleEventVar_SetValue(VAR_MOVE_CATEGORY, category);
-    BattleEventVar_SetValue(VAR_TARGET_TYPE, targetType);
-    BattleEventVar_SetRewriteOnceValue(VAR_NO_TYPE_EFFECTIVENESS, 0);
-
-    BattleEvent_CallHandlers(serverFlow, EVENT_MOVE_PARAM);
-
-    moveParam->moveID = moveID;
-    moveParam->originalMoveID = moveID;
-    moveParam->moveType = BattleEventVar_GetValue(VAR_MOVE_TYPE);
-    moveParam->userType = BattleEventVar_GetValue(VAR_USER_TYPE);
-    moveParam->category = BattleEventVar_GetValue(VAR_MOVE_CATEGORY);
-    moveParam->targetType = BattleEventVar_GetValue(VAR_TARGET_TYPE);
-    moveParam->flags = 0;
-    if (BattleEventVar_GetValue(VAR_NO_TYPE_EFFECTIVENESS)) {
-        moveParam->moveType = TYPE_NULL;
-    }
-
-    BattleEventVar_Pop();
-}
-
 // Diguise & Ice Face - Only remove the damage if there are no more hits remaining
 extern "C" void THUMB_BRANCH_ServerControl_ApplyDamageToRecover(ServerFlow* serverFlow, BattleMon* attackingMon, MoveParam* moveParam, PokeSet* targetSet) {
     PokeSet_SeekStart(targetSet);
@@ -5145,6 +5111,46 @@ extern "C" b32 THUMB_BRANCH_BattleHandler_AddSideEffect(ServerFlow * serverFlow,
     return 1;
 }
 
+// Liquid Voice - Added move ID to check for move flags
+// Ion Deluge (and any other move type changing move) - Made so the move type can be changed more than once
+extern "C" void THUMB_BRANCH_ServerEvent_GetMoveParam(ServerFlow* serverFlow, MOVE_ID moveID, BattleMon* battleMon, MoveParam* moveParam) {
+    BattleEventVar_Push();
+
+    u32 currentSlot = BattleMon_GetID(battleMon);
+    POKE_TYPE moveType = PML_MoveGetType(moveID);
+    POKE_TYPE pokeType = BattleMon_GetPokeType(battleMon);
+    MoveCategory category = PML_MoveGetCategory(moveID);
+    u32 targetType = PML_MoveGetParam(moveID, MVDATA_TARGET);
+
+    BattleEventVar_SetConstValue(VAR_MON_ID, currentSlot);
+    // Added move ID
+    BattleEventVar_SetConstValue(VAR_MOVE_ID, moveID);
+#if EXPAND_MOVES
+    BattleEventVar_SetValue(VAR_MOVE_TYPE, moveType);
+#else
+    BattleEventVar_SetRewriteOnceValue(VAR_MOVE_TYPE, moveType);
+#endif
+    BattleEventVar_SetValue(VAR_USER_TYPE, pokeType);
+    BattleEventVar_SetValue(VAR_MOVE_CATEGORY, category);
+    BattleEventVar_SetValue(VAR_TARGET_TYPE, targetType);
+    BattleEventVar_SetRewriteOnceValue(VAR_NO_TYPE_EFFECTIVENESS, 0);
+
+    BattleEvent_CallHandlers(serverFlow, EVENT_MOVE_PARAM);
+
+    moveParam->moveID = moveID;
+    moveParam->originalMoveID = moveID;
+    moveParam->moveType = BattleEventVar_GetValue(VAR_MOVE_TYPE);
+    moveParam->userType = BattleEventVar_GetValue(VAR_USER_TYPE);
+    moveParam->category = BattleEventVar_GetValue(VAR_MOVE_CATEGORY);
+    moveParam->targetType = BattleEventVar_GetValue(VAR_TARGET_TYPE);
+    moveParam->flags = 0;
+    if (BattleEventVar_GetValue(VAR_NO_TYPE_EFFECTIVENESS)) {
+        moveParam->moveType = TYPE_NULL;
+    }
+
+    BattleEventVar_Pop();
+}
+
 #endif // EXPAND_ABILITIES || EXPAND_MOVES
 
 #if EXPAND_ITEMS
@@ -5653,11 +5659,23 @@ MoveEventAddTableExt moveEventAddTableExt[] = {
     {MOVE_FELL_STINGER, EventAddFellStinger, "Moves/FellStinger"},
     {MOVE_PHANTOM_FORCE, EventAddShadowForce, nullptr},
     {MOVE_TRICK_OR_TREAT, EventAddTrickOrTreat, "Moves/ExtraType"},
-
+    {MOVE_ION_DELUGE, EventAddIonDeluge, "Moves/IonDeluge"},
     {MOVE_FOREST_S_CURSE, EventAddForestsCurse, "Moves/ExtraType"},
+
+    {MOVE_PLASMA_FIST, EventAddPlasmaFist, "Moves/IonDeluge"},
 
     {MOVE_INFERNAL_PARADE, EventAddHex, nullptr},
     {MOVE_CEASELESS_EDGE, EventAddCeaselessEdge, "Moves/CeaselessEdge"},
+};
+
+struct PosEffectEventAddTableExt
+{
+    POS_EFFECT posEffect;
+    PosEffectEventAddFunc func;
+    const char* dllName;
+};
+PosEffectEventAddTableExt posEffectEventAddTableExt[] = {
+    {POSEFF_ION_DELUGE, EventAddPosIonDeluge, "Moves/IonDeluge"},
 };
 
 extern "C" void CMD_ACT_MoveAnimStart(BtlvScu * btlvScu, u32 attckViewPos, u32 defViewPos, u16 moveID, u32 moveTarget, u8 effectIndex, u8 zero);
@@ -5699,7 +5717,7 @@ extern "C" bool THUMB_BRANCH_MoveEvent_AddItem(BattleMon * battleMon, MoveID mov
 
         MoveEventAddTableExt* moveAddEvent = &(moveEventAddTableExt[moveEvent]);
         if (moveID == moveAddEvent->moveID) {
-            // Load the DLL with the code for the ability if needed
+            // Load the DLL with the code for the move if needed
             if (!LoadDll(moveAddEvent->dllName))
                 return 0;
 
@@ -5717,6 +5735,74 @@ extern "C" bool THUMB_BRANCH_MoveEvent_AddItem(BattleMon * battleMon, MoveID mov
         }
     }
     return 0;
+}
+
+extern "C" BattleEventPriority PosEffect_GetPriority(u32* handlerAmount) {
+
+    u16 eventPriority = ((*handlerAmount & 0xFFFF0000) >> 16);
+    if (eventPriority != 0) {
+        *handlerAmount &= 0x0000FFFF;
+        return (BattleEventPriority)eventPriority;
+    }
+    return EVENTPRI_POS_DEFAULT;
+}
+extern "C" u32 PosEffect_SetPriority(BattleEventPriority priority, u32 handlerCount) {
+    u32 value = handlerCount & 0x0000FFFF;
+    value |= (priority & 0x0000FFFF) << 16;
+    return value;
+}
+
+extern "C" BattleEventItem* GetPosEffectEvent(POS_EFFECT posEffect, u32 targetPos, PosEffectEventAddFunc func, u8 workCount, u32* work) {
+    if (!PosEffectEvent_CanEffectBeRegistered(posEffect, targetPos)) {
+        return nullptr;
+    }
+
+    u32 handlerAmount = 0;
+    BattleEventHandlerTableEntry* handlers = func(&handlerAmount);
+    if (handlers == nullptr) {
+        return nullptr;
+    }
+
+    BattleEventPriority mainPrio = PosEffect_GetPriority(&handlerAmount);
+    BattleEventItem* battleEvent = BattleEvent_AddItem(EVENTITEM_POS, posEffect, mainPrio, 0, targetPos, handlers, handlerAmount);
+    if (battleEvent) {
+        for (u32 workIdx = 0; workIdx < workCount; ++workIdx) {
+            BattleEventItem_SetWorkValue(battleEvent, workIdx, work[workIdx]);
+        }
+    }
+
+    return battleEvent;
+}
+
+extern "C" BattleEventItem* THUMB_BRANCH_SAFESTACK_PosEffectEvent_AddItem(POS_EFFECT posEffect, u32 targetPos, u32 pokemonSlot, u32* work, u8 workCount) {
+    // Check for new or overriden pos effects
+    for (u32 posEvent = 0; posEvent < ARRAY_COUNT(posEffectEventAddTableExt); ++posEvent) {
+
+        PosEffectEventAddTableExt* posAddEvent = &(posEffectEventAddTableExt[posEvent]);
+        if (posEffect == posAddEvent->posEffect) {
+            // Load the DLL with the code for the pos effect if needed
+            if (!LoadDll(posAddEvent->dllName))
+                return nullptr;
+            return GetPosEffectEvent(posEffect, targetPos, posAddEvent->func, workCount, work);
+        }
+    }
+
+    // Check for vanilla moves
+    PosEffectEventAddTable* posEventAddTable = (PosEffectEventAddTable*)0x689D850;
+    for (u32 posEvent = 0; posEvent < 5; ++posEvent) {
+
+        PosEffectEventAddTable* posAddEvent = &(posEventAddTable[posEvent]);
+        if (posEffect == posAddEvent->posEffect) {
+            return GetPosEffectEvent(posEffect, targetPos, posAddEvent->func, workCount, work);
+        }
+    }
+    return nullptr;
+}
+
+extern "C" void HandlerPosTurnCheckDone(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work) {
+    if (BattleEventVar_GetValue(VAR_MON_ID) == BATTLE_MAX_SLOTS) {
+        BattleEventItem_Remove(item);
+    }
 }
 
 // Protect Moves
@@ -5753,7 +5839,6 @@ extern "C" b32 THUMB_BRANCH_BattleMon_HasType(BattleMon* battleMon, POKE_TYPE ty
 // Trick-or-Treat & Forest's Curse - Calculate triple weakness/resistance with extra type
 u8 effectivenessMultiplier[] = { 0, 2, 4, 8, 16, 32 };
 extern "C" EFFECTIVENESS THUMB_BRANCH_GetTypeEffectivenessMultiplier(EFFECTIVENESS effectiveness1, EFFECTIVENESS effectiveness2) {
-
     u32 multiplier = effectivenessMultiplier[effectiveness1] * effectivenessMultiplier[effectiveness2] / 4;
     switch (multiplier)
     {
@@ -5770,7 +5855,6 @@ extern "C" EFFECTIVENESS THUMB_BRANCH_GetTypeEffectivenessMultiplier(EFFECTIVENE
 
 // Trick-or-Treat & Forest's Curse - Add extra type to the effectiveness calculation
 extern "C" EFFECTIVENESS THUMB_BRANCH_LINK_ServerEvent_CheckMoveDamageEffectiveness_0x32(ServerFlow* serverFlow, BattleMon* attackingMon, BattleMon* defendingMon, PokeType moveType) {
-
     u16 pokeType = BattleMon_GetPokeType(defendingMon);
     POKE_TYPE type = PokeTypePair_GetType1(pokeType);
     EFFECTIVENESS effectiveness = ServerEvent_CheckDamageEffectiveness(serverFlow, attackingMon,
@@ -5783,7 +5867,6 @@ extern "C" EFFECTIVENESS THUMB_BRANCH_LINK_ServerEvent_CheckMoveDamageEffectiven
             defendingMon, moveType, extraType);
         effectiveness = GetTypeEffectivenessMultiplier(effectiveness, extraEffectiveness);
     }
-
     return effectiveness;
 }
 
@@ -5797,16 +5880,17 @@ extern "C" void THUMB_BRANCH_ServerDisplay_DamageEffectiveness(ServerFlow* serve
     }
 }
 extern "C" void DisplayMultiEffectiveMessage(ServerFlow* serverFlow, u32 hitMonCount, EFFECTIVENESS* effectiveRecord, BattleMon** battleMons, u32 effectivenessCount, u16 msgID) {
-    u8 hitSlots[3] = { BATTLE_MAX_SLOTS };
+    u8 hitSlots[3];
+    sys_memset(hitSlots, BATTLE_MAX_SLOTS, 3);
     u32 hitCount = 0;
     for (u32 idx = 0; idx < hitMonCount; ++idx) {
         if (effectiveRecord[idx] > EFFECTIVENESS_1 &&
             effectiveRecord[idx] != EFFECTIVENESS_1_8) {
-
             hitSlots[hitCount] = BattleMon_GetID(battleMons[idx]);
             ++hitCount;
         }
     }
+
     switch (effectivenessCount)
     {
     case 1u:

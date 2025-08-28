@@ -3619,3 +3619,33 @@ Symbols:
   - Name: ServerDisplay_MoveEffectivenessMessage
     Segment: 0xA7
     Address: 0x21a9399
+  - Name: PosEffectEvent_CanEffectBeRegistered
+    Segment: 0xA9
+    Address: 0x68982c1
+  - Name: PosEffectEvent_AddItem
+    Segment: 0xA9
+    Address: 0x68981f1
+  - Name: DayCare_CommitPkmGrowth
+    Segment: 0x24
+    Address: 0x21bd681
+  - Name: CalcLevelByExp
+    Segment: 0x0
+    Address: 0x201d569
+  - Name: DayCare_CalcNewLevel
+    Segment: 0x24
+    Address: 0x21bd52d
+  - Name: DayCareSave_GetPkmStatus
+    Segment: 0x0
+    Address: 0x200c449
+  - Name: DayCareSave_GetPkm
+    Segment: 0x0
+    Address: 0x200c3cd
+  - Name: DayCareSave_GetPkmStepCounter
+    Segment: 0x0
+    Address: 0x200c479
+  - Name: DayCare_CalcNewExp
+    Segment: 0x24
+    Address: 0x21bd661
+  - Name: DayCare_RemovePkm
+    Segment: 0x24
+    Address: 0x21bd381
