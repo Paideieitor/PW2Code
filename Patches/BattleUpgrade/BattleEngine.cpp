@@ -1671,7 +1671,7 @@ extern "C" void THUMB_BRANCH_BattleField_InitCore(BattleFieldExt * battleField, 
 
     battleField->consumedBerryFlags = 0;
 
-    sys_memset(battleField->extraTypes, BATTLE_MAX_SLOTS, TYPE_NULL);
+    sys_memset(battleField->extraTypes, TYPE_NULL, BATTLE_MAX_SLOTS);
 
 #endif 
 }
@@ -3107,66 +3107,6 @@ extern "C" void THUMB_BRANCH_HandlerRockyHelmet(BattleEventItem * item, ServerFl
             BattleHandler_StrSetup(&damage->exStr, 2u, 424);
             BattleHandler_AddArg(&damage->exStr, damage->pokeID);
             BattleHandler_PopWork(serverFlow, damage);
-        }
-    }
-}
-
-// STAT BOOST FLAGS - Allows to distinguish if a stat boost
-// was caused by Intimidate, Mirror Armor or Opportunist
-extern "C" b32 THUMB_BRANCH_SAFESTACK_ServerEvent_CheckStatStageChangeSuccess(ServerFlow* serverFlow, BattleMon* affectedMon, StatStage statStage, u32 attackingSlot, int volume, u32 moveSerial) {
-    BattleEventVar_Push();
-    u32 affectedSlot = BattleMon_GetID(affectedMon);
-    BattleEventVar_SetConstValue(VAR_MON_ID, affectedSlot);
-    BattleEventVar_SetConstValue(VAR_ATTACKING_MON, attackingSlot);
-    BattleEventVar_SetConstValue(VAR_MOVE_EFFECT, statStage);
-    BattleEventVar_SetConstValue(VAR_VOLUME, volume);
-    BattleEventVar_SetConstValue(VAR_INTIMIDATE_FLAG, (moveSerial & STAT_CHANGE_INTIMIDATE_FLAG) != 0); // Intimidate Flag
-    BattleEventVar_SetConstValue(VAR_MIRROR_ARMOR_FLAG, (moveSerial & STAT_CHANGE_MIRROR_ARMOR_FLAG) != 0); // Mirror Armor Flag
-    BattleEventVar_SetConstValue(VAR_OPPORTUNIST_FLAG, (moveSerial & STAT_CHANGE_OPPORTUNIST_FLAG) != 0); // Opportunist Flag
-    BattleEventVar_SetConstValue(VAR_MOVE_SERIAL, (moveSerial & 0x0FFFFFFF));
-    BattleEventVar_SetRewriteOnceValue(VAR_MOVE_FAIL_FLAG, 0);
-    BattleEvent_CallHandlers(serverFlow, EVENT_STAT_STAGE_CHANGE_LAST_CHECK);
-    u32 failFlag = BattleEventVar_GetValue(VAR_MOVE_FAIL_FLAG);
-    BattleEventVar_Pop();
-
-    if (!failFlag) {
-        return 1;
-    }
-    return 0;
-}
-extern "C" void THUMB_BRANCH_ServerEvent_StatStageChangeFail(ServerFlow* serverFlow, BattleMon* currentMon, u32 moveSerial) {
-    BattleEventVar_Push();
-    u32 currentSlot = BattleMon_GetID(currentMon);
-    BattleEventVar_SetConstValue(VAR_MON_ID, currentSlot);
-    BattleEventVar_SetConstValue(VAR_INTIMIDATE_FLAG, (moveSerial & STAT_CHANGE_INTIMIDATE_FLAG) != 0); // Intimidate Flag
-    BattleEventVar_SetConstValue(VAR_MIRROR_ARMOR_FLAG, (moveSerial & STAT_CHANGE_MIRROR_ARMOR_FLAG) != 0); // Mirror Armor Flag
-    BattleEventVar_SetConstValue(VAR_OPPORTUNIST_FLAG, (moveSerial & STAT_CHANGE_OPPORTUNIST_FLAG) != 0); // Opportunist Flag
-    BattleEventVar_SetConstValue(VAR_MOVE_SERIAL, moveSerial & 0x0FFFFFFF);
-    BattleEvent_CallHandlers(serverFlow, EVENT_STAT_STAGE_CHANGE_FAIL);
-    BattleEventVar_Pop();
-}
-extern "C" void THUMB_BRANCH_HandlerIntimidate(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work) {
-    if (pokemonSlot == BattleEventVar_GetValue(VAR_MON_ID)) {
-        u16 frontPokeExist = Handler_GetExistFrontPokePos(serverFlow, pokemonSlot);
-        u8* frontSlots = Handler_GetTempWork(serverFlow);
-        u32 frontCount = Handler_ExpandPokeID(serverFlow, frontPokeExist | 0x100, frontSlots);
-        if (frontCount) {
-            BattleHandler_PushRun(serverFlow, EFFECT_ABILITY_POPUP_ADD, pokemonSlot);
-
-            HandlerParam_ChangeStatStage* statChange;
-            statChange = (HandlerParam_ChangeStatStage*)BattleHandler_PushWork(serverFlow, EFFECT_CHANGE_STAT_STAGE, pokemonSlot);
-            statChange->stat = STATSTAGE_ATTACK;
-            statChange->volume = -1;
-            statChange->moveAnimation = 1;
-            statChange->pokeCount = frontCount;
-            for (u8 frontCurrent = 0; frontCurrent < frontCount; ++frontCurrent) {
-                statChange->pokeID[frontCurrent] = frontSlots[frontCurrent];
-            }
-            // Set the intimidate flag
-            statChange->pad = STAT_CHANGE_INTIMIDATE_FLAG;
-            BattleHandler_PopWork(serverFlow, statChange);
-
-            BattleHandler_PushRun(serverFlow, EFFECT_ABILITY_POPUP_REMOVE, pokemonSlot);
         }
     }
 }
@@ -5338,9 +5278,9 @@ extern "C" WEATHER THUMB_BRANCH_LINK_HandlerLeafGuardYawnCheck_0x12(ServerFlow* 
     return Handler_CheckWeather(serverFlow, BattleEventVar_GetValue(VAR_MON_ID), ServerEvent_GetWeather(serverFlow));
 }
 
-extern "C" void THUMB_BRANCH_LINK_HandlerRainDish_0x8(ServerFlow* serverFlow, u32 pokemonSlot, Weather weather) {
-    if (Handler_CheckWeather(serverFlow, pokemonSlot, BattleEventVar_GetValue(VAR_WEATHER)) == weather) {
-        CommonWeatherRecoveryAbility(serverFlow, pokemonSlot, weather);
+extern "C" void THUMB_BRANCH_HandlerRainDish(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work) {
+    if (Handler_CheckWeather(serverFlow, pokemonSlot, BattleEventVar_GetValue(VAR_WEATHER)) == WEATHER_RAIN) {
+        CommonWeatherRecoveryAbility(serverFlow, pokemonSlot, WEATHER_RAIN);
     }
 }
 
@@ -5661,6 +5601,8 @@ MoveEventAddTableExt moveEventAddTableExt[] = {
     {MOVE_TRICK_OR_TREAT, EventAddTrickOrTreat, "Moves/ExtraType"},
     {MOVE_ION_DELUGE, EventAddIonDeluge, "Moves/IonDeluge"},
     {MOVE_FOREST_S_CURSE, EventAddForestsCurse, "Moves/ExtraType"},
+    {MOVE_FREEZE_DRY, EventAddFreezeDry, "Moves/FreezeDry"},
+    {MOVE_PARTING_SHOT, EventAddPartingShot, "Moves/PartingShot"},
 
     {MOVE_PLASMA_FIST, EventAddPlasmaFist, "Moves/IonDeluge"},
 
@@ -5855,18 +5797,19 @@ extern "C" EFFECTIVENESS THUMB_BRANCH_GetTypeEffectivenessMultiplier(EFFECTIVENE
 
 // Trick-or-Treat & Forest's Curse - Add extra type to the effectiveness calculation
 extern "C" EFFECTIVENESS THUMB_BRANCH_LINK_ServerEvent_CheckMoveDamageEffectiveness_0x32(ServerFlow* serverFlow, BattleMon* attackingMon, BattleMon* defendingMon, PokeType moveType) {
+
     u16 pokeType = BattleMon_GetPokeType(defendingMon);
     POKE_TYPE type = PokeTypePair_GetType1(pokeType);
     EFFECTIVENESS effectiveness = ServerEvent_CheckDamageEffectiveness(serverFlow, attackingMon,
         defendingMon, moveType, type);
 
     POKE_TYPE extraType = BattleField_GetExtraType(defendingMon->battleSlot);
-    if (extraType != TYPE_NULL)
-    {
+    if (extraType != TYPE_NULL) {
         EFFECTIVENESS extraEffectiveness = ServerEvent_CheckDamageEffectiveness(serverFlow, attackingMon,
             defendingMon, moveType, extraType);
         effectiveness = GetTypeEffectivenessMultiplier(effectiveness, extraEffectiveness);
     }
+
     return effectiveness;
 }
 
@@ -5936,6 +5879,72 @@ extern "C" void THUMB_BRANCH_SAFESTACK_ServerDisplay_MoveEffectivenessMessage(Se
 }
 
 #endif // EXPAND_MOVES
+
+#if EXPAND_ABILITIES || EXPAND_ITEMS || EXPAND_MOVES
+
+// STAT BOOST FLAGS - Allows to distinguish if a stat boost
+// was caused by Intimidate, Mirror Armor, Opportunist or Parting Shot
+extern "C" b32 THUMB_BRANCH_SAFESTACK_ServerEvent_CheckStatStageChangeSuccess(ServerFlow* serverFlow, BattleMon* affectedMon, StatStage statStage, u32 attackingSlot, int volume, u32 moveSerial) {
+    BattleEventVar_Push();
+    u32 affectedSlot = BattleMon_GetID(affectedMon);
+    BattleEventVar_SetConstValue(VAR_MON_ID, affectedSlot);
+    BattleEventVar_SetConstValue(VAR_ATTACKING_MON, attackingSlot);
+    BattleEventVar_SetConstValue(VAR_MOVE_EFFECT, statStage);
+    BattleEventVar_SetConstValue(VAR_VOLUME, volume);
+    BattleEventVar_SetValue(VAR_INTIMIDATE_FLAG, (moveSerial & STAT_CHANGE_INTIMIDATE_FLAG) != 0); // Intimidate Flag
+    BattleEventVar_SetValue(VAR_MIRROR_ARMOR_FLAG, (moveSerial & STAT_CHANGE_MIRROR_ARMOR_FLAG) != 0); // Mirror Armor Flag
+    BattleEventVar_SetValue(VAR_OPPORTUNIST_FLAG, (moveSerial & STAT_CHANGE_OPPORTUNIST_FLAG) != 0); // Opportunist Flag
+    BattleEventVar_SetValue(VAR_PARTING_SHOT_FLAG, (moveSerial & STAT_CHANGE_PARTING_SHOT_FLAG) != 0); // Parting Shot Flag
+    BattleEventVar_SetConstValue(VAR_MOVE_SERIAL, moveSerial & 0x0FFFFFFF);
+    BattleEventVar_SetRewriteOnceValue(VAR_MOVE_FAIL_FLAG, 0);
+    BattleEvent_CallHandlers(serverFlow, EVENT_STAT_STAGE_CHANGE_LAST_CHECK);
+    u32 failFlag = BattleEventVar_GetValue(VAR_MOVE_FAIL_FLAG);
+    BattleEventVar_Pop();
+
+    if (!failFlag) {
+        return 1;
+    }
+    return 0;
+}
+extern "C" void THUMB_BRANCH_ServerEvent_StatStageChangeFail(ServerFlow* serverFlow, BattleMon* currentMon, u32 moveSerial) {
+    BattleEventVar_Push();
+    u32 currentSlot = BattleMon_GetID(currentMon);
+    BattleEventVar_SetConstValue(VAR_MON_ID, currentSlot);
+    BattleEventVar_SetConstValue(VAR_INTIMIDATE_FLAG, (moveSerial & STAT_CHANGE_INTIMIDATE_FLAG) != 0); // Intimidate Flag
+    BattleEventVar_SetConstValue(VAR_MIRROR_ARMOR_FLAG, (moveSerial & STAT_CHANGE_MIRROR_ARMOR_FLAG) != 0); // Mirror Armor Flag
+    BattleEventVar_SetConstValue(VAR_OPPORTUNIST_FLAG, (moveSerial & STAT_CHANGE_OPPORTUNIST_FLAG) != 0); // Opportunist Flag
+    BattleEventVar_SetConstValue(VAR_PARTING_SHOT_FLAG, (moveSerial & STAT_CHANGE_PARTING_SHOT_FLAG) != 0); // Parting Shot Flag
+    BattleEventVar_SetConstValue(VAR_MOVE_SERIAL, moveSerial & 0x0FFFFFFF);
+    BattleEvent_CallHandlers(serverFlow, EVENT_STAT_STAGE_CHANGE_FAIL);
+    BattleEventVar_Pop();
+}
+extern "C" void THUMB_BRANCH_HandlerIntimidate(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work) {
+    if (pokemonSlot == BattleEventVar_GetValue(VAR_MON_ID)) {
+        u16 frontPokeExist = Handler_GetExistFrontPokePos(serverFlow, pokemonSlot);
+        u8* frontSlots = Handler_GetTempWork(serverFlow);
+        u32 frontCount = Handler_ExpandPokeID(serverFlow, frontPokeExist | 0x100, frontSlots);
+        if (frontCount) {
+            BattleHandler_PushRun(serverFlow, EFFECT_ABILITY_POPUP_ADD, pokemonSlot);
+
+            HandlerParam_ChangeStatStage* statChange;
+            statChange = (HandlerParam_ChangeStatStage*)BattleHandler_PushWork(serverFlow, EFFECT_CHANGE_STAT_STAGE, pokemonSlot);
+            statChange->stat = STATSTAGE_ATTACK;
+            statChange->volume = -1;
+            statChange->moveAnimation = 1;
+            statChange->pokeCount = frontCount;
+            for (u8 frontCurrent = 0; frontCurrent < frontCount; ++frontCurrent) {
+                statChange->pokeID[frontCurrent] = frontSlots[frontCurrent];
+            }
+            // Set the intimidate flag
+            statChange->pad = STAT_CHANGE_INTIMIDATE_FLAG;
+            BattleHandler_PopWork(serverFlow, statChange);
+
+            BattleHandler_PushRun(serverFlow, EFFECT_ABILITY_POPUP_REMOVE, pokemonSlot);
+        }
+    }
+}
+
+#endif // EXPAND_ABILITIES || EXPAND_ITEMS || EXPAND_MOVES
 
 #if 0 // EXPAND_FIELD_EFFECTS
 

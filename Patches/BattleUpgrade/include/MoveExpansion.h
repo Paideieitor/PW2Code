@@ -11,6 +11,8 @@ extern "C" BattleEventHandlerTableEntry* EventAddFellStinger(u32* handlerAmount)
 extern "C" BattleEventHandlerTableEntry* EventAddTrickOrTreat(u32* handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddIonDeluge(u32* handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddForestsCurse(u32* handlerAmount);
+extern "C" BattleEventHandlerTableEntry* EventAddFreezeDry(u32* handlerAmount);
+extern "C" BattleEventHandlerTableEntry* EventAddPartingShot(u32* handlerAmount);
 
 extern "C" BattleEventHandlerTableEntry* EventAddPlasmaFist(u32* handlerAmount);
 

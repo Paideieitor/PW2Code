@@ -11,17 +11,12 @@
 
 @ TYPE_NULL redefinitions
 
-// This hook will get overriden in "BattlEngine.cpp" but I leave
-// it here in case someone wants to use this as a standalone patch
+#if !GEN6_CRIT && !EXPAND_FIELD_EFFECTS
 FULL_COPY_ServerEvent_CalcDamage_0x13A:
     .byte 0x12, 0x2A @ cmp r2, #TypeCount
     .byte 0x08, 0xDA @ bge #0x14
     .size FULL_COPY_ServerEvent_CalcDamage_0x13A, . - FULL_COPY_ServerEvent_CalcDamage_0x13A
-
-FULL_COPY_ServerEvent_CheckMoveDamageEffectiveness_0x12:
-    .byte 0x12, 0x28 @ cmp r0, #TypeCount
-    .byte 0x02, 0xDB @ blt #0x8
-    .size FULL_COPY_ServerEvent_CheckMoveDamageEffectiveness_0x12, . - FULL_COPY_ServerEvent_CheckMoveDamageEffectiveness_0x12
+#endif // !GEN6_CRIT && !EXPAND_FIELD_EFFECTS
 
 FULL_COPY_splitTypeCore_0x1C:
     .byte 0x12, 0x21 @ movs r1, #TypeCount
@@ -44,6 +39,11 @@ FULL_COPY_splitTypeCore_0x4C:
     .size FULL_COPY_splitTypeCore_0x4C, . - FULL_COPY_splitTypeCore_0x4C
 
 #if !EXPAND_MOVES
+FULL_COPY_ServerEvent_CheckMoveDamageEffectiveness_0x12:
+    .byte 0x12, 0x28 @ cmp r0, #TypeCount
+    .byte 0x02, 0xDB @ blt #0x8
+    .size FULL_COPY_ServerEvent_CheckMoveDamageEffectiveness_0x12, . - FULL_COPY_ServerEvent_CheckMoveDamageEffectiveness_0x12
+
 FULL_COPY_BattleMon_HasType_0x6:
     .byte 0x12, 0x2C @ cmp r4, #TypeCount
     .byte 0x0E, 0xDA @ bge #0x20

@@ -22,7 +22,11 @@ extern "C" void HandlerMirrorArmor(BattleEventItem * item, ServerFlow * serverFl
         statChange->pokeID[0] = attackingSlot;
         statChange->stat = (StatStage)BattleEventVar_GetValue(VAR_MOVE_EFFECT);
         statChange->volume = volume;
+        statChange->moveAnimation = 1;
         statChange->pad = STAT_CHANGE_MIRROR_ARMOR_FLAG;
+        if (BattleEventVar_GetValue(VAR_PARTING_SHOT_FLAG)) {
+            statChange->pad |= STAT_CHANGE_PARTING_SHOT_FLAG;
+        }
         BattleHandler_PopWork(serverFlow, statChange);
     }
 }
