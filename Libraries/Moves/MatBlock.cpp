@@ -35,11 +35,41 @@ extern "C" void HandlerMatBlock(BattleEventItem * item, ServerFlow * serverFlow,
         BattleHandler_PopWork(serverFlow, message);
     }
 }
+extern "C" void HandlerMatBlockProtectBroken(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work) {
+    if (IS_NOT_NEW_EVENT)
+        return;
+
+    u32 defendingSlot = BattleEventVar_GetValue(NEW_VAR_DEFENDING_MON);
+    if (MainModule_IsAllyMonID(pokemonSlot, defendingSlot)) {
+        u8 allies[3];
+        BattleMon* currentMon = Handler_GetBattleMon(serverFlow, pokemonSlot);
+        GetSideBattleSlots(serverFlow, BattleMon_GetID(currentMon), allies);
+
+        for (u32 allyIdx = 0; allyIdx < 3; ++allyIdx) {
+            u32 battleSlot = allies[allyIdx];
+            if (battleSlot == BATTLE_MAX_SLOTS)
+                break;
+
+            HandlerParam_SetTurnFlag* resetTurnFlag;
+            resetTurnFlag = (HandlerParam_SetTurnFlag*)BattleHandler_PushWork(serverFlow, EFFECT_RESET_TURN_FLAG, pokemonSlot);
+            resetTurnFlag->pokeID = defendingSlot;
+            resetTurnFlag->flag = TURNFLAG_PROTECT;
+            BattleHandler_PopWork(serverFlow, resetTurnFlag);
+
+            HandlerParam_Message* message;
+            message = (HandlerParam_Message*)BattleHandler_PushWork(serverFlow, EFFECT_MESSAGE, pokemonSlot);
+            BattleHandler_StrSetup(&message->str, 2u, 526u);
+            BattleHandler_AddArg(&message->str, defendingSlot);
+            BattleHandler_PopWork(serverFlow, message);
+        }
+    }
+}
 BattleEventHandlerTableEntry MatBlockHandlers[]{
     {EVENT_MOVE_SEQUENCE_START, HandlerProtectStart},
     {EVENT_MOVE_EXECUTE_CHECK2, HandlerProtectCheckFail },
     {EVENT_MOVE_EXECUTE_FAIL, HandlerProtectResetCounter},
     {EVENT_UNCATEGORIZED_MOVE, HandlerMatBlock},
+    {EVENT_PROTECT_BROKEN, HandlerMatBlockProtectBroken}
 };
 extern "C" BattleEventHandlerTableEntry * EventAddMatBlock(u32 * handlerAmount) {
     *handlerAmount = ARRAY_COUNT(MatBlockHandlers);

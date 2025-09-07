@@ -7,7 +7,7 @@
 #include "server_flow.h"
 
 // POS ION DELUGE
-extern "C" void HandlerPosIonDeluge(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work) {
+extern "C" void HandlerPosIonDeluge(BattleEventItem* item, ServerFlow* serverFlow, u32 targetPos, u32* work) {
     if (IS_NOT_NEW_EVENT) { // Safety layer to make sure it's not used if a new event uses the same event ID
         if (BattleEventVar_GetValue(VAR_MOVE_TYPE) == TYPE_NORMAL) {
             BattleEventVar_RewriteValue(VAR_MOVE_TYPE, TYPE_ELEC);

@@ -12,7 +12,7 @@ extern "C" void HandlerUnseenFistBreakProtect(BattleEventItem * item, ServerFlow
         MOVE_ID moveID = BattleEventVar_GetValue(VAR_MOVE_ID);
         u32 defendingSlot = BattleEventVar_GetValue(VAR_DEFENDING_MON);
         if (IsContact(serverFlow, moveID, pokemonSlot)) {
-            BattleEventVar_RewriteValue(VAR_GENERAL_USE_FLAG, 1);
+            BattleEventVar_RewriteValue(VAR_GENERAL_USE_FLAG, 2); // Value of 2 ingnores protect without breaking it
         }
     }
 }

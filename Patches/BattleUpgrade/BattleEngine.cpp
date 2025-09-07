@@ -4619,11 +4619,11 @@ extern "C" void THUMB_BRANCH_SAFESTACK_ServerControl_SubstituteExclude(ServerFlo
 
 #endif // GEN7_INFILTRATOR
 
-#if EXPAND_ABILITIES || GRASS_IMMUNE_TO_POWDER
+#if EXPAND_ABILITIES || EXPAND_MOVES || GRASS_IMMUNE_TO_POWDER
 
 #if EXPAND_ABILITIES
 // Unseen Fist - Modified CheckProtectBreak server event
-extern "C" b32 ServerEvent_CheckProtectBreakExt(ServerFlow * serverFlow, BattleMon * attackingMon, BattleMon * defendingMon, MOVE_ID moveID)
+extern "C" u32 ServerEvent_CheckProtectBreakExt(ServerFlow * serverFlow, BattleMon * attackingMon, BattleMon * defendingMon, MOVE_ID moveID)
 {
     BattleEventVar_Push();
     u32 attackingSlot = BattleMon_GetID(attackingMon);
@@ -4635,9 +4635,41 @@ extern "C" b32 ServerEvent_CheckProtectBreakExt(ServerFlow * serverFlow, BattleM
     BattleEventVar_SetValue(VAR_MOVE_ID, moveID);
     BattleEventVar_SetValue(VAR_GENERAL_USE_FLAG, 0);
     BattleEvent_CallHandlers(serverFlow, EVENT_CHECK_PROTECT_BREAK);
-    b32 protectBroken = BattleEventVar_GetValue(VAR_GENERAL_USE_FLAG);
+    u32 protectBroken = BattleEventVar_GetValue(VAR_GENERAL_USE_FLAG);
     BattleEventVar_Pop();
     return protectBroken;
+}
+#endif
+#if EXPAND_MOVES
+extern "C" void ServerEvent_ProtectSuccess(ServerFlow* serverFlow, BattleMon* attackingMon, BattleMon* defendingMon, MOVE_ID moveID) {
+    u32 HEID = HEManager_PushState(&serverFlow->HEManager);
+
+    BattleEventVar_Push();
+    SET_UP_NEW_EVENT;
+    u32 attackingSlot = BattleMon_GetID(attackingMon);
+    BattleEventVar_SetConstValue(NEW_VAR_ATTACKING_MON, attackingSlot);
+    u32 defendingSlot = BattleMon_GetID(defendingMon);
+    BattleEventVar_SetConstValue(NEW_VAR_DEFENDING_MON, defendingSlot);
+    BattleEventVar_SetConstValue(VAR_MOVE_ID, moveID);
+    BattleEvent_CallHandlers(serverFlow, EVENT_PROTECT_SUCCESS);
+    BattleEventVar_Pop();
+
+    HEManager_PopState(&serverFlow->HEManager, HEID);
+}
+extern "C" void ServerEvent_ProtectBroken(ServerFlow* serverFlow, BattleMon* attackingMon, BattleMon* defendingMon, MOVE_ID moveID) {
+    u32 HEID = HEManager_PushState(&serverFlow->HEManager);
+
+    BattleEventVar_Push();
+    SET_UP_NEW_EVENT;
+    u32 attackingSlot = BattleMon_GetID(attackingMon);
+    BattleEventVar_SetConstValue(NEW_VAR_ATTACKING_MON, attackingSlot);
+    u32 defendingSlot = BattleMon_GetID(defendingMon);
+    BattleEventVar_SetConstValue(NEW_VAR_DEFENDING_MON, defendingSlot);
+    BattleEventVar_SetConstValue(VAR_MOVE_ID, moveID);
+    BattleEvent_CallHandlers(serverFlow, EVENT_PROTECT_BROKEN);
+    BattleEventVar_Pop();
+
+    HEManager_PopState(&serverFlow->HEManager, HEID);
 }
 #endif
 extern "C" void THUMB_BRANCH_SAFESTACK_flowsub_CheckNoEffect_Protect(ServerFlow * serverFlow, u16 * moveID, BattleMon * attackingMon, PokeSet * targetSet, int dmgAffRec) {
@@ -4654,21 +4686,36 @@ extern "C" void THUMB_BRANCH_SAFESTACK_flowsub_CheckNoEffect_Protect(ServerFlow 
             PokeSet_Remove(targetSet, targetMon);
         }
     }
-    if (getMoveFlag(*moveID, FLAG_BLOCKED_BY_PROTECT)) {
-        PokeSet_SeekStart(targetSet);
-        for (BattleMon* targetMon = PokeSet_SeekNext(targetSet); targetMon; targetMon = PokeSet_SeekNext(targetSet)) {
-            if (BattleMon_GetTurnFlag(targetMon, TURNFLAG_PROTECT)
+
+    PokeSet_SeekStart(targetSet);
+    for (BattleMon* targetMon = PokeSet_SeekNext(targetSet); targetMon; targetMon = PokeSet_SeekNext(targetSet)) {
 #if EXPAND_ABILITIES
-                && !ServerEvent_CheckProtectBreakExt(serverFlow, attackingMon, targetMon, *moveID)) {
+        u32 breakProtect = ServerEvent_CheckProtectBreakExt(serverFlow, attackingMon, targetMon, *moveID);
 #else
-                && !ServerEvent_CheckProtectBreak(serverFlow, attackingMon)) {
+        u32 breakProtect = ServerEvent_CheckProtectBreak(serverFlow, attackingMon);
 #endif
+        switch (breakProtect)
+        {
+        case 0:
+            if (BattleMon_GetTurnFlag(targetMon, TURNFLAG_PROTECT) &&
+                getMoveFlag(*moveID, FLAG_BLOCKED_BY_PROTECT)) {
+
                 PokeSet_Remove(targetSet, targetMon);
                 u32 targetSlot = BattleMon_GetID(targetMon);
                 ServerDisplay_AddMessageImpl(serverFlow->serverCommandQueue, SCID_SetMessage, 523, targetSlot, 0xFFFF0000);
+#if EXPAND_MOVES      
+                ServerEvent_ProtectSuccess(serverFlow, attackingMon, targetMon, *moveID);
+#endif
             }
+            break;
+#if EXPAND_MOVES
+        case 1:
+            ServerEvent_ProtectBroken(serverFlow, attackingMon, targetMon, *moveID);
+            break;
+#endif
         }
     }
+    
     PokeSet_SeekStart(targetSet);
     for (BattleMon* targetMon = PokeSet_SeekNext(targetSet); targetMon; targetMon = PokeSet_SeekNext(targetSet)) {
 #if GRASS_IMMUNE_TO_POWDER
@@ -5603,6 +5650,8 @@ MoveEventAddTableExt moveEventAddTableExt[] = {
     {MOVE_FOREST_S_CURSE, EventAddForestsCurse, "Moves/ExtraType"},
     {MOVE_FREEZE_DRY, EventAddFreezeDry, "Moves/FreezeDry"},
     {MOVE_PARTING_SHOT, EventAddPartingShot, "Moves/PartingShot"},
+    {MOVE_TOPSY_TURVY, EventAddTopsyTurvy, "Moves/TopsyTurvy"},
+    {MOVE_CRAFTY_SHIELD, EventAddCraftyShield, "Moves/CraftyShield"},
 
     {MOVE_PLASMA_FIST, EventAddPlasmaFist, "Moves/IonDeluge"},
 
@@ -5618,6 +5667,7 @@ struct PosEffectEventAddTableExt
 };
 PosEffectEventAddTableExt posEffectEventAddTableExt[] = {
     {POSEFF_ION_DELUGE, EventAddPosIonDeluge, "Moves/IonDeluge"},
+    {POSEFF_CRAFTY_SHIELD, EventAddPosCraftyShield, "Moves/CraftyShield"},
 };
 
 extern "C" void CMD_ACT_MoveAnimStart(BtlvScu * btlvScu, u32 attckViewPos, u32 defViewPos, u16 moveID, u32 moveTarget, u8 effectIndex, u8 zero);
@@ -5741,7 +5791,7 @@ extern "C" BattleEventItem* THUMB_BRANCH_SAFESTACK_PosEffectEvent_AddItem(POS_EF
     return nullptr;
 }
 
-extern "C" void HandlerPosTurnCheckDone(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work) {
+extern "C" void HandlerPosTurnCheckDone(BattleEventItem* item, ServerFlow* serverFlow, u32 targetPos, u32* work) {
     if (BattleEventVar_GetValue(VAR_MON_ID) == BATTLE_MAX_SLOTS) {
         BattleEventItem_Remove(item);
     }
@@ -5760,6 +5810,17 @@ extern "C" void THUMB_BRANCH_HandlerProtectStart(BattleEventItem* item, ServerFl
             setCounter->value = 0;
             BattleHandler_PopWork(serverFlow, setCounter);
         }
+    }
+}
+
+extern "C" void HandlerPosProtectBroken(BattleEventItem* item, ServerFlow* serverFlow, u32 targetPos, u32* work) {
+    if (IS_NOT_NEW_EVENT)
+        return;
+
+    u32 pokemonSlot = Handler_PokePosToPokeID(serverFlow, targetPos);
+    u32 defendingSlot = BattleEventVar_GetValue(NEW_VAR_DEFENDING_MON);
+    if (MainModule_IsAllyMonID(pokemonSlot, defendingSlot)) {
+        BattleEventItem_Remove(item);
     }
 }
 
@@ -5822,19 +5883,8 @@ extern "C" void THUMB_BRANCH_ServerDisplay_DamageEffectiveness(ServerFlow* serve
         ServerDisplay_AddMessageImpl(serverFlow->serverCommandQueue, SCID_MessageStandard, 78, 0xFFFF0000);
     }
 }
-extern "C" void DisplayMultiEffectiveMessage(ServerFlow* serverFlow, u32 hitMonCount, EFFECTIVENESS* effectiveRecord, BattleMon** battleMons, u32 effectivenessCount, u16 msgID) {
-    u8 hitSlots[3];
-    sys_memset(hitSlots, BATTLE_MAX_SLOTS, 3);
-    u32 hitCount = 0;
-    for (u32 idx = 0; idx < hitMonCount; ++idx) {
-        if (effectiveRecord[idx] > EFFECTIVENESS_1 &&
-            effectiveRecord[idx] != EFFECTIVENESS_1_8) {
-            hitSlots[hitCount] = BattleMon_GetID(battleMons[idx]);
-            ++hitCount;
-        }
-    }
-
-    switch (effectivenessCount)
+extern "C" void DisplayMultiEffectiveMessage(ServerFlow* serverFlow, u8* hitSlots, u32 hitCount, u16 msgID) {
+    switch (hitCount)
     {
     case 1u:
         ServerDisplay_AddMessageImpl(serverFlow->serverCommandQueue, SCID_SetMessage, msgID, hitSlots[0], 0xFFFF0000);
@@ -5848,15 +5898,22 @@ extern "C" void DisplayMultiEffectiveMessage(ServerFlow* serverFlow, u32 hitMonC
     }
 }
 extern "C" void THUMB_BRANCH_SAFESTACK_ServerDisplay_MoveEffectivenessMessage(ServerFlow* serverFlow, u32 hitMonCount, EFFECTIVENESS* effectiveRecord, BattleMon** battleMons, b32 multipleTargets) {
-    u32 notEffective = 0;
+    u8 superSlots[3];
+    sys_memset(superSlots, BATTLE_MAX_SLOTS, 3);
     u32 superEffective = 0;
-    for (u32 effectiveIdx = 0; effectiveIdx < hitMonCount; ++effectiveIdx)
+    u8 notSlots[3];
+    sys_memset(notSlots, BATTLE_MAX_SLOTS, 3);
+    u32 notEffective = 0;
+
+    for (u32 idx = 0; idx < hitMonCount; ++idx)
     {
-        EFFECTIVENESS effectiveness = effectiveRecord[effectiveIdx];
+        EFFECTIVENESS effectiveness = effectiveRecord[idx];
         if (effectiveness < EFFECTIVENESS_1 || effectiveness == EFFECTIVENESS_1_8) {
+            notSlots[notEffective] = BattleMon_GetID(battleMons[idx]);
             ++notEffective;
         }
         else if (effectiveness > EFFECTIVENESS_1) {
+            superSlots[superEffective] = BattleMon_GetID(battleMons[idx]);
             ++superEffective;
         }
     }
@@ -5864,10 +5921,10 @@ extern "C" void THUMB_BRANCH_SAFESTACK_ServerDisplay_MoveEffectivenessMessage(Se
     if (multipleTargets)
     {
         if (superEffective) {
-            DisplayMultiEffectiveMessage(serverFlow, hitMonCount, effectiveRecord, battleMons, superEffective, 6);
+            DisplayMultiEffectiveMessage(serverFlow, superSlots, superEffective, 6);
         }
         if (notEffective) {
-            DisplayMultiEffectiveMessage(serverFlow, hitMonCount, effectiveRecord, battleMons, notEffective, 15);
+            DisplayMultiEffectiveMessage(serverFlow, notSlots, notEffective, 15);
         }
     }
     else if (superEffective) {
