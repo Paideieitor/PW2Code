@@ -1593,20 +1593,24 @@ extern "C" void CommonRemoveFieldEffectAbilityHandler(ServerFlow * serverFlow, u
     }
 }
 
-extern "C" void CommonTerrainChangeAbility(ServerFlow* serverFlow, u32 pokemonSlot, TERRAIN terrain, u16 msgID) {
+extern "C" void HandlerCommon_TerrainChange(ServerFlow* serverFlow, u32 pokemonSlot, TERRAIN terrain, u8 turns, bool ability, u16 msgID) {
     if (BattleField_GetTerrain(g_BattleField) != terrain) {
-        BattleHandler_PushRun(serverFlow, EFFECT_ABILITY_POPUP_ADD, pokemonSlot);
+        if (ability) {
+            BattleHandler_PushRun(serverFlow, EFFECT_ABILITY_POPUP_ADD, pokemonSlot);
+        }
 
         HandlerParam_AddFieldEffect* addFieldEffect;
         addFieldEffect = (HandlerParam_AddFieldEffect*)BattleHandler_PushWork(serverFlow, EFFECT_ADD_FIELD_EFFECT, pokemonSlot);
         addFieldEffect->effect = FLDEFF_TERRAIN;
         addFieldEffect->field_D = terrain;
-        addFieldEffect->condData = Condition_MakeTurn(TERRAIN_ABILITY_TURNS);
+        addFieldEffect->condData = Condition_MakeTurn(turns);
         BattleHandler_StrSetup(&addFieldEffect->exStr, 1u, msgID);
         BattleHandler_AddArg(&addFieldEffect->exStr, pokemonSlot);
         BattleHandler_PopWork(serverFlow, addFieldEffect);
 
-        BattleHandler_PushRun(serverFlow, EFFECT_ABILITY_POPUP_REMOVE, pokemonSlot);
+        if (ability) {
+            BattleHandler_PushRun(serverFlow, EFFECT_ABILITY_POPUP_REMOVE, pokemonSlot);
+        }
     }
 }
 
@@ -4642,8 +4646,6 @@ extern "C" u32 ServerEvent_CheckProtectBreakExt(ServerFlow * serverFlow, BattleM
 #endif
 #if EXPAND_MOVES
 extern "C" void ServerEvent_ProtectSuccess(ServerFlow* serverFlow, BattleMon* attackingMon, BattleMon* defendingMon, MOVE_ID moveID) {
-    u32 HEID = HEManager_PushState(&serverFlow->HEManager);
-
     BattleEventVar_Push();
     SET_UP_NEW_EVENT;
     u32 attackingSlot = BattleMon_GetID(attackingMon);
@@ -4651,14 +4653,11 @@ extern "C" void ServerEvent_ProtectSuccess(ServerFlow* serverFlow, BattleMon* at
     u32 defendingSlot = BattleMon_GetID(defendingMon);
     BattleEventVar_SetConstValue(NEW_VAR_DEFENDING_MON, defendingSlot);
     BattleEventVar_SetConstValue(VAR_MOVE_ID, moveID);
+    DPRINT("PROTECT SUCCESS \n");
     BattleEvent_CallHandlers(serverFlow, EVENT_PROTECT_SUCCESS);
     BattleEventVar_Pop();
-
-    HEManager_PopState(&serverFlow->HEManager, HEID);
 }
 extern "C" void ServerEvent_ProtectBroken(ServerFlow* serverFlow, BattleMon* attackingMon, BattleMon* defendingMon, MOVE_ID moveID) {
-    u32 HEID = HEManager_PushState(&serverFlow->HEManager);
-
     BattleEventVar_Push();
     SET_UP_NEW_EVENT;
     u32 attackingSlot = BattleMon_GetID(attackingMon);
@@ -4666,10 +4665,9 @@ extern "C" void ServerEvent_ProtectBroken(ServerFlow* serverFlow, BattleMon* att
     u32 defendingSlot = BattleMon_GetID(defendingMon);
     BattleEventVar_SetConstValue(NEW_VAR_DEFENDING_MON, defendingSlot);
     BattleEventVar_SetConstValue(VAR_MOVE_ID, moveID);
+    DPRINT("PROTECT BROKEN \n");
     BattleEvent_CallHandlers(serverFlow, EVENT_PROTECT_BROKEN);
     BattleEventVar_Pop();
-
-    HEManager_PopState(&serverFlow->HEManager, HEID);
 }
 #endif
 extern "C" void THUMB_BRANCH_SAFESTACK_flowsub_CheckNoEffect_Protect(ServerFlow * serverFlow, u16 * moveID, BattleMon * attackingMon, PokeSet * targetSet, int dmgAffRec) {
@@ -4694,6 +4692,7 @@ extern "C" void THUMB_BRANCH_SAFESTACK_flowsub_CheckNoEffect_Protect(ServerFlow 
 #else
         u32 breakProtect = ServerEvent_CheckProtectBreak(serverFlow, attackingMon);
 #endif
+
         switch (breakProtect)
         {
         case 0:
@@ -5652,6 +5651,16 @@ MoveEventAddTableExt moveEventAddTableExt[] = {
     {MOVE_PARTING_SHOT, EventAddPartingShot, "Moves/PartingShot"},
     {MOVE_TOPSY_TURVY, EventAddTopsyTurvy, "Moves/TopsyTurvy"},
     {MOVE_CRAFTY_SHIELD, EventAddCraftyShield, "Moves/CraftyShield"},
+    {MOVE_FLOWER_SHIELD, EventAddRototiller, "Moves/Rototiller"},
+    {MOVE_GRASSY_TERRAIN, EventAddGrassyTerrain, "Moves/GrassyTerrain"},
+    {MOVE_MISTY_TERRAIN, EventAddMistyTerrain, "Moves/MistyTerrain"},
+    {MOVE_ELECTRIFY, EventAddElectrify, "Moves/Electrify"},
+    {MOVE_FAIRY_LOCK, EventAddSpiderWeb, nullptr},
+    {MOVE_KINGS_SHIELD, EventAddKingsShield, "Moves/KingsShield"},
+
+    {MOVE_ELECTRIC_TERRAIN, EventAddElectricTerrain, "Moves/ElectricTerrain"},
+
+    {MOVE_PSYCHIC_TERRAIN, EventAddPsychicTerrain, "Moves/PsychicTerrain"},
 
     {MOVE_PLASMA_FIST, EventAddPlasmaFist, "Moves/IonDeluge"},
 
@@ -5668,6 +5677,7 @@ struct PosEffectEventAddTableExt
 PosEffectEventAddTableExt posEffectEventAddTableExt[] = {
     {POSEFF_ION_DELUGE, EventAddPosIonDeluge, "Moves/IonDeluge"},
     {POSEFF_CRAFTY_SHIELD, EventAddPosCraftyShield, "Moves/CraftyShield"},
+    {POSEFF_ELECTRIFY, EventAddPosElectrify, "Moves/Electrify"},
 };
 
 extern "C" void CMD_ACT_MoveAnimStart(BtlvScu * btlvScu, u32 attckViewPos, u32 defViewPos, u16 moveID, u32 moveTarget, u8 effectIndex, u8 zero);

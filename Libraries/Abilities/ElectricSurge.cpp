@@ -8,7 +8,7 @@
 // ELECTRIC SURGE
 extern "C" void HandlerElectricSurge(BattleEventItem * item, ServerFlow * serverFlow, u32 pokemonSlot, u32 * work) {
     if (pokemonSlot == BattleEventVar_GetValue(VAR_MON_ID)) {
-        CommonTerrainChangeAbility(serverFlow, pokemonSlot, TERRAIN_ELECTRIC, BATTLE_ELECTRIC_TERRAIN_MSGID);
+        HandlerCommon_TerrainChange(serverFlow, pokemonSlot, TERRAIN_ELECTRIC, TERRAIN_ABILITY_TURNS, true, BATTLE_ELECTRIC_TERRAIN_MSGID);
     }
 }
 BattleEventHandlerTableEntry ElectricSurgeHandlers[]{

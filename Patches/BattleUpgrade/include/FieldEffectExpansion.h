@@ -23,7 +23,7 @@ extern "C" void ServerEvent_GroundedByGravity(ServerFlow * serverFlow, BattleMon
 extern "C" b32 ServerControl_ChangeTerrainCheck(ServerFlow * serverFlow, TERRAIN terrain, u32 turns);
 extern "C" u32 ServerControl_ChangeTerrain(ServerFlow * serverFlow, TERRAIN terrain, u32 turns);
 
-extern "C" void CommonTerrainChangeAbility(ServerFlow * serverFlow, u32 pokemonSlot, TERRAIN terrain, u16 msgID);
+extern "C" void HandlerCommon_TerrainChange(ServerFlow * serverFlow, u32 pokemonSlot, TERRAIN terrain, u8 turns, bool ability, u16 msgID);
 
 extern "C" BattleEventHandlerTableEntry * EventAddFieldTerrain(u32 * handlerAmount);
 extern "C" BattleEventHandlerTableEntry * EventAddFieldDarkAura(u32 * handlerAmount);

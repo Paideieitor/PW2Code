@@ -8,7 +8,7 @@
 // MISTY SURGE
 extern "C" void HandlerMistySurge(BattleEventItem * item, ServerFlow * serverFlow, u32 pokemonSlot, u32 * work) {
     if (pokemonSlot == BattleEventVar_GetValue(VAR_MON_ID)) {
-        CommonTerrainChangeAbility(serverFlow, pokemonSlot, TERRAIN_MISTY, BATTLE_MISTY_TERRAIN_MSGID);
+        HandlerCommon_TerrainChange(serverFlow, pokemonSlot, TERRAIN_MISTY, TERRAIN_ABILITY_TURNS, true, BATTLE_MISTY_TERRAIN_MSGID);
     }
 }
 BattleEventHandlerTableEntry MistySurgeHandlers[]{

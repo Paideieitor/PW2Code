@@ -3649,3 +3649,9 @@ Symbols:
   - Name: DayCare_RemovePkm
     Segment: 0x24
     Address: 0x21bd381
+  - Name: EventAddSpiderWeb
+    Segment: 0xA7
+    Address: 0x21c6545
+  - Name: HandlerProtect
+    Segment: 0xA7
+    Address: 0x21c946d

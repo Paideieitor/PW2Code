@@ -8,7 +8,7 @@
 // SEED SOWER
 extern "C" void HandlerSeedSower(BattleEventItem * item, ServerFlow * serverFlow, u32 pokemonSlot, u32 * work) {
     if (pokemonSlot == BattleEventVar_GetValue(VAR_DEFENDING_MON)) {
-        CommonTerrainChangeAbility(serverFlow, pokemonSlot, TERRAIN_GRASSY, BATTLE_GRASSY_TERRAIN_MSGID);
+        HandlerCommon_TerrainChange(serverFlow, pokemonSlot, TERRAIN_GRASSY, TERRAIN_ABILITY_TURNS, true, BATTLE_GRASSY_TERRAIN_MSGID);
     }
 }
 BattleEventHandlerTableEntry SeedSowerHandlers[]{

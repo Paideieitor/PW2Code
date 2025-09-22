@@ -68,8 +68,8 @@ BattleEventHandlerTableEntry MatBlockHandlers[]{
     {EVENT_MOVE_SEQUENCE_START, HandlerProtectStart},
     {EVENT_MOVE_EXECUTE_CHECK2, HandlerProtectCheckFail },
     {EVENT_MOVE_EXECUTE_FAIL, HandlerProtectResetCounter},
-    {EVENT_UNCATEGORIZED_MOVE, HandlerMatBlock},
-    {EVENT_PROTECT_BROKEN, HandlerMatBlockProtectBroken}
+    {EVENT_UNCATEGORIZED_MOVE_NO_TARGET, HandlerMatBlock},
+    {EVENT_PROTECT_BROKEN, HandlerMatBlockProtectBroken},
 };
 extern "C" BattleEventHandlerTableEntry * EventAddMatBlock(u32 * handlerAmount) {
     *handlerAmount = ARRAY_COUNT(MatBlockHandlers);

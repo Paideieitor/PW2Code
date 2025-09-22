@@ -51,7 +51,7 @@ extern "C" void HandlerCraftyShield(BattleEventItem* item, ServerFlow* serverFlo
     }
 }
 BattleEventHandlerTableEntry CraftyShieldHandlers[]{
-    {EVENT_UNCATEGORIZED_MOVE, HandlerCraftyShield},
+    {EVENT_UNCATEGORIZED_MOVE_NO_TARGET, HandlerCraftyShield},
 };
 extern "C" BattleEventHandlerTableEntry* EventAddCraftyShield(u32* handlerAmount) {
     *handlerAmount = ARRAY_COUNT(CraftyShieldHandlers);
