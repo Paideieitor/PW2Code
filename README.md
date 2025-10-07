@@ -104,7 +104,6 @@ To personalize the patch modify the ``settings.h`` file (I don't recomend modify
 
 ## Reporting Issues/Contributing
 You can message me through Discord, @dararoraro
-If you are having troubles building the patches or running CTRMap, I recommend joining [Kingdom of DS Hacking](https://discord.gg/zAtqJDW2jC) and the [DS Modding Community](https://discord.gg/YBtdN3aXfv)
 
 ## Credits
 * Hello007 - CTRMap and the Gen V code injection system
