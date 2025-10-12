@@ -12,8 +12,7 @@ extern "C" void HandlerEjectPackStatCheck(BattleEventItem* item, ServerFlow* ser
     }
 }
 extern "C" void HandlerEjectPackActionEnd(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work) {
-    if (pokemonSlot == BattleEventVar_GetValue(VAR_MON_ID) &&
-        work[0] == 1) {
+    if (work[0] == 1) {
         work[0] = 0;
         if (Handler_GetFightEnableBenchPokeNum(serverFlow, pokemonSlot)
             && Handler_CheckReservedMemberChangeAction(serverFlow)) {

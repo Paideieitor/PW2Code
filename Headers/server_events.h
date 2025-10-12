@@ -40,5 +40,8 @@ extern "C" void ServerEvent_AfterWeatherChange(ServerFlow* serverFlow, WEATHER w
 extern "C" b32 ServerEvent_CheckProtectBreak(ServerFlow * serverFlow, BattleMon * attackingMon);
 extern "C" u32 ServerEvent_CheckRunPrevent(ServerFlow * serverFlow, BattleMon * battleMon);
 extern "C" EFFECTIVENESS ServerEvent_CheckDamageEffectiveness(ServerFlow* serverFlow, BattleMon* attackingMon, BattleMon* defendingMon, PokeType moveType, u8 pokemonType);
-
+extern "C" void ServerEvent_ActProcEnd(ServerFlow* serverFlow, BattleMon* currentMon, u32 action);
+extern "C" void ServerEvent_AfterSwitchInPrevious(ServerFlow* serverFlow);
+extern "C" void ServerEvent_SwitchIn(ServerFlow* serverFlow, BattleMon* battleMon);
+extern "C" void ServerEvent_AfterLastSwitchIn(ServerFlow* serverFlow);
 #endif // __SERVER_EVENTS_H
