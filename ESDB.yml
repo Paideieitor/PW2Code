@@ -3655,3 +3655,51 @@ Symbols:
   - Name: HandlerProtect
     Segment: 0xA7
     Address: 0x21c946d
+  - Name: BattleHandler_Switch
+    Segment: 0xA7
+    Address: 0x21adcd9
+  - Name: Handler_IsMonInSkyDrop
+    Segment: 0xA7
+    Address: 0x21abef5
+  - Name: ServerControl_SwitchOut
+    Segment: 0xA7
+    Address: 0x21a17e9
+  - Name: BattleServer_RequestChangePokemon
+    Segment: 0xA7
+    Address: 0x219f399
+  - Name: Handler_GetPartyData
+    Segment: 0xA7
+    Address: 0x21abb4d
+  - Name: Handler_GetMyBenchindex
+    Segment: 0xA7
+    Address: 0x21aba85
+  - Name: BattleParty_GetAliveMemberCountRear
+    Segment: 0xA7
+    Address: 0x219d4f9
+  - Name: ServerControl_Switch
+    Segment: 0xA7
+    Address: 0x21a1781
+  - Name: ServerControl_AfterSwitchIn
+    Segment: 0xA7
+    Address: 0x21a14e9
+  - Name: sub_21B23F8
+    Segment: 0xA7
+    Address: 0x21b23f9
+  - Name: BattleClient_SubProc_UI_SelectAction
+    Segment: 0xA7
+    Address: 0x21b2259
+  - Name: ServerEvent_ActProcEnd
+    Segment: 0xA7
+    Address: 0x21a0a49
+  - Name: PokeSet_Add
+    Segment: 0xA7
+    Address: 0x21a1621
+  - Name: PokeSet_SortBySpeed
+    Segment: 0xA7
+    Address: 0x21a1631
+  - Name: ServerEvent_AfterLastSwitchIn
+    Segment: 0xA7
+    Address: 0x21a16f5
+  - Name: Move_IsUsable
+    Segment: 0xA7
+    Address: 0x21baf91

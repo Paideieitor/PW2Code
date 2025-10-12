@@ -31,7 +31,7 @@ struct BattleFieldExt
     ITEM tempItem;
 
     // Is set in [ServerControl_DamageRoot] whenever a move hits twice bacause of the ability
-    u8 parentalBondFlag = 0;
+    u8 parentalBondFlag;
 
     // Amount of Pokemon with Aura Break
     u8 auraBreakMons;
@@ -51,7 +51,7 @@ struct BattleFieldExt
 
     // Stores the Pokémon that start the battle
     // - Set in [ServerFlow_SetupBeforeFirstTurn]
-    u8 firstTurnMons[6] = { BATTLE_MAX_SLOTS };
+    u8 firstTurnMons[6];
 
     // Each bit represents a battle slot, 1 means the mon has used Battle Bond and thus can't use it again
     u32 battleBondFlag;
@@ -71,7 +71,7 @@ struct BattleFieldExt
     // When a Pokémon has the ability As One this represents the ability that the pop up should display
     // First Ability (Unnerve) -> 1000 0000
     // Second Ability (Chilling/Grim Neigh) -> 0100 0000
-    u8 asOneAbilityPopUpFlags = 0;
+    u8 asOneAbilityPopUpFlags;
 
     // Stores the 2 possible paired Dondozos battle slots for Commander
     u8 pairedDondozos[4];
@@ -83,6 +83,14 @@ struct BattleFieldExt
     // Each bit represents a battle slot, 1 means the mon has already used Supersweet Syrup
     u32 supersweetSyrupFlag;
 #endif // EXPAND_ABILITIES
+
+#if EXPAND_ITEMS
+
+    // Stores the Pokémon that have already been processed in the entry turn
+    // - Used in [ProcessEntryTurn]
+    u8 entrySlots[BATTLE_MAX_SLOTS];
+
+#endif // EXPAND_ITEMS
 
 #if EXPAND_MOVES
     // Keeps track if a Pokémon has eaten a berry this match (used by Belch)

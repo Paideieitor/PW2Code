@@ -245,7 +245,7 @@ struct SWAN_ALIGNED(8) ServerFlow
     u8 field_790;
     u8 revivePokeID[24];
     u8 pokeInFlag[24];
-    u8 field_7C1[24];
+    u8 afterTurnStartSlots[24];
     u8 switchCount[4];
     u8 field_7DD;
     u8 field_7DE;
@@ -358,6 +358,8 @@ extern "C" b32 ServerControl_IsGuaranteedHit(ServerFlow* serverFlow, BattleMon* 
 extern "C" b32 ServerControl_CheckNoEffectCore(ServerFlow* serverFlow, u16* moveID, BattleMon* attackingMon, BattleMon* defendingMon, int dmgAffRec, BattleEventType eventType);
 extern "C" b32 ServerControl_HideTurnStart(ServerFlow * serverFlow, BattleMon * attackingMon, u32 attackingPos, PokeSet * targetSet, u16 moveID);
 extern "C" CONDITION_FLAG ServerControl_ChargeUpLockClear(ServerFlow * serverFlow, BattleMon * attackingMon);
+extern "C" void ServerControl_Switch(ServerFlow* serverFlow, BattleMon* battleMon, u32 switchSlot);
+extern "C" bool ServerControl_AfterSwitchIn(ServerFlow* serverFlow);
 
 enum ServerCommandID : u32
 {
@@ -483,6 +485,8 @@ extern "C" u32 PokeSet_GetCount(PokeSet* pokeSet);
 extern "C" u32 PokeSet_GetCountMax(PokeSet* pokeSet);
 extern "C" void PokeSet_Remove(PokeSet* pokeSet, BattleMon* battleMon);
 extern "C" BattleMon* PokeSet_Get(PokeSet* pokeSet, u32 idx);
+extern "C" void PokeSet_Add(PokeSet* pokeSet, BattleMon* battleMon);
+extern "C" u32 PokeSet_SortBySpeed(PokeSet* pokeSet, ServerFlow* serverFlow);
 
 extern "C" BattleMon* Handler_GetBattleMon(ServerFlow* serverFlow, u32 pokemonSlot);
 extern "C" u32 Handler_PokeIDToPokePos(ServerFlow* serverFlow, u32 pokemonSlot);
