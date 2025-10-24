@@ -18,8 +18,7 @@
 #if EXPAND_ITEMS
 
 //extern "C" BagItem* BagSave_AddItemCore(BagSaveData* bag, u16 item_idx, u16 quantity, HeapID heapId);
-//extern "C" bool THUMB_BRANCH_BagSave_AddItem(BagSaveData* bag, u16 itemId, u16 quantity, HeapID heapId)
-//{
+//extern "C" bool THUMB_BRANCH_BagSave_AddItem(BagSaveData* bag, u16 itemId, u16 quantity, HeapID heapId) {
 //    int amount = 50;
 //    BagSave_AddItemCore(bag, 130, amount, heapId);
 //

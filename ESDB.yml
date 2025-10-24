@@ -3703,3 +3703,9 @@ Symbols:
   - Name: Move_IsUsable
     Segment: 0xA7
     Address: 0x21baf91
+  - Name: ServerFlow_StartAfterPokeIn
+    Segment: 0xA7
+    Address: 0x219f7f5
+  - Name: ServerControl_ActOrderProc_OnlyPokeIn
+    Segment: 0xA7
+    Address: 0x219fcb5

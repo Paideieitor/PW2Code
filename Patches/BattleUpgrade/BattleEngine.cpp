@@ -1,8 +1,8 @@
 #include "settings.h"
 #include "BattleEngine.h"
 #include "GameVariables.h"
-#include "include/Battlefield.h"
 
+#include "include/Battlefield.h"
 #include "include/AbilityExpansion.h"
 #include "include/ItemExpansion.h"
 #include "include/MoveExpansion.h"
@@ -821,6 +821,8 @@ extern "C" u32 CommonGetAllyPos(ServerFlow * serverFlow, u32 battlePos) {
 
 u8 entryTurn = 0;
 extern "C" bool ProcessEntryTurn(ServerFlow* serverFlow) {
+    // Reset switch flag (used in Handler_CheckReservedMemberChangeAction)
+    serverFlow->field_78A &= ~8u;
     PokeSet_Clear(&serverFlow->currentpokeSet);
 
     FRONT_POKE_SEEK_WORK seekWork[6];
@@ -911,6 +913,11 @@ extern "C" bool THUMB_BRANCH_LINK_167_0x021B2416(BtlClientWk* btlClient, u32* st
 // Stop the turn setup from calling the switch in function
 extern "C" bool THUMB_BRANCH_LINK_ServerFlow_SetupBeforeFirstTurn_0xC0() {
     return false;
+}
+extern "C" void THUMB_BRANCH_LINK_ServerControl_ActOrderProc_OnlyPokeIn_0x82(ServerFlow* serverFlow) {
+    if (entryTurn != 0) {
+        ServerControl_AfterSwitchIn(serverFlow);
+    }
 }
 
 #endif
@@ -4773,7 +4780,6 @@ extern "C" void ServerEvent_ProtectSuccess(ServerFlow* serverFlow, BattleMon* at
     u32 defendingSlot = BattleMon_GetID(defendingMon);
     BattleEventVar_SetConstValue(NEW_VAR_DEFENDING_MON, defendingSlot);
     BattleEventVar_SetConstValue(VAR_MOVE_ID, moveID);
-    DPRINT("PROTECT SUCCESS \n");
     BattleEvent_CallHandlers(serverFlow, EVENT_PROTECT_SUCCESS);
     BattleEventVar_Pop();
 }
@@ -4785,7 +4791,6 @@ extern "C" void ServerEvent_ProtectBroken(ServerFlow* serverFlow, BattleMon* att
     u32 defendingSlot = BattleMon_GetID(defendingMon);
     BattleEventVar_SetConstValue(NEW_VAR_DEFENDING_MON, defendingSlot);
     BattleEventVar_SetConstValue(VAR_MOVE_ID, moveID);
-    DPRINT("PROTECT BROKEN \n");
     BattleEvent_CallHandlers(serverFlow, EVENT_PROTECT_BROKEN);
     BattleEventVar_Pop();
 }
@@ -4823,13 +4828,17 @@ extern "C" void THUMB_BRANCH_SAFESTACK_flowsub_CheckNoEffect_Protect(ServerFlow 
                 u32 targetSlot = BattleMon_GetID(targetMon);
                 ServerDisplay_AddMessageImpl(serverFlow->serverCommandQueue, SCID_SetMessage, 523, targetSlot, 0xFFFF0000);
 #if EXPAND_MOVES      
+                u32 HEID = HEManager_PushState(&serverFlow->HEManager);
                 ServerEvent_ProtectSuccess(serverFlow, attackingMon, targetMon, *moveID);
+                HEManager_PopState(&serverFlow->HEManager, HEID);
 #endif
             }
             break;
 #if EXPAND_MOVES
         case 1:
+            u32 HEID = HEManager_PushState(&serverFlow->HEManager);
             ServerEvent_ProtectBroken(serverFlow, attackingMon, targetMon, *moveID);
+            HEManager_PopState(&serverFlow->HEManager, HEID);
             break;
 #endif
         }
@@ -5798,6 +5807,7 @@ PosEffectEventAddTableExt posEffectEventAddTableExt[] = {
     {POSEFF_ION_DELUGE, EventAddPosIonDeluge, "Moves/IonDeluge"},
     {POSEFF_CRAFTY_SHIELD, EventAddPosCraftyShield, "Moves/CraftyShield"},
     {POSEFF_ELECTRIFY, EventAddPosElectrify, "Moves/Electrify"},
+    {POSEFF_KINGS_SHIELD, EventAddPosKingsShield, "Moves/KingsShield"},
 };
 
 extern "C" void CMD_ACT_MoveAnimStart(BtlvScu * btlvScu, u32 attckViewPos, u32 defViewPos, u16 moveID, u32 moveTarget, u8 effectIndex, u8 zero);

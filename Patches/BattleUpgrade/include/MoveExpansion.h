@@ -34,6 +34,7 @@ extern "C" BattleEventHandlerTableEntry* EventAddDefogUpdated(u32* handlerAmount
 extern "C" BattleEventHandlerTableEntry* EventAddPosIonDeluge(u32* handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddPosCraftyShield(u32* handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddPosElectrify(u32* handlerAmount);
+extern "C" BattleEventHandlerTableEntry* EventAddPosKingsShield(u32* handlerAmount);
 
 extern "C" void GetSideBattleSlots(ServerFlow * serverFlow, u32 side, u8 battleSlots[3]);
 extern "C" u32 PosEffect_SetPriority(BattleEventPriority priority, u32 handlerCount);
