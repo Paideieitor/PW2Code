@@ -14,8 +14,14 @@ typedef u32 MOVE_ID;
 typedef u32 WEATHER;
 typedef u32 SIDE_EFFECT;
 
-struct ServerCommandQueue;
 struct ArcTool;
+
+struct ServerCommandQueue
+{
+    u32 writePtr;
+    u32 readPtr;
+    u8 buffer[3000];
+};
 
 struct SWAN_ALIGNED(4) m_record
 {
@@ -327,6 +333,13 @@ struct FRONT_POKE_SEEK_WORK
 
 extern "C" u32 ServerFlow_ReqChangePokeForServer(ServerFlow * serverFlow, u16 * a2);
 extern "C" b32 ServerFlow_IsCompetitorScenarioMode(ServerFlow* serverFlow);
+extern "C" bool ServerFlow_ResetCommandQueue(ServerFlow* serverFlow);
+extern "C" void ServerFlow_StartTurnBoot(ServerFlow* serverFlow);
+extern "C" u32 ServerFlow_StartTurn(ServerFlow* serverFlow, u32* clientAction);
+extern "C" void ServerFlow_StartAfterPokeInBoot(ServerFlow* serverFlow);
+extern "C" u32 ServerFlow_StartAfterPokeIn(ServerFlow* serverFlow, u32* clientAction);
+extern "C" u32 ServerFlow_GenerateActionOrder(ServerFlow* serverFlow, u32* clientAction, ActionOrderWork* actionOrderWork);
+
 extern "C" u32 ActionOrder_Proc(ServerFlow* serverFlow, ActionOrderWork* actionOrder);
 
 extern "C" b32 ServerControl_TurnCheck(ServerFlow* serverFlow);
@@ -360,6 +373,7 @@ extern "C" b32 ServerControl_HideTurnStart(ServerFlow * serverFlow, BattleMon * 
 extern "C" CONDITION_FLAG ServerControl_ChargeUpLockClear(ServerFlow * serverFlow, BattleMon * attackingMon);
 extern "C" void ServerControl_Switch(ServerFlow* serverFlow, BattleMon* battleMon, u32 switchSlot);
 extern "C" bool ServerControl_AfterSwitchIn(ServerFlow* serverFlow);
+extern "C" void ServerControl_SwitchInFillSlot(ServerFlow* serverFlow, u32 clientID, u32 posIndex, u32 switchSlot, u8 isTrainer);
 
 enum ServerCommandID : u32
 {
@@ -473,7 +487,9 @@ extern "C" void ServerDisplay_MoveFail(ServerFlow * serverFlow);
 extern "C" void ServerDisplay_MoveAvoid(ServerFlow* serverFlow, BattleMon* attackingMon);
 extern "C" void ServerDisplay_ResetConditionFlag(ServerFlow* serverFlow, BattleMon* battleMon, CONDITION_FLAG conditionFlag);
 extern "C" void ServerDisplay_UseHeldItem(ServerFlow* serverFlow, BattleMon* battleMon);
+
 extern "C" void ServerControl_ChangeHeldItem(ServerFlow* serverFlow, BattleMon* battleMon, ITEM itemID, u32 consumeItem);
+extern "C" u32 ServerControl_ActOrderProc_OnlyPokeIn(ServerFlow* serverFlow, u32* clientAction);
 
 extern "C" BattleMon* PokeCon_GetBattleMon(PokeCon* pokeCon, u32 index);
 extern "C" BattleParty* PokeCon_GetBattleParty(PokeCon* pokeCon, u32 idx);
@@ -535,5 +551,17 @@ extern "C" void FaintRecord_Add(FaintRecord * faintRecord, u8 battleSlot);
 
 extern "C" void FRONT_POKE_SEEK_InitWork(FRONT_POKE_SEEK_WORK* frontSet, ServerFlow* serverFlow);
 extern "C" b32 FRONT_POKE_SEEK_GetNext(FRONT_POKE_SEEK_WORK* frontSet, ServerFlow* serverFlow, BattleMon** battleMon);
+
+extern "C" bool BattleServer_IsWaitingClientReply(BtlServerWk* btlServer);
+extern "C" bool BattleServer_DoesSwitchModeNeedConfirming(BtlServerWk* btlServer);
+extern "C" u32 BattleServer_GetNextEnemyForSwitchMode(BtlServerWk* btlServer);
+extern "C" void BattleServer_RequestChangeSwitchMode(BtlServerWk* btlServer, u16 cmdID, u32 clientID, u8* data, u32 dataSize);
+#define SEQUENCE_FUNCTION(name) u32(*name)(BtlServerWk* btlServer, u32* statePtr)
+extern "C" void BattleServer_ChangeSequence(BtlServerWk* btlServer, SEQUENCE_FUNCTION(sequence));
+extern "C" void BattleServer_SetDefaultSequence(BtlServerWk* btlServer);
+extern "C" BtlServerWk* BattleServer_InitChangePokemonReq(BtlServerWk* result);
+
+extern "C" bool CMDCHECK_Make(BtlServerWk* btlServer, u32 state, void* cmdPtr, u32 cmdSize);
+extern "C" void MovePokemonTripleBattle1v1(ServerFlow* serverFlow); 
 
 #endif // __SERVER_FLOW_H

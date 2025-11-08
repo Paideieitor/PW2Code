@@ -17,13 +17,16 @@ extern "C" void HandlerFellStinger(BattleEventItem* item, ServerFlow* serverFlow
             BattleMon* targetMon = Handler_GetBattleMon(serverFlow, targetSlot);
             if (BattleMon_IsFainted(targetMon))
             {
-                u32 statsToMax = BattleMon_GetStatStageVolumeToMax(attackingMon, STATSTAGE_ATTACK);
                 HandlerParam_ChangeStatStage* statChange;
                 statChange = (HandlerParam_ChangeStatStage*)BattleHandler_PushWork(serverFlow, EFFECT_CHANGE_STAT_STAGE, pokemonSlot);
                 statChange->pokeCount = 1;
                 statChange->pokeID[0] = pokemonSlot;
                 statChange->stat = STATSTAGE_ATTACK;
-                statChange->volume = statsToMax;
+#if GEN6_FELL_STINGER
+                statChange->volume = 2;
+#else
+                statChange->volume = 3;
+#endif
                 BattleHandler_PopWork(serverFlow, statChange);
 
                 return;

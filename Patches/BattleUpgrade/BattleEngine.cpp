@@ -163,6 +163,82 @@ extern "C" b32 SearchArray(const u32* const arr, const u32 arrSize, const u32 va
 }
 #define SEARCH_ARRAY(arr, value) SearchArray(arr, ARRAY_COUNT(arr), value)
 
+#include "gfl/core/gfl_heap.h"
+#include "data/heapid_def.h"
+#include "nds/gx.h"
+
+void swap16(void* a, void* b) {
+    u16* a_16 = static_cast<u16*>(a);
+    u16* b_16 = static_cast<u16*>(b);
+    u16 temp = *a_16;
+    *a_16 = *b_16;
+    *b_16 = temp;
+}
+
+void swapbuffer_memcpy32(void* a, void* b, size_t size) {
+    //Not really optimized since we're not copying large amounts
+    u32* a_32 = static_cast<u32*>(a);
+    u32* b_32 = static_cast<u32*>(b);
+    u32 swap;
+    u32* end = b_32 + (size >> 2);
+    while (b_32 < end) {
+        swap = *a_32;
+        *a_32 = *b_32;
+        *b_32 = swap;
+        a_32++;
+        b_32++;
+    }
+}
+
+extern "C" void PrintLowerScreen() {
+#define TILES_PER_LINE 32;
+#define TILE_AMOUNT 24
+
+    size_t mapSize = TILE_AMOUNT * TILES_PER_LINE;
+    u16* mapBase = GFL_NEW(HEAPID_SYSTEM) u16[mapSize];
+    sys_memset32_fast(0, mapBase, mapSize * sizeof(u16));
+    u16 paletteBGColor = 0x0000;
+
+    BGCntReg bgCfg;
+    bgCfg.Mosaic = 0;
+    bgCfg.Priority = 0;
+    bgCfg.ScreenSize = BGSIZE_T256x256_R128x128;
+    bgCfg.ColorPaletteMode = 0;
+    bgCfg.Bit12 = 0;
+    bgCfg.CharBase = 0;
+    bgCfg.ScreenBase = 2;
+
+    u16 bgHOfs = 0;
+    u16 bgVOfs = 0;
+    u16 bldCnt = 0;
+    u16 dispLayout = G2D_DISPLAYOUT_A_UP_B_DOWN;
+    u16 enabledBGs = G2D_SCREENBG_1;
+    u16 masterBright = 0;
+
+    G2DBGTransformRegs BGTransform;
+    memset(&BGTransform, 0, sizeof(BGTransform));
+
+    if (gfxGetScreenAddrBG1B()) {
+        swap16(&STD_PALETTE_BG_B.Colors[0xE], &paletteBGColor);
+
+        swap16(&MASTER_BRIGHT_B, &masterBright);
+        swap16(&LCDIO_B.BG1CNT, &bgCfg);
+        swap16(&LCDIO_B.BG1HOFS, &bgHOfs);
+        swap16(&LCDIO_B.BG1VOFS, &bgVOfs);
+        swap16(&LCDIO_B.BLD.BLDCNT, &bldCnt);
+
+        u16 bgs = DISPCNT_B.DispBGs;
+        u16 dispLayout = POWCNT1.DispLayout;
+        swap16(&enabledBGs, &bgs);
+        swap16(&dispLayout, &dispLayout);
+        DISPCNT_B.DispBGs = bgs;
+        POWCNT1.DispLayout = dispLayout;
+
+        swapbuffer_memcpy32(mapBase, gfxGetScreenAddrBG1B(), mapSize << 1);
+
+    }
+}
+
 #if EXPAND_FIELD_EFFECTS
 
 // The battle engine stores 2 BattleField structs
@@ -817,111 +893,6 @@ extern "C" u32 CommonGetAllyPos(ServerFlow * serverFlow, u32 battlePos) {
 
 #endif
 
-#if EXPAND_ITEMS
-
-u8 entryTurn = 0;
-extern "C" bool ProcessEntryTurn(ServerFlow* serverFlow) {
-    // Reset switch flag (used in Handler_CheckReservedMemberChangeAction)
-    serverFlow->field_78A &= ~8u;
-    PokeSet_Clear(&serverFlow->currentpokeSet);
-
-    FRONT_POKE_SEEK_WORK seekWork[6];
-    FRONT_POKE_SEEK_InitWork(seekWork, serverFlow);
-
-    BattleMon* battleMon;
-    while (FRONT_POKE_SEEK_GetNext(seekWork, serverFlow, &battleMon)) {
-        PokeSet_Add(&serverFlow->currentpokeSet, battleMon);
-        serverFlow->afterTurnStartSlots[BattleMon_GetID(battleMon)] = 0;
-    }
-
-    PokeSet_SortBySpeed(&serverFlow->currentpokeSet, serverFlow);
-    u32 HEID = HEManager_PushState(&serverFlow->HEManager);
-    ServerEvent_AfterSwitchInPrevious(serverFlow);
-    HEManager_PopState(&serverFlow->HEManager, HEID);
-
-    PokeSet_SeekStart(&serverFlow->currentpokeSet);
-    for (battleMon = PokeSet_SeekNext(&serverFlow->currentpokeSet); battleMon; battleMon = PokeSet_SeekNext(&serverFlow->currentpokeSet)) {
-
-        // Check the entry Pokémon array
-        u8 entryIdx = 0;
-        for (; entryIdx < BATTLE_MAX_SLOTS; ++entryIdx) {
-            u8 entry = g_BattleField->entrySlots[entryIdx];
-            u8 slot = BattleMon_GetID(battleMon);
-
-            if (entry == slot) {
-                // Don't process already processed Pokémon
-                entryIdx = 0xFF;
-                break;
-            }
-            if (entry == BATTLE_MAX_SLOTS) {
-                // Store the new Pokémon so it's no longer processed
-                g_BattleField->entrySlots[entryIdx] = slot;
-                break;
-            }
-        }
-        if (entryIdx == 0xFF) {
-            continue;
-        }
-
-        HEID = HEManager_PushState(&serverFlow->HEManager);
-        ServerEvent_SwitchIn(serverFlow, battleMon);
-        HEManager_PopState(&serverFlow->HEManager, HEID);
-
-        HEID = HEManager_PushState(&serverFlow->HEManager);
-        ServerEvent_ActProcEnd(serverFlow, battleMon, 0);
-        HEManager_PopState(&serverFlow->HEManager, HEID);
-
-        u32 getExp = ServerControl_CheckExpGet(serverFlow);
-        b32 matchup = ServerControl_CheckMatchup(serverFlow);
-
-        // Stop the entry turn if the battle ends
-        if (matchup) {
-            serverFlow->flowResult = 4;
-            return false;
-        }
-
-        // Stop the entry turn if a new Pokémon has to enter the battle
-        if (serverFlow->flowResult == 6 || serverFlow->flowResult == 1) {
-            return false;
-        }
-
-        // Stop the entry turn if a Pokémon died but the battle is not over
-        if (getExp) {
-            serverFlow->flowResult = 3;
-            return false;
-        }
-    }
-
-    HEID = HEManager_PushState(&serverFlow->HEManager);
-    ServerEvent_AfterLastSwitchIn(serverFlow);
-    HEManager_PopState(&serverFlow->HEManager, HEID);
-
-    // Finish the entry turn
-    serverFlow->flowResult = 0;
-    return true;
-}
-
-// Eject Pack - Skip first Action Selection Menu to allow for pre-battle switches
-// Function that starts the Action Selection Menu
-extern "C" bool BattleClient_SubProc_UI_SelectAction(BtlClientWk* btlClient, u32* state);
-extern "C" bool THUMB_BRANCH_LINK_167_0x021B2416(BtlClientWk* btlClient, u32* state) {
-    if (entryTurn != 0) {
-        return BattleClient_SubProc_UI_SelectAction(btlClient, state);
-    }
-    return 1;
-}
-// Stop the turn setup from calling the switch in function
-extern "C" bool THUMB_BRANCH_LINK_ServerFlow_SetupBeforeFirstTurn_0xC0() {
-    return false;
-}
-extern "C" void THUMB_BRANCH_LINK_ServerControl_ActOrderProc_OnlyPokeIn_0x82(ServerFlow* serverFlow) {
-    if (entryTurn != 0) {
-        ServerControl_AfterSwitchIn(serverFlow);
-    }
-}
-
-#endif
-
 // Stores data of extra action generated by Dancer, Instruct...
 // - Set in [HandlerDancerCheckMove]
 // - Reset and used in [ServerFlow_ActOrderProcMain]
@@ -959,18 +930,6 @@ extern "C" void ResetExtraActionFlag()
 extern "C" int THUMB_BRANCH_ServerFlow_ActOrderProcMain(ServerFlow * serverFlow, u32 currentActionIdx) {
     u32 procAction = 0;
     ActionOrderWork* actionOrderWork = serverFlow->actionOrderWork;
-
-#if EXPAND_ITEMS
-
-    // Check if any turn events (switching, ending the battle, etc.) need to trigger before starting the battle
-    if (entryTurn == 0) {
-        if (ProcessEntryTurn(serverFlow)) {
-            entryTurn = 1;
-        }
-        return 0;
-    }
-
-#endif
 
     for (u8 i = 0; i < 6; ++i) {
         sys_memset(&extraActionOrder[i], 0, sizeof(ActionOrderWork));
@@ -1163,6 +1122,114 @@ extern "C" int THUMB_BRANCH_ServerFlow_ActOrderProcMain(ServerFlow * serverFlow,
     }
     return serverFlow->numActOrder;
 }
+
+#if EXPAND_ITEMS
+
+extern "C" u32 ServerFlow_SwitchEndTurn(ServerFlow* serverFlow, u32* clientAction) {
+    serverFlow->flowResult = 0;
+    serverFlow->serverCommandQueue->writePtr = 0;
+    serverFlow->serverCommandQueue->readPtr = 0;
+
+    // Reset switch flag (used in Handler_CheckReservedMemberChangeAction)
+    serverFlow->field_78A &= ~8u;
+
+    if (serverFlow->cmdBuildStep ||
+        (BattleServer_InitChangePokemonReq(serverFlow->server),
+            BattleEventVar_CheckStackCleared(),
+            serverFlow->field_77D = 0,
+            serverFlow->cmdBuildStep = 1,
+            !ServerControl_ActOrderProc_OnlyPokeIn(serverFlow, clientAction))) {
+
+        FRONT_POKE_SEEK_WORK seekWork[6];
+        FRONT_POKE_SEEK_InitWork(seekWork, serverFlow);
+
+        BattleMon* battleMon;
+        while (FRONT_POKE_SEEK_GetNext(seekWork, serverFlow, &battleMon)) {
+            ServerEvent_ActProcEnd(serverFlow, battleMon, 0);
+            if (serverFlow->flowResult == 1) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+extern "C" u32 sub_219F214(BtlServerWk* btlServer);
+extern "C" u32 sub_219DF90(MainModule* mainModule);
+extern "C" void sub_219F0EC(BtlServerWk* btlServer);
+extern "C" bool sub_219F06C(BtlServerWk* btlServer, u8, u8);
+extern "C" void sub_219F168(BtlServerWk* server, u16 cmdID, u8* data, u32 dataSize);
+extern "C" u32 BtlServer_EndTurnSequence(BtlServerWk* btlServer, u32* state) {
+    switch (*state)
+    {
+    case 0:
+        sub_219F168(btlServer, 6, &btlServer->field_CB4, btlServer->field_CBA);
+        *state = 1;
+        break;
+    case 1:
+        if (!BattleServer_IsWaitingClientReply(btlServer)) {
+            return 0;
+        }
+        sub_219F214(btlServer);
+        if (sub_219DF90((MainModule*)btlServer->mainModule)) {
+            BattleServer_ChangeSequence(btlServer, (SEQUENCE_FUNCTION())0x219ECC5); // BtlServer_EndMatchSequence
+        }
+        else
+        {
+            sub_219F0EC(btlServer);
+            if (!sub_219F06C(btlServer, 2u, 0)) {
+                *state = 3;
+            }
+            else {
+                *state = 2;
+            }
+        }
+        break;
+    case 2:
+        if (!BattleServer_IsWaitingClientReply(btlServer)) {
+            return 0;
+        }
+        sub_219F214(btlServer);
+        *state = 3;
+        return 0;
+    case 3:
+        sub_219F214(btlServer);
+        btlServer->serverFlow->cmdBuildStep = 0;
+        *state = 4;
+    case 4:
+        btlServer->serverTurnState = ServerFlow_SwitchEndTurn(btlServer->serverFlow, &btlServer->clientAction);
+        sub_219F168(btlServer, 8, btlServer->field_CB0 + 8, *btlServer->field_CB0);
+        *state = 5;
+        break;
+    case 5:
+        if (!BattleServer_IsWaitingClientReply(btlServer)) {
+            return 0;
+        }
+        sub_219F214(btlServer);
+        switch (btlServer->serverTurnState)
+        {
+        case 1:
+            *state = 0;
+            break;
+        default:
+            BattleServer_SetDefaultSequence(btlServer);
+            break;
+        }
+        break;
+    }
+
+    return 0;
+}
+
+extern "C" void THUMB_BRANCH_LINK_BtlServer_StartBattleSequence_0x9C(BtlServerWk* btlServer) {
+    BattleServer_ChangeSequence(btlServer, BtlServer_EndTurnSequence);
+}
+
+extern "C" void THUMB_BRANCH_LINK_BtlServer_FaintSequence_0x136(BtlServerWk* btlServer) {
+    BattleServer_ChangeSequence(btlServer, BtlServer_EndTurnSequence);
+}
+
+#endif
 
 #endif // DYNAMIC_SPEED || EXPAND_ABILITIES
 

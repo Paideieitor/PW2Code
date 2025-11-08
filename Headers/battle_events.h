@@ -329,6 +329,7 @@ extern "C" void BattleEventVar_SetRewriteOnceValue(BattleEventVar battleEvent, i
 extern "C" void BattleEventVar_MulValue(BattleEventVar battleEvent, int value);
 extern "C" int BattleEventVar_GetValue(BattleEventVar eventVar);
 extern "C" b32 BattleEventVar_GetValueIfExist(BattleEventVar battleEvent, u32* a2);
+extern "C" void BattleEventVar_CheckStackCleared();
 
 extern "C" void BattleEvent_CallHandlers(ServerFlow* serverFlow, BattleEventType event);
 extern "C" void BattleEvent_ForceCallHandlers(ServerFlow* serverFlow, BattleEventType event);

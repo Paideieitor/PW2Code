@@ -16,7 +16,72 @@ struct PokeCon
     u32 forServer;
 };
 
-#define BtlServerWk u8
+struct SVCL_WORK
+{
+    u32 adapter;
+    BattleParty* party;
+    u8 byte8;
+    u8 byte9;
+    u8 byteA;
+    u8 ID;
+};
+
+struct SWAN_ALIGNED(4) BtlServerWk
+{
+    u32 field_0;
+    u32 field_4;
+    u8 field_8;
+    u8 field_9;
+    u8 field_A;
+    u8 field_B;
+    u8* mainModule;
+    u32 pokeCon;
+    SVCL_WORK client[4];
+    ServerFlow* serverFlow;
+    u32 serverTurnState;
+    u32 field_4C;
+    u32 field_50;
+    u32 field_54;
+    u32 field_58;
+    u32 field_5C;
+    u32 field_60;
+    u32 field_64;
+    u8 field_68;
+    u8 gap69;
+    u8 gap6A[62];
+    u16 field_A8;
+    u16 field_AA;
+    StrBuf* field_AC;
+    EscapeInfo* escapeInfo;
+    u32 clientAction;
+    u8 gapB8[40];
+    u32 field_E0;
+    u8 field_E4[4];
+    u32 field_E8;
+    u8 nextEnemyForSwitchMode;
+    u8 field_ED;
+    u8 field_EE;
+    u8 field_EF;
+    u32 field_F0;
+    u8 gapF4[3004];
+    u8* field_CB0;
+    u8 field_CB4;
+    u8 field_CB5;
+    u8 field_CB6;
+    u8 field_CB7;
+    u8 field_CB8;
+    u8 field_CB9;
+    u8 field_CBA;
+    u8 field_CBB;
+    u8 field_CBC;
+    u8 field_CBD;
+    u8 field_CBE;
+    u8 field_CBF;
+    HeapID heapID;
+    u8 field_CC2;
+    u8 field_CC3;
+};
+
 struct SWAN_ALIGNED(32) MainModule
 {
     BtlSetup* btlSetup;

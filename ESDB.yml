@@ -5,6 +5,12 @@ Segments:
   - ID: 0x1
     Name: ARM9_BSS
     Type: null
+  - ID: 0x2
+    Name: ARM9_IOREG
+    Type: null
+  - ID: 0x3
+    Name: STD_PALETTE
+    Type: null
   - ID: 0xC
     Name: 12
     Type: OVERLAY
@@ -3709,3 +3715,108 @@ Symbols:
   - Name: ServerControl_ActOrderProc_OnlyPokeIn
     Segment: 0xA7
     Address: 0x219fcb5
+  - Name: ServerFlow_ContinueAfterSwitch
+    Segment: 0xA7
+    Address: 0x219f795
+  - Name: BattleServer_InitChangePokemonReq
+    Segment: 0xA7
+    Address: 0x219f389
+  - Name: BattleEventVar_CheckStackCleared
+    Segment: 0xA7
+    Address: 0x21bcd35
+  - Name: ServerFlow_GenerateActionOrder
+    Segment: 0xA7
+    Address: 0x21a00e5
+  - Name: ServerControl_SwitchInFillSlot
+    Segment: 0xA7
+    Address: 0x21a14bd
+  - Name: MovePokemonTripleBattle1v1
+    Segment: 0xA7
+    Address: 0x21a8105
+  - Name: BtlServer_Update
+    Segment: 0xA7
+    Address: 0x219e6f1
+  - Name: BattleServer_IsWaitingClientReply
+    Segment: 0xA7
+    Address: 0x219f1dd
+  - Name: sub_219F15C
+    Segment: 0xA7
+    Address: 0x219f15d
+  - Name: ServerFlow_ResetCommandQueue
+    Segment: 0xA7
+    Address: 0x219fe65
+  - Name: ServerFlow_StartTurnBoot
+    Segment: 0xA7
+    Address: 0x219f69d
+  - Name: ServerFlow_StartTurn
+    Segment: 0xA7
+    Address: 0x219f6ad
+  - Name: CMDCHECK_Make
+    Segment: 0xA7
+    Address: 0x219efb5
+  - Name: SubProc_UI_ServerCmd
+    Segment: 0xA7
+    Address: 0x21b6e61
+  - Name: BtlServer_FaintSequence
+    Segment: 0xA7
+    Address: 0x219e93d
+  - Name: BattleServer_DoesSwitchModeNeedConfirming
+    Segment: 0xA7
+    Address: 0x219ea85
+  - Name: BattleServer_RequestChangeSwitchMode
+    Segment: 0xA7
+    Address: 0x219f1ad
+  - Name: BattleServer_ChangeSequence
+    Segment: 0xA7
+    Address: 0x219e631
+  - Name: ServerFlow_StartAfterPokeInBoot
+    Segment: 0xA7
+    Address: 0x219f7e9
+  - Name: BattleServer_SetDefaultSequence
+    Segment: 0xA7
+    Address: 0x219e639
+  - Name: BattleServer_GetNextEnemyForSwitchMode
+    Segment: 0xA7
+    Address: 0x219eae5
+  - Name: sub_219F214
+    Segment: 0xA7
+    Address: 0x219f215
+  - Name: sub_219DF90
+    Segment: 0xA7
+    Address: 0x219df91
+  - Name: sub_219F0EC
+    Segment: 0xA7
+    Address: 0x219f0ed
+  - Name: sub_219F06C
+    Segment: 0xA7
+    Address: 0x219f06d
+  - Name: sub_219F168
+    Segment: 0xA7
+    Address: 0x219f169
+  - Name: sys_memset32_fast
+    Segment: 0x0
+    Address: 0x20786c8
+  - Name: memset
+    Segment: 0x0
+    Address: 0x20839fc
+  - Name: gfxGetScreenAddrBG1B
+    Segment: 0x0
+    Address: 0x20751a1
+  - Name: STD_PALETTE_BG_B
+    Segment: 0x3
+    Address: 0x5000400
+  - Name: MASTER_BRIGHT_B
+    Segment: 0x2
+    Address: 0x400106c
+  - Name: LCDIO_B
+    Segment: 0x2
+    Address: 0x4001008
+  - Name: DISPCNT_B
+    Segment: 0x2
+    Address: 0x4001000
+  - Name: POWCNT1
+    Segment: 0x2
+    Address: 0x4000304
+  - Name: BtlServer_StartBattleSequence
+    Segment: 0xA7
+    Address: 0x219e649
