@@ -87,8 +87,8 @@ extern "C" void THUMB_BRANCH_LINK_TrainerUtil_LoadParty_0x4C8(PokeParty* party, 
 			DPRINT("MOVES: \n");
 			for (u32 moveSlot = 0; moveSlot < 4; ++moveSlot)
 				DPRINTF("    %d (%d) \n", GET_TRMOVE_ID(team[slot], moveSlot), GET_TRMOVE_PPMAX(team[slot], moveSlot));
-			DPRINTF("STATUS: %d \n", team[slot].status);
-			DPRINTF("HP: %d \n", (team[slot].hp * maxHP) / 100);
+			DPRINTF("STATUS: %d \n", GET_TRPOKE_STATUS(team[slot]));
+			DPRINTF("HP: %d \n", (GET_TRPOKE_HP(team[slot]) * maxHP) / 100);
 #endif
 		}
 	}

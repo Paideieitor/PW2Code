@@ -4,6 +4,10 @@
 
 #if PERFECT_TRAINERS
 
+FULL_COPY_TrainerUtil_LoadParty_0x3E:
+    movs    r1, #0xC0
+    .size FULL_COPY_TrainerUtil_LoadParty_0x3E, . - FULL_COPY_TrainerUtil_LoadParty_0x3E
+
 FULL_COPY_TrainerUtil_LoadParty_0x4BA:
     nop
     nop
