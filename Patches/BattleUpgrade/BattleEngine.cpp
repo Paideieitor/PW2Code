@@ -2,7 +2,7 @@
 #include "BattleEngine.h"
 #include "GameVariables.h"
 
-#include "include/Battlefield.h"
+#include "include/BattleField.h"
 #include "include/AbilityExpansion.h"
 #include "include/ItemExpansion.h"
 #include "include/MoveExpansion.h"
@@ -394,12 +394,12 @@ extern "C" void SwapPokemonOrder(ActionOrderWork * actionOrder, u16 * speedStats
 }
 
 extern "C" void PokeSet_SortBySpeedDynamic(ServerFlow* serverFlow, ActionOrderWork * actionOrder, u8 firstIdx, u8 turnStart) {
-    // Skip the Pokémons that have already moved.
+    // Skip the PokÃ©mons that have already moved.
     u8 startIdx = firstIdx;
     if (!turnStart)
         startIdx += 1;
 
-    // "firstIdx" is the latest Pokémon to move.
+    // "firstIdx" is the latest PokÃ©mon to move.
     u8 pokeAmount = serverFlow->numActOrder - startIdx;
 
     // Reset the send last slots at the start of the turn.
@@ -461,11 +461,11 @@ extern "C" void PokeSet_SortBySpeedDynamic(ServerFlow* serverFlow, ActionOrderWo
             changes = 0;
 
             for (u8 i = startIdx; i < serverFlow->numActOrder; ++i) {
-                // Check if the first Pokémon is fainted.
+                // Check if the first PokÃ©mon is fainted.
                 if (priority[i] != 0xFF) {
                     if (i + 1 < serverFlow->numActOrder) {
                         for (u8 j = i + 1; j < serverFlow->numActOrder; ++j) {
-                            // Check if the second Pokémon is fainted.
+                            // Check if the second PokÃ©mon is fainted.
                             if (priority[j] != 0xFF) {
                                 u8 poke1EventPriority = eventPriority[i];
                                 u8 poke2EventPriority = eventPriority[j];
@@ -534,7 +534,7 @@ extern "C" u32 THUMB_BRANCH_BattleHandler_SendLast(ServerFlow * serverFlow, Hand
     }
     BattleHandler_SetString(serverFlow, &params->exStr);
 
-    // Add the Pokémon slot to the send last slots.
+    // Add the PokÃ©mon slot to the send last slots.
     for (u8 i = 0; i < 6; ++i) {
         if (sendLastSlots[i] == 0xFF) {
             sendLastSlots[i] = params->pokeID;
@@ -903,7 +903,7 @@ extern "C" int THUMB_BRANCH_ServerFlow_ActOrderProcMain(ServerFlow * serverFlow,
             hasMegaEvolved = 1;
         }
     }
-    // Re-calc speed if any Pokémon has Mega-Evolved
+    // Re-calc speed if any PokÃ©mon has Mega-Evolved
     if (hasMegaEvolved)
         PokeSet_SortBySpeedDynamic(serverFlow, actionOrderWork, (u8)currentActionIdx, 1);
 
@@ -936,7 +936,7 @@ extern "C" int THUMB_BRANCH_ServerFlow_ActOrderProcMain(ServerFlow * serverFlow,
             }
         }
 #if EXPAND_ABILITIES
-        // Skip action if the Pokémon is invulnerable because of Commander
+        // Skip action if the PokÃ©mon is invulnerable because of Commander
         b32 isCommander = (!BattleMon_CheckIfMoveCondition(currentActionOrder->battleMon, CONDITION_CHARGELOCK) &&
             BattleMon_GetHideCondition(currentActionOrder->battleMon) == CONDITIONFLAG_SHADOWFORCE);
         if (!isCommander) {
@@ -977,7 +977,7 @@ extern "C" int THUMB_BRANCH_ServerFlow_ActOrderProcMain(ServerFlow * serverFlow,
             }
         }
 
-        // Stop the turn if a new Pokémon has to enter the battle
+        // Stop the turn if a new PokÃ©mon has to enter the battle
         if (serverFlow->flowResult == 6 || serverFlow->flowResult == 1) {
             // Don't advance an action if we have an extra action
             if (isExtraAction) {
@@ -988,7 +988,7 @@ extern "C" int THUMB_BRANCH_ServerFlow_ActOrderProcMain(ServerFlow * serverFlow,
             }
         }
 
-        // Stop the turn if a Pokémon died but the battle is not over
+        // Stop the turn if a PokÃ©mon died but the battle is not over
         if (getExp) {
             serverFlow->flowResult = 3;
             // Don't advance an action if we have an extra action
@@ -1016,7 +1016,7 @@ extern "C" int THUMB_BRANCH_ServerFlow_ActOrderProcMain(ServerFlow * serverFlow,
             return serverFlow->numActOrder;
         }
         
-        // A Pokémon fainted during the TurnCheck
+        // A PokÃ©mon fainted during the TurnCheck
         if (turnCheck) {
             serverFlow->flowResult = 3;
             return serverFlow->numActOrder;
@@ -1026,7 +1026,7 @@ extern "C" int THUMB_BRANCH_ServerFlow_ActOrderProcMain(ServerFlow * serverFlow,
         if (CheckEndTurnSwitchFlag()) {
             ResetEndTurnSwitchFlag();
 
-            // Skip TurnCheck if a Pokémon has to enter the battle during the TurnCheck
+            // Skip TurnCheck if a PokÃ©mon has to enter the battle during the TurnCheck
             serverFlow->turnCheckSeq = 7;
 
             serverFlow->flowResult = 1;
@@ -1253,7 +1253,7 @@ extern "C" void HandlerRemoveExtremeWeather(ServerFlow * serverFlow, u32 pokemon
         // Substract 1 to the Extreme Weather counter
         BattleField_RemoveExtremeWeatherMon();
 
-        // If there are no more Pokémon invoking Extreme Weather remove it
+        // If there are no more PokÃ©mon invoking Extreme Weather remove it
         if (!BattleField_GetExtremeWeatherMons()) {
             BattleField_EndWeather(g_BattleField);
             // I set the 8th bit in the weather variable to indicate that it is Extreme Weather
@@ -1387,7 +1387,7 @@ extern "C" b32 SwitchedInThisTurn(ServerFlow * serverFlow, BattleMon * battleMon
     if (serverFlow->turnCount == 0) {
         for (u8 i = 0; i < 6; ++i) {
             if (g_BattleField->firstTurnMons[i] == battleMon->battleSlot) {
-                // A Pokémon that started the battle doesn't count as just switched in
+                // A PokÃ©mon that started the battle doesn't count as just switched in
                 return 0;
             }
         }
@@ -1638,7 +1638,7 @@ extern "C" BattleEventItem* FieldEffectEvent_AddItem(FIELD_EFFECT fieldEffect, u
     return 0;
 }
 
-// Remove a specific dependent Pokémon from a specific field effect
+// Remove a specific dependent PokÃ©mon from a specific field effect
 extern "C" void BattleField_RemoveDependPokeEffectCoreFromEffect(BattleFieldExt * battleField, u32 pokemonSlot, FIELD_EFFECT fieldEffect) {
     if (BattleField_CheckFieldEffectCore(battleField, fieldEffect)) {
 
@@ -1674,7 +1674,7 @@ extern "C" void BattleField_RemoveDependPokeEffectCoreFromEffect(BattleFieldExt 
             }
             else {
                 u32 condPokemonSlot = Condition_GetMonID(battleField->conditionData[fieldEffect]);
-                // If the condition Pokémon is the one removed, set it to the first available Pokémon
+                // If the condition PokÃ©mon is the one removed, set it to the first available PokÃ©mon
                 if (pokemonSlot == condPokemonSlot) {
                     Condition_SetMonID(&battleField->conditionData[fieldEffect], dependPokes[0]);
                 }
@@ -1939,12 +1939,12 @@ extern "C" b32 THUMB_BRANCH_BattleField_RemoveEffect(FIELD_EFFECT fieldEffect) {
     return BattleField_RemoveEffectCore(g_BattleField, fieldEffect);
 }
 
-// Makes a given Field Effect dependent on a Pokémon, and makes affected Pokémons dependent on it
+// Makes a given Field Effect dependent on a PokÃ©mon, and makes affected PokÃ©mons dependent on it
 extern "C" b32 THUMB_BRANCH_BattleField_AddDependPokeCore(BattleFieldExt * battleField, FIELD_EFFECT fieldEffect, u32 pokemonSlot) {
     if (BattleField_CheckFieldEffectCore(battleField, fieldEffect)) {
 
         u32 pokeCount = battleField->dependPokeCount[fieldEffect];
-        // Don't add if this effect already depends on this Pokémon
+        // Don't add if this effect already depends on this PokÃ©mon
         for (u32 i = 0; i < pokeCount; ++i) {
             if (battleField->dependPokeID[fieldEffect][i] == pokemonSlot) {
                 return 0;
@@ -3338,13 +3338,13 @@ extern "C" u32 THUMB_BRANCH_SAFESTACK_ServerControl_AddConditionCheckFail(Server
     u32 failStatus = AddConditionCheckFailOverwrite(serverFlow, defendingMon, condition, condData, overrideMode);
 
 #if EXPAND_ABILITIES
-    // Ignore poison immunity if the Pokémon has Corrotion
+    // Ignore poison immunity if the PokÃ©mon has Corrotion
     if (condition == CONDITION_POISON &&
         failStatus == 2 &&
         BattleMon_GetValue(attackingMon, VALUE_EFFECTIVE_ABILITY) == ABIL_CORROSION) {
         failStatus = 0;
     }
-    // Make any status fail if the Pokémon has Comatose
+    // Make any status fail if the PokÃ©mon has Comatose
     if ((condition < CONDITION_CONFUSION || condition == CONDITION_YAWN) &&
         defendingMon->currentAbility == ABIL_COMATOSE) {
         failStatus = 3;
@@ -3362,7 +3362,7 @@ extern "C" u32 THUMB_BRANCH_SAFESTACK_ServerControl_AddConditionCheckFail(Server
             break;
         case 1:
             // Gastro Acid should not fail if the condition is already detected 
-            // only because the Pokémon is affected by Neutralizing Gas
+            // only because the PokÃ©mon is affected by Neutralizing Gas
             failStatus = 0;
             break;
         }
@@ -3435,7 +3435,7 @@ extern "C" void ServerEvent_SimpleDamageReaction(ServerFlow * serverFlow, Battle
 
     HEManager_PopState(&serverFlow->HEManager, HEID);
 }
-// Called when 2 Pokémon are swapping places [BattleHandler_SwapPoke]
+// Called when 2 PokÃ©mon are swapping places [BattleHandler_SwapPoke]
 extern "C" void ServerEvent_SwapPoke(ServerFlow* serverFlow, BattleMon* attackingMon, BattleMon* defendingMon) {
     u32 HEID = HEManager_PushState(&serverFlow->HEManager);
 
@@ -3872,7 +3872,7 @@ extern "C" b32 ParentalBondCheck(ServerFlow* serverFlow, MOVE_ID moveID, BattleM
     }
 
     u32 targetCount = PokeSet_GetCount(targetSet);
-    // Only when targeting 1 Pokémon will Parental Bond work
+    // Only when targeting 1 PokÃ©mon will Parental Bond work
     if (targetCount && targetCount == 1) {
 
         MoveParam* moveParam;
@@ -4198,7 +4198,7 @@ extern "C" b32 THUMB_BRANCH_BattleMon_CheckIfMoveCondition(BattleMon* battleMon,
     return (battleMon->conditions[condition].status) != 0;
 }
 
-// Comatose - Hex is not boosted against a Comatose Pokémon
+// Comatose - Hex is not boosted against a Comatose PokÃ©mon
 extern "C" void THUMB_BRANCH_HandlerHex(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work) {
     if (pokemonSlot == BattleEventVar_GetValue(VAR_ATTACKING_MON)) {
 
@@ -4668,7 +4668,7 @@ extern "C" void THUMB_BRANCH_ServerFlow_CheckPokeHideAvoid(ServerFlow* serverFlo
     PokeSet_SeekStart(targetSet);
     for (BattleMon* currentMon = PokeSet_SeekNext(targetSet); currentMon; currentMon = PokeSet_SeekNext(targetSet)) {
 
-        // Always miss if the Pokémon is invulnerable because of Commander
+        // Always miss if the PokÃ©mon is invulnerable because of Commander
         b32 isCommander = (!BattleMon_CheckIfMoveCondition(currentMon, CONDITION_CHARGELOCK) &&
             BattleMon_GetHideCondition(currentMon) == CONDITIONFLAG_SHADOWFORCE);
         if (isCommander) {
@@ -4712,7 +4712,7 @@ extern "C" u32 THUMB_BRANCH_ServerEvent_CheckForceSwitch(ServerFlow* serverFlow,
     Condition_CheckForceSwitchFail(serverFlow, defendingMon);
     u32 failFlag = BattleEventVar_GetValue(VAR_MOVE_FAIL_FLAG);
     BattleEventVar_Pop();
-    // Fail to force a switch if the Pokémon is a Dondozo paired by Commander
+    // Fail to force a switch if the PokÃ©mon is a Dondozo paired by Commander
     if (BattleField_IsDondozoPaired(defendingMon->battleSlot)) {
         failFlag = 1;
     }
@@ -4839,7 +4839,7 @@ extern "C" void THUMB_BRANCH_SAFESTACK_flowsub_CheckNoEffect_Protect(ServerFlow 
     for (BattleMon* targetMon = PokeSet_SeekNext(targetSet); targetMon; targetMon = PokeSet_SeekNext(targetSet)) {
 #if GRASS_IMMUNE_TO_POWDER
         if (getMoveFlag(*moveID, FLAG_POWDER) && BattleMon_HasType(targetMon, TYPE_GRASS)) {
-            // If a Grass Pokémon is hit by a non-self-targeting move
+            // If a Grass PokÃ©mon is hit by a non-self-targeting move
             u32 targetSlot = BattleMon_GetID(targetMon);
             if (targetSlot != BattleMon_GetID(attackingMon)) {
 
@@ -4871,7 +4871,7 @@ extern "C" void THUMB_BRANCH_SAFESTACK_flowsub_CheckNoEffect_Protect(ServerFlow 
 #if EXPAND_ABILITIES || ADD_MEGA_EVOLUTION
 
 // Mega-Evolution - Reset the Mega-Evolution related values
-// Stakeout - Store first turn Pokémon to be able to check if a Pokémon switches in the firt turn
+// Stakeout - Store first turn PokÃ©mon to be able to check if a PokÃ©mon switches in the firt turn
 extern "C" void THUMB_BRANCH_LINK_ServerFlow_SetupBeforeFirstTurn_0x6E(ServerFlow * serverFlow, u32 clientID, 
     u32 switchInSlot, u32 switchOutSlot) {
 
@@ -4883,7 +4883,7 @@ extern "C" void THUMB_BRANCH_LINK_ServerFlow_SetupBeforeFirstTurn_0x6E(ServerFlo
     ServerControl_SwitchInCore(serverFlow, clientID, switchInSlot, switchOutSlot);
 
 #if EXPAND_ABILITIES
-    // Store the starting Pokémon in the firstTurnMons array
+    // Store the starting PokÃ©mon in the firstTurnMons array
     BattleParty* party = PokeCon_GetBattleParty(serverFlow->pokeCon, clientID);
     BattleMon* switchInMon = BattleParty_GetPartyMember(party, switchInSlot);
     for (u8 i = 0; i < 6; ++i) {
@@ -4997,7 +4997,7 @@ extern "C" void THUMB_BRANCH_BattleMon_ClearForSwitchOut(BattleMon* battleMon) {
     }
     else
     {
-        // Reset to the ability of the current form if the Pokémon doesn't revert to base
+        // Reset to the ability of the current form if the PokÃ©mon doesn't revert to base
         battleMon->currentAbility = PokeParty_GetParam(battleMon->partySrc, PF_Ability, 0);
     }
 #else
