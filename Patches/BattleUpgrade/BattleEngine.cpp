@@ -3705,6 +3705,9 @@ AbilityEventAddTableExt abilityEventAddTableExt[]{
     { ABIL_TERA_SHELL, EventAddTeraShell, "Abilities/TeraShell" },
     { ABIL_TERAFORM_ZERO, EventAddTeraformZero, "Abilities/TeraformZero" },
     { ABIL_POISON_PUPPETEE, EventAddPoisonPuppeteer, "Abilities/PoisonPuppeteer" },
+    { ABIL_PIERCING_DRILL, EventAddUnseenFist, "Abilities/UnseenFist" },
+    { ABIL_DRAGONIZE, EventAddDragonize, "Abilities/Dragonize" },
+    { ABIL_SPICY_SPRAY, EventAddSpicySpray, "Abilities/SpicySpray" },
 };
 
 extern "C" BattleEventItem * GetAbiltiyEvent(BattleMon * battleMon, ABILITY ability, AbilityEventAddFunc func) {
@@ -4745,7 +4748,7 @@ extern "C" void THUMB_BRANCH_SAFESTACK_ServerControl_SubstituteExclude(ServerFlo
 
 #if EXPAND_ABILITIES
 // Unseen Fist - Modified CheckProtectBreak server event
-extern "C" u32 ServerEvent_CheckProtectBreakExt(ServerFlow * serverFlow, BattleMon * attackingMon, BattleMon * defendingMon, MOVE_ID moveID)
+extern "C" u32 ServerEvent_CheckProtectBreakExt(ServerFlow * serverFlow, BattleMon * attackingMon, BattleMon * defendingMon, MOVE_ID moveID, bool targetIsProtected)
 {
     BattleEventVar_Push();
     u32 attackingSlot = BattleMon_GetID(attackingMon);
@@ -4756,6 +4759,7 @@ extern "C" u32 ServerEvent_CheckProtectBreakExt(ServerFlow * serverFlow, BattleM
     // Added the Move ID so that Unseen Fist can check if it is contact
     BattleEventVar_SetValue(VAR_MOVE_ID, moveID);
     BattleEventVar_SetValue(VAR_GENERAL_USE_FLAG, 0);
+    BattleEventVar_SetConstValue(VAR_NO_EFFECT_FLAG, targetIsProtected ? 1 : 0);
     BattleEvent_CallHandlers(serverFlow, EVENT_CHECK_PROTECT_BREAK);
     u32 protectBroken = BattleEventVar_GetValue(VAR_GENERAL_USE_FLAG);
     BattleEventVar_Pop();
@@ -4803,8 +4807,10 @@ extern "C" void THUMB_BRANCH_SAFESTACK_flowsub_CheckNoEffect_Protect(ServerFlow 
 
     PokeSet_SeekStart(targetSet);
     for (BattleMon* targetMon = PokeSet_SeekNext(targetSet); targetMon; targetMon = PokeSet_SeekNext(targetSet)) {
+        bool targetIsProtected = BattleMon_GetTurnFlag(targetMon, TURNFLAG_PROTECT) && getMoveFlag(*moveID, FLAG_BLOCKED_BY_PROTECT);
+
 #if EXPAND_ABILITIES
-        u32 breakProtect = ServerEvent_CheckProtectBreakExt(serverFlow, attackingMon, targetMon, *moveID);
+        u32 breakProtect = ServerEvent_CheckProtectBreakExt(serverFlow, attackingMon, targetMon, *moveID, targetIsProtected);
 #else
         u32 breakProtect = ServerEvent_CheckProtectBreak(serverFlow, attackingMon);
 #endif
@@ -4812,8 +4818,7 @@ extern "C" void THUMB_BRANCH_SAFESTACK_flowsub_CheckNoEffect_Protect(ServerFlow 
         switch (breakProtect)
         {
         case 0:
-            if (BattleMon_GetTurnFlag(targetMon, TURNFLAG_PROTECT) &&
-                getMoveFlag(*moveID, FLAG_BLOCKED_BY_PROTECT)) {
+            if (targetIsProtected) {
 
                 PokeSet_Remove(targetSet, targetMon);
                 u32 targetSlot = BattleMon_GetID(targetMon);

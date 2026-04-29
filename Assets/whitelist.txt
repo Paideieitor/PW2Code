@@ -82,106 +82,111 @@
 	a\0\2\1\560 <...> a\0\2\1\919  // Move data for the new moves
 	a\0\6\5\560 <...> a\0\6\5\919  // Animations for the new moves
 #endif
-#if UPDATE_OLD_MOVES
-	a\0\2\1\14 // Swords Dance
-	a\0\2\1\15 // Cut
-	a\0\2\1\16 // Gust
-	a\0\2\1\18 // Whirlwind
-	a\0\2\1\44 // Bite
-	a\0\2\1\45 // Growl
-	a\0\2\1\47 // Sing
-	a\0\2\1\48 // Supersonic
-	a\0\2\1\103 // Screech
-	a\0\2\1\105 // Recover
-	a\0\2\1\121 // Egg Bomb
-	a\0\2\1\135 // Softboiled
-	a\0\2\1\138 // Dream Eater
-	a\0\2\1\140 // Barrage
-	a\0\2\1\141 // Leech Life
-	a\0\2\1\147 // Spore
-	a\0\2\1\156 // Rest
-	a\0\2\1\158 // Hyper Fang
-	a\0\2\1\163 // Slash
-	a\0\2\1\173 // Snore
-	a\0\2\1\177 // Aeroblast
-	a\0\2\1\178 // Cotton Spore
-	a\0\2\1\188 // Sludge Bomb
-	a\0\2\1\190 // Octazooka
-	a\0\2\1\192 // Zap Cannon
-	a\0\2\1\196 // Icy Wind
-	a\0\2\1\201 // Sandstorm
-	a\0\2\1\202 // Giga Drain
-	a\0\2\1\208 // Milk Drink
-	a\0\2\1\210 // Fury Cutter
-	a\0\2\1\234 // Morning Sun
-	a\0\2\1\235 // Synthesis
-	a\0\2\1\239 // Twister
-	a\0\2\1\242 // Crunch
-	a\0\2\1\247 // Shadow Ball
-	a\0\2\1\253 // Uproar
-	a\0\2\1\256 // Swallow
-	a\0\2\1\257 // Heat Wave
-	a\0\2\1\273 // Wish
-	a\0\2\1\296 // Mist Ball
-	a\0\2\1\297 // FeatherDance
-	a\0\2\1\298 // Teeter Dance
-	a\0\2\1\301 // Ice Ball
-	a\0\2\1\303 // Slack Off
-	a\0\2\1\304 // Hyper Voice
-	a\0\2\1\305 // Poison Fang
-	a\0\2\1\311 // Weather Ball
-	a\0\2\1\314 // Air Cutter
-	a\0\2\1\319 // Metal Sound
-	a\0\2\1\320 // GrassWhistle
-	a\0\2\1\331 // Bullet Seed
-	a\0\2\1\332 // Aerial Ace
-	a\0\2\1\336 // Howl
-	a\0\2\1\348 // Leaf Blade
-	a\0\2\1\349 // Dragon Dance
-	a\0\2\1\350 // Rock Blast
-	a\0\2\1\352 // Water Pulse
-	a\0\2\1\355 // Roost
-	a\0\2\1\360 // Gyro Ball
-	a\0\2\1\361 // Healing Wish
-	a\0\2\1\366 // Tailwind
-	a\0\2\1\396 // Aura Sphere
-	a\0\2\1\399 // Dark Pulse
-	a\0\2\1\400 // Night Slash
-	a\0\2\1\402 // Seed Bomb
-	a\0\2\1\403 // Air Slash
-	a\0\2\1\404 // X-Scissor
-	a\0\2\1\405 // Bug Buzz
-	a\0\2\1\406 // Dragon Pulse
-	a\0\2\1\409 // Drain Punch
-	a\0\2\1\411 // Focus Blast
-	a\0\2\1\412 // Energy Ball
-	a\0\2\1\422 // Thunder Fang
-	a\0\2\1\423 // Ice Fang
-	a\0\2\1\424 // Fire Fang
-	a\0\2\1\426 // Mud Bomb
-	a\0\2\1\427 // Psycho Cut
-	a\0\2\1\439 // Rock Wrecker
-	a\0\2\1\440 // Cross Poison
-	a\0\2\1\443 // Magnet Bomb
-	a\0\2\1\448 // Chatter
-	a\0\2\1\456 // Heal Order
-	a\0\2\1\461 // Lunar Dance
-	a\0\2\1\476 // Rage Powder
-	a\0\2\1\483 // Quiver Dance
-	a\0\2\1\486 // Electro Ball
-	a\0\2\1\491 // Acid Spray
-	a\0\2\1\496 // Round
-	a\0\2\1\497 // Echoed Voice
-	a\0\2\1\505 // Heal Pulse
-	a\0\2\1\532 // Horn Leech
-	a\0\2\1\533 // Sacred Sword
-	a\0\2\1\534 // Razor Shell
-	a\0\2\1\542 // Hurricane
-	a\0\2\1\545 // Searing Shot
-	a\0\2\1\547 // Relic Song
-	a\0\2\1\548 // Secret Sword
-	a\0\2\1\552 // Fiery Dance
-	a\0\2\1\555 // Snarl
+#if UPDATE_OLD_MOVES 
+	a\0\2\1\14 // Swords Dance		[Dance flag]
+	a\0\2\1\15 // Cut			    [Sharp flag]
+	a\0\2\1\16 // Gust			    [Wind flag]
+	a\0\2\1\18 // Whirlwind			[Wind flag]
+	a\0\2\1\44 // Bite			    [Bite flag]
+	a\0\2\1\45 // Growl			    [Bypass Substitute flag]
+	a\0\2\1\47 // Sing			    [Bypass Substitute flag]
+	a\0\2\1\48 // Supersonic		[Bypass Substitute flag]
+	a\0\2\1\103 // Screech			[Bypass Substitute flag]
+	a\0\2\1\105 // Recover			[Healing flag]
+	a\0\2\1\121 // Egg Bomb			[Bullet flag]
+	a\0\2\1\135 // Softboiled		[Healing flag]
+	a\0\2\1\138 // Dream Eater		[Healing flag]
+	a\0\2\1\140 // Barrage			[Bullet flag]
+	a\0\2\1\141 // Leech Life		[Healing flag]
+	a\0\2\1\147 // Spore			[Powder flag]
+	a\0\2\1\156 // Rest			    [Healing flag]
+	a\0\2\1\158 // Hyper Fang		[Bite flag]
+	a\0\2\1\163 // Slash			[Sharp flag]
+	a\0\2\1\173 // Snore			[Bypass Substitute flag]
+	a\0\2\1\177 // Aeroblast		[Pulse flag]
+	a\0\2\1\178 // Cotton Spore		[Powder flag]
+    a\0\2\1\182 // Protect			[Protect flag]
+	a\0\2\1\188 // Sludge Bomb		[Bullet flag]
+	a\0\2\1\190 // Octazooka		[Bullet flag]
+	a\0\2\1\192 // Zap Cannon		[Bullet flag]
+	a\0\2\1\196 // Icy Wind			[Wind flag]
+	a\0\2\1\197 // Detect			[Protect flag]
+	a\0\2\1\201 // Sandstorm		[Wind flag]
+	a\0\2\1\202 // Giga Drain		[Healing flag]
+	a\0\2\1\203 // Endure			[Protect flag]
+	a\0\2\1\208 // Milk Drink		[Healing flag]
+	a\0\2\1\210 // Fury Cutter		[Sharp flag]
+	a\0\2\1\234 // Morning Sun		[Healing flag]
+	a\0\2\1\235 // Synthesis		[Healing flag]
+	a\0\2\1\239 // Twister			[Wind flag]
+	a\0\2\1\242 // Crunch			[Bite flag]
+	a\0\2\1\247 // Shadow Ball		[Bullet flag]
+	a\0\2\1\253 // Uproar			[Bypass Substitute flag]
+	a\0\2\1\256 // Swallow			[Healing flag]
+	a\0\2\1\257 // Heat Wave		[Wind flag]
+	a\0\2\1\273 // Wish			    [Healing flag]
+	a\0\2\1\296 // Mist Ball		[Bullet flag]
+	a\0\2\1\297 // FeatherDance		[Dance flag]
+	a\0\2\1\298 // Teeter Dance		[Dance flag]
+	a\0\2\1\301 // Ice Ball			[Bullet flag]
+	a\0\2\1\303 // Slack Off		[Healing flag]
+	a\0\2\1\304 // Hyper Voice		[Bypass Substitute flag]
+	a\0\2\1\305 // Poison Fang		[Bite flag]
+	a\0\2\1\311 // Weather Ball		[Bullet flag]
+	a\0\2\1\314 // Air Cutter		[Wind flag] [Sharp flag]
+	a\0\2\1\319 // Metal Sound		[Bypass Substitute flag]
+	a\0\2\1\320 // GrassWhistle		[Bypass Substitute flag]
+	a\0\2\1\331 // Bullet Seed		[Bullet flag]
+	a\0\2\1\332 // Aerial Ace		[Sharp flag]
+	a\0\2\1\336 // Howl			    [Bypass Substitute flag]
+	a\0\2\1\348 // Leaf Blade		[Sharp flag]
+	a\0\2\1\349 // Dragon Dance		[Dance flag]
+	a\0\2\1\350 // Rock Blast		[Bullet flag]
+	a\0\2\1\352 // Water Pulse		[Pulse flag]
+	a\0\2\1\355 // Roost			[Healing flag]
+	a\0\2\1\360 // Gyro Ball		[Bullet flag]
+	a\0\2\1\361 // Healing Wish		[Healing flag]
+	a\0\2\1\366 // Tailwind			[Wind flag]
+	a\0\2\1\396 // Aura Sphere		[Pulse flag]
+	a\0\2\1\399 // Dark Pulse		[Pulse flag]
+	a\0\2\1\400 // Night Slash		[Sharp flag]
+	a\0\2\1\402 // Seed Bomb		[Bullet flag]
+	a\0\2\1\403 // Air Slash		[Sharp flag]
+	a\0\2\1\404 // X-Scissor		[Sharp flag]
+	a\0\2\1\405 // Bug Buzz			[Bypass Substitute flag]
+	a\0\2\1\406 // Dragon Pulse		[Pulse flag]
+	a\0\2\1\409 // Drain Punch		[Healing flag]
+	a\0\2\1\411 // Focus Blast		[Pulse flag]
+	a\0\2\1\412 // Energy Ball		[Bullet flag]
+	a\0\2\1\422 // Thunder Fang		[Bite flag]
+	a\0\2\1\423 // Ice Fang			[Bite flag]
+	a\0\2\1\424 // Fire Fang		[Bite flag]
+	a\0\2\1\426 // Mud Bomb			[Bullet flag]
+	a\0\2\1\427 // Psycho Cut		[Sharp flag]
+	a\0\2\1\439 // Rock Wrecker		[Bullet flag]
+	a\0\2\1\440 // Cross Poison		[Sharp flag]
+	a\0\2\1\443 // Magnet Bomb		[Bullet flag]
+	a\0\2\1\448 // Chatter			[Bypass Substitute flag]
+	a\0\2\1\456 // Heal Order		[Healing flag]
+	a\0\2\1\461 // Lunar Dance		[Dance flag]
+	a\0\2\1\469 // Wide Guard		[Protect flag]
+	a\0\2\1\476 // Rage Powder		[Powder flag]
+	a\0\2\1\483 // Quiver Dance		[Dance flag]
+	a\0\2\1\486 // Electro Ball		[Bullet flag]
+	a\0\2\1\491 // Acid Spray		[Bullet flag]
+	a\0\2\1\496 // Round			[Bypass Substitute flag]
+	a\0\2\1\497 // Echoed Voice		[Bypass Substitute flag]
+	a\0\2\1\501 // Quick Guard		[Protect flag]
+	a\0\2\1\505 // Heal Pulse		[Pulse flag]
+	a\0\2\1\532 // Horn Leech		[Healing flag]
+	a\0\2\1\533 // Sacred Sword		[Sharp flag]
+	a\0\2\1\534 // Razor Shell		[Sharp flag]
+	a\0\2\1\542 // Hurricane		[Wind flag]
+	a\0\2\1\545 // Searing Shot		[Bullet flag]
+	a\0\2\1\547 // Relic Song		[Bypass Substitute flag]
+	a\0\2\1\548 // Secret Sword		[Sharp flag]
+	a\0\2\1\552 // Fiery Dance		[Dance flag]
+	a\0\2\1\555 // Snarl			[Bypass Substitute flag]
 #endif
 #if EXPAND_FIELD_EFFECTS
 	patches\NitroKernel.dll
