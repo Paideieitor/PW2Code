@@ -28,6 +28,8 @@
 
 #define WEATHER_ABILITY_TURNS 5 // 255 means infinite turns
 
+#define SNOW_WEATHER 1
+
 #define GRASS_IMMUNE_TO_POWDER 1
 #define ELECTRIC_IMMUNE_TO_PARALYSIS 1
 #define GHOST_IGNORES_TRAPS 1

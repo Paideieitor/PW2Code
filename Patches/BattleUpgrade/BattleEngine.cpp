@@ -2856,6 +2856,94 @@ extern "C" u32 ExtraTypeEffectivenessPowerMod(u32 damage, EFFECTIVENESS effectiv
     return damage;
 }
 #endif
+
+#endif // GEN6_CRIT || EXPAND_FIELD_EFFECTS
+
+#if EXPAND_ABILITIES || SNOW_WEATHER
+
+extern "C" u32 THUMB_BRANCH_SAFESTACK_ServerEvent_GetTargetDefenses(ServerFlow *serverFlow, BattleMon *attackingMon, BattleMon *defendingMon, MoveParam *moveParam, u32 critFlag) {
+
+  BattleMonValue stat = VALUE_SPECIAL_DEFENSE_STAT;
+  if ( PML_MoveGetCategory(moveParam->moveID) != CATEGORY_SPECIAL ) {
+    stat = VALUE_DEFENSE_STAT;
+  }
+  MoveCategory category = (MoveCategory)moveParam->category;
+
+  BattleEventVar_Push();
+  u32 attackingSlot = BattleMon_GetID(attackingMon);
+  BattleEventVar_SetConstValue(VAR_ATTACKING_MON, attackingSlot);
+  u32 defendingSlot = BattleMon_GetID(defendingMon);
+  BattleEventVar_SetConstValue(VAR_DEFENDING_MON, defendingSlot);
+  BattleEventVar_SetConstValue(VAR_BATTLE_MON_STAT, stat);
+  BattleEventVar_SetValue(VAR_BATTLE_MON_STAT_SWAP_FLAG, 0);
+  BattleEventVar_SetRewriteOnceValue(VAR_GENERAL_USE_FLAG, 0);
+  BattleEvent_CallHandlers(serverFlow, EVENT_BEFORE_DEFENDER_GUARD);
+  if ((BattleEventVar_GetValue(VAR_BATTLE_MON_STAT_SWAP_FLAG) & 1) != 0) {
+    if (stat == VALUE_DEFENSE_STAT) {
+      stat = VALUE_SPECIAL_DEFENSE_STAT;
+    }
+    else {
+      stat = VALUE_DEFENSE_STAT;
+    }
+    MoveCategory categorySwap;
+    if (stat == VALUE_DEFENSE_STAT) {
+      categorySwap = CATEGORY_PHYSICAL;
+    }
+    else {
+      categorySwap = CATEGORY_SPECIAL;
+    }
+    category = categorySwap;
+  }
+  bool ignoreBoosts = BattleEventVar_GetValue(VAR_GENERAL_USE_FLAG);
+  BattleEventVar_Pop();
+
+  u32 realDefense;
+  if (ignoreBoosts) {
+    realDefense = BattleMon_GetRealStat(defendingMon, stat);
+  }
+  else if (critFlag) {
+    realDefense = BattleMon_GetStatsForCritDamage(defendingMon, stat);
+  }
+  else {
+    realDefense = BattleMon_GetValue(defendingMon, stat);
+  }
+  u32 defense = realDefense;
+  bool checkWeather = true;
+#if EXPAND_ABILITIES
+  if (BattleMon_GetValue(attackingMon, VALUE_EFFECTIVE_ABILITY) == ABIL_MEGA_SOL) {
+      checkWeather = false;
+  }
+#endif
+  if (checkWeather) {
+      if ((ServerEvent_GetWeather(serverFlow) == WEATHER_SANDSTORM && BattleMon_HasType(defendingMon, TYPE_ROCK) && stat == VALUE_SPECIAL_DEFENSE_STAT)
+#if SNOW_WEATHER
+       || (ServerEvent_GetWeather(serverFlow) == WEATHER_HAIL && BattleMon_HasType(defendingMon, TYPE_ICE) && stat == VALUE_DEFENSE_STAT)
+#endif
+       ) {
+          defense = fixed_round(defense, 6144);
+      }
+  }
+
+  BattleEventVar_Push();
+  BattleEventVar_SetConstValue(VAR_ATTACKING_MON, attackingSlot);
+  BattleEventVar_SetConstValue(VAR_DEFENDING_MON, defendingSlot);
+  BattleEventVar_SetConstValue(VAR_MOVE_ID, moveParam->moveID);
+  BattleEventVar_SetConstValue(VAR_MOVE_TYPE, moveParam->moveType);
+  BattleEventVar_SetConstValue(VAR_MOVE_CATEGORY, category);
+  BattleEventVar_SetValue(VAR_GUARD, defense);
+  BattleEventVar_SetMulValue(VAR_RATIO, 4096, 410, 0x20000);
+  BattleEvent_CallHandlers(serverFlow, EVENT_DEFENDER_GUARD);
+  u32 finalDefense = BattleEventVar_GetValue(VAR_GUARD);
+  u32 defenseRation = BattleEventVar_GetValue(VAR_RATIO);
+  BattleEventVar_Pop();
+
+  return fixed_round(finalDefense, defenseRation);
+}
+
+#endif // EXPAND_ABILITIES || SNOW_WEATHER
+
+#if GEN6_CRIT || EXPAND_FIELD_EFFECTS || EXPAND_ABILITIES
+
 extern "C" u32 THUMB_BRANCH_SAFESTACK_ServerEvent_CalcDamage(ServerFlow * serverFlow, BattleMon * attackingMon, BattleMon * defendingMon,
     MoveParam * moveParam, EFFECTIVENESS typeEffectiveness, u32 targetDmgRatio, u32 critFlag, u32 battleDebugMode, u16 * destDamage) {
     u32 category = PML_MoveGetCategory(moveParam->moveID);
@@ -2889,6 +2977,11 @@ extern "C" u32 THUMB_BRANCH_SAFESTACK_ServerEvent_CalcDamage(ServerFlow * server
         }
 
         u32 weather = ServerEvent_GetWeather(serverFlow);
+#if EXPAND_ABILITIES
+        if (BattleMon_GetValue(attackingMon, VALUE_EFFECTIVE_ABILITY) == ABIL_MEGA_SOL) {
+            weather = (u32)WEATHER_SUN;
+        }
+#endif
         u32 weatherDmgRatio = WeatherPowerMod(weather, moveParam->moveType);
         if (weatherDmgRatio != 4096
 #if EXPAND_ITEMS
@@ -2956,7 +3049,7 @@ extern "C" u32 THUMB_BRANCH_SAFESTACK_ServerEvent_CalcDamage(ServerFlow * server
     return isFixedDamage;
 }
 
-#endif // GEN6_CRIT || EXPAND_FIELD_EFFECTS
+#endif // GEN6_CRIT || EXPAND_FIELD_EFFECTS || EXPAND_ABILITIES
 
 #if EXPAND_ITEMS || GRASS_IMMUNE_TO_POWDER || GEN6_OVERCOAT
 
@@ -3233,13 +3326,53 @@ extern "C" void THUMB_BRANCH_HandlerRockyHelmet(BattleEventItem * item, ServerFl
     }
 }
 
-extern "C" WEATHER Handler_CheckWeather(ServerFlow* serverFlow, u32 pokemonSlot, WEATHER weather) {
+extern "C" WEATHER Handler_CheckWeather(ServerFlow* serverFlow, u32 attackingSlot, u32 defendingSlot, WEATHER weather) {
+    if (attackingSlot == BATTLE_MAX_SLOTS) {
 #if EXPAND_ITEMS
-    BattleMon* currentMon = Handler_GetBattleMon(serverFlow, pokemonSlot);
-    if (currentMon && BattleMon_GetUsableItem(currentMon) == ITEM_UTILITY_UMBRELLA) {
-        return WEATHER_NULL;
-    }
+        BattleMon* defendingMon = Handler_GetBattleMon(serverFlow, defendingSlot);
+        if (!defendingMon) {
+            return weather;
+        }
+        if (BattleMon_GetUsableItem(defendingMon) == ITEM_UTILITY_UMBRELLA) {
+            return WEATHER_NULL;
+        }
 #endif
+    }
+    else if (defendingSlot == BATTLE_MAX_SLOTS) {
+#if EXPAND_ITEMS
+        BattleMon* attackingMon = Handler_GetBattleMon(serverFlow, attackingSlot);
+        if (!attackingMon) {
+            return weather;
+        }
+        if (BattleMon_GetUsableItem(attackingMon) == ITEM_UTILITY_UMBRELLA) {
+            return WEATHER_NULL;
+        }
+#endif
+#if EXPAND_ABILITIES
+        if (BattleMon_GetValue(attackingMon, VALUE_EFFECTIVE_ABILITY) == ABIL_MEGA_SOL) {
+            return WEATHER_SUN;
+        }
+#endif
+    }
+    else {
+        BattleMon* attackingMon = Handler_GetBattleMon(serverFlow, attackingSlot);
+        BattleMon* defendingMon = Handler_GetBattleMon(serverFlow, defendingSlot);
+        if (!attackingMon || !defendingMon) {
+            return weather;
+        }
+
+#if EXPAND_ITEMS
+        if (BattleMon_GetUsableItem(attackingMon) == ITEM_UTILITY_UMBRELLA ||
+            BattleMon_GetUsableItem(defendingMon) == ITEM_UTILITY_UMBRELLA) {
+            return WEATHER_NULL;
+        }
+#endif
+#if EXPAND_ABILITIES
+        if (BattleMon_GetValue(attackingMon, VALUE_EFFECTIVE_ABILITY) == ABIL_MEGA_SOL) {
+            return WEATHER_SUN;
+        }
+#endif
+    }
     return weather;
 }
 #endif // EXPAND_ABILITIES || EXPAND_ITEMS
@@ -5397,15 +5530,15 @@ extern "C" void THUMB_BRANCH_SAFESTACK_ServerFlow_CheckMoveAvoid(ServerFlow* ser
 
 // Utility Umbrella - Disable weather related abilities and moves on the holder
 extern "C" WEATHER THUMB_BRANCH_LINK_HandlerChlorophyll_0x14(ServerFlow * serverFlow) {
-    return Handler_CheckWeather(serverFlow, BattleEventVar_GetValue(VAR_MON_ID), ServerEvent_GetWeather(serverFlow));
+    return Handler_CheckWeather(serverFlow, BATTLE_MAX_SLOTS, BattleEventVar_GetValue(VAR_MON_ID), ServerEvent_GetWeather(serverFlow));
 }
 extern "C" WEATHER THUMB_BRANCH_LINK_HandlerSwiftSwim_0x14(ServerFlow * serverFlow) {
-    return Handler_CheckWeather(serverFlow, BattleEventVar_GetValue(VAR_MON_ID), ServerEvent_GetWeather(serverFlow));
+    return Handler_CheckWeather(serverFlow, BATTLE_MAX_SLOTS, BattleEventVar_GetValue(VAR_MON_ID), ServerEvent_GetWeather(serverFlow));
 }
 
 // WARNING HandlerDrySkinWeather is used in BattleUpgrade.S
 extern "C" WEATHER THUMB_BRANCH_LINK_HandlerDrySkinWeather_0x1C(ServerFlow* serverFlow) {
-    return Handler_CheckWeather(serverFlow, BattleEventVar_GetValue(VAR_MON_ID), BattleEventVar_GetValue(VAR_WEATHER));
+    return Handler_CheckWeather(serverFlow, BATTLE_MAX_SLOTS, BattleEventVar_GetValue(VAR_MON_ID), BattleEventVar_GetValue(VAR_WEATHER));
 }
 
 extern "C" void THUMB_BRANCH_CommonFlowerGiftFormChange(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32 newForm, u8 flag) {
@@ -5425,47 +5558,47 @@ extern "C" void THUMB_BRANCH_CommonFlowerGiftFormChange(BattleEventItem* item, S
     }
 }
 extern "C" WEATHER THUMB_BRANCH_LINK_HandlerFlowerGiftPower_0x14(ServerFlow* serverFlow, u32 pokemonSlot) {
-    return Handler_CheckWeather(serverFlow, pokemonSlot, ServerEvent_GetWeather(serverFlow));
+    return Handler_CheckWeather(serverFlow, BATTLE_MAX_SLOTS, pokemonSlot, ServerEvent_GetWeather(serverFlow));
 }
 extern "C" WEATHER THUMB_BRANCH_LINK_HandlerFlowerGiftSpecialDefense_0x14(ServerFlow* serverFlow, u32 pokemonSlot) {
-    return Handler_CheckWeather(serverFlow, pokemonSlot, ServerEvent_GetWeather(serverFlow));
+    return Handler_CheckWeather(serverFlow, BATTLE_MAX_SLOTS, pokemonSlot, ServerEvent_GetWeather(serverFlow));
 }
 
 extern "C" u32 THUMB_BRANCH_LINK_HandlerForecastSwitchIn_0xA(ServerFlow* serverFlow, u32 nullVar, u32 pokemonSlot) {
-    return Handler_CheckWeather(serverFlow, pokemonSlot, ServerEvent_GetWeather(serverFlow));
+    return Handler_CheckWeather(serverFlow, BATTLE_MAX_SLOTS, pokemonSlot, ServerEvent_GetWeather(serverFlow));
 }
 extern "C" u32 THUMB_BRANCH_LINK_HandlerForecastWeather_0xE(ServerFlow* serverFlow, u32 nullVar, u32 pokemonSlot) {
-    return Handler_CheckWeather(serverFlow, pokemonSlot, ServerEvent_GetWeather(serverFlow));
+    return Handler_CheckWeather(serverFlow, BATTLE_MAX_SLOTS, pokemonSlot, ServerEvent_GetWeather(serverFlow));
 }
 
 extern "C" WEATHER THUMB_BRANCH_LINK_HandlerHydration_0x14(ServerFlow* serverFlow) {
-    return Handler_CheckWeather(serverFlow, BattleEventVar_GetValue(VAR_MON_ID), ServerEvent_GetWeather(serverFlow));
+    return Handler_CheckWeather(serverFlow, BATTLE_MAX_SLOTS, BattleEventVar_GetValue(VAR_MON_ID), ServerEvent_GetWeather(serverFlow));
 }
 
 extern "C" WEATHER THUMB_BRANCH_LINK_HandlerLeafGuard_0x14(ServerFlow* serverFlow) {
-    return Handler_CheckWeather(serverFlow, BattleEventVar_GetValue(VAR_DEFENDING_MON), ServerEvent_GetWeather(serverFlow));
+    return Handler_CheckWeather(serverFlow, BATTLE_MAX_SLOTS, BattleEventVar_GetValue(VAR_DEFENDING_MON), ServerEvent_GetWeather(serverFlow));
 }
 extern "C" WEATHER THUMB_BRANCH_LINK_HandlerLeafGuardYawnCheck_0x12(ServerFlow* serverFlow) {
-    return Handler_CheckWeather(serverFlow, BattleEventVar_GetValue(VAR_MON_ID), ServerEvent_GetWeather(serverFlow));
+    return Handler_CheckWeather(serverFlow, BATTLE_MAX_SLOTS, BattleEventVar_GetValue(VAR_MON_ID), ServerEvent_GetWeather(serverFlow));
 }
 
 extern "C" void THUMB_BRANCH_HandlerRainDish(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work) {
-    if (Handler_CheckWeather(serverFlow, pokemonSlot, BattleEventVar_GetValue(VAR_WEATHER)) == WEATHER_RAIN) {
+    if (Handler_CheckWeather(serverFlow, BATTLE_MAX_SLOTS, pokemonSlot, BattleEventVar_GetValue(VAR_WEATHER)) == WEATHER_RAIN) {
         CommonWeatherRecoveryAbility(serverFlow, pokemonSlot, WEATHER_RAIN);
     }
 }
 
 // WARNING HandlerSolarPowerWeather is used in BattleUpgrade.S
 extern "C" WEATHER THUMB_BRANCH_LINK_HandlerSolarPowerWeather_0x14(ServerFlow* serverFlow) {
-    return Handler_CheckWeather(serverFlow, BattleEventVar_GetValue(VAR_MON_ID), BattleEventVar_GetValue(VAR_WEATHER));
+    return Handler_CheckWeather(serverFlow, BATTLE_MAX_SLOTS, BattleEventVar_GetValue(VAR_MON_ID), BattleEventVar_GetValue(VAR_WEATHER));
 }
 // WARNING HandlerSolarPowerPower is used in BattleUpgrade.S
 extern "C" WEATHER THUMB_BRANCH_LINK_HandlerSolarPowerPower_0x14(u32 pokemonSlot, ServerFlow* serverFlow) {
-    return Handler_CheckWeather(serverFlow, pokemonSlot, ServerEvent_GetWeather(serverFlow));
+    return Handler_CheckWeather(serverFlow, BATTLE_MAX_SLOTS, pokemonSlot, ServerEvent_GetWeather(serverFlow));
 }
 
 extern "C" WEATHER THUMB_BRANCH_LINK_HandlerMorningSun_0x14(ServerFlow* serverFlow) {
-    return Handler_CheckWeather(serverFlow, BattleEventVar_GetValue(VAR_MON_ID), ServerEvent_GetWeather(serverFlow));
+    return Handler_CheckWeather(serverFlow, BattleEventVar_GetValue(VAR_MON_ID), BATTLE_MAX_SLOTS, ServerEvent_GetWeather(serverFlow));
 }
 
 extern "C" b32 PML_MoveIsAlwaysHit(MOVE_ID moveID);
@@ -5487,25 +5620,25 @@ extern "C" b32 THUMB_BRANCH_ServerEvent_BypassAccuracyCheck(ServerFlow* serverFl
     return isAlwaysHit;
 }
 extern "C" WEATHER THUMB_BRANCH_LINK_HandlerThunderRainCheck_0x12(ServerFlow* serverFlow) {
-    return Handler_CheckWeather(serverFlow, BattleEventVar_GetValue(VAR_DEFENDING_MON), ServerEvent_GetWeather(serverFlow));
+    return Handler_CheckWeather(serverFlow, BattleEventVar_GetValue(VAR_ATTACKING_MON), BattleEventVar_GetValue(VAR_DEFENDING_MON), ServerEvent_GetWeather(serverFlow));
 }
 extern "C" WEATHER THUMB_BRANCH_LINK_HandlerThunderSunCheck_0x12(ServerFlow* serverFlow) {
-    return Handler_CheckWeather(serverFlow, BattleEventVar_GetValue(VAR_DEFENDING_MON), ServerEvent_GetWeather(serverFlow));
+    return Handler_CheckWeather(serverFlow, BattleEventVar_GetValue(VAR_ATTACKING_MON), BattleEventVar_GetValue(VAR_DEFENDING_MON), ServerEvent_GetWeather(serverFlow));
 }
 
 extern "C" WEATHER THUMB_BRANCH_LINK_HandlerSolarBeamSunCheck_0x12(ServerFlow* serverFlow) {
-    return Handler_CheckWeather(serverFlow, BattleEventVar_GetValue(VAR_ATTACKING_MON), ServerEvent_GetWeather(serverFlow));
+    return Handler_CheckWeather(serverFlow, BattleEventVar_GetValue(VAR_ATTACKING_MON), BATTLE_MAX_SLOTS, ServerEvent_GetWeather(serverFlow));
 }
 
 extern "C" WEATHER THUMB_BRANCH_LINK_HandlerGrowth_0x12(ServerFlow* serverFlow) {
-    return Handler_CheckWeather(serverFlow, BattleEventVar_GetValue(VAR_ATTACKING_MON), ServerEvent_GetWeather(serverFlow));
+    return Handler_CheckWeather(serverFlow, BattleEventVar_GetValue(VAR_ATTACKING_MON), BATTLE_MAX_SLOTS, ServerEvent_GetWeather(serverFlow));
 }
 
 extern "C" WEATHER THUMB_BRANCH_LINK_HandlerWeatherBallType_0x14(ServerFlow* serverFlow) {
-    return Handler_CheckWeather(serverFlow, BattleEventVar_GetValue(VAR_MON_ID), ServerEvent_GetWeather(serverFlow));
+    return Handler_CheckWeather(serverFlow, BattleEventVar_GetValue(VAR_MON_ID), BATTLE_MAX_SLOTS, ServerEvent_GetWeather(serverFlow));
 }
 extern "C" WEATHER THUMB_BRANCH_LINK_HandlerWeatherBallPower_0x12(ServerFlow* serverFlow) {
-    return Handler_CheckWeather(serverFlow, BattleEventVar_GetValue(VAR_ATTACKING_MON), ServerEvent_GetWeather(serverFlow));
+    return Handler_CheckWeather(serverFlow, BattleEventVar_GetValue(VAR_ATTACKING_MON), BATTLE_MAX_SLOTS, ServerEvent_GetWeather(serverFlow));
 }
 
 // Ability Shield - Added events for stopping ability modifications

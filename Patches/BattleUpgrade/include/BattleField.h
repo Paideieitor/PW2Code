@@ -209,6 +209,6 @@ extern "C" void BattleField_SetExtraType(u32 battleSlot, POKE_TYPE type);
 
 #endif // EXPAND_MOVES
 
-extern "C" WEATHER Handler_CheckWeather(ServerFlow * serverFlow, u32 pokemonSlot, WEATHER weather);
+extern "C" WEATHER Handler_CheckWeather(ServerFlow * serverFlow, u32 attackingSlot, u32 defendingSlot, WEATHER weather);
 
 #endif // __BATTLEFIELD_EXT_H

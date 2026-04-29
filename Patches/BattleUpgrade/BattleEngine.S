@@ -27,6 +27,16 @@ FULL_COPY_BattleHandler_RemoveSideEffectCore_0x58:
  
 #endif // EXPAND_FIELD_EFFECTS
 
+#if SNOW_WEATHER
+
+@ This prevents any Pokemon from taking hail/snow damage
+FULL_COPY_CalcWeatherDamage_0xE:
+    nop
+    movs    r0, #1
+    .size FULL_COPY_CalcWeatherDamage_0xE, . - FULL_COPY_CalcWeatherDamage_0xE
+
+#endif // SNOW_WEATHER
+
 #if EXPAND_ABILITIES || ADD_MEGA_EVOLUTION
 
 @ Remove the if statements that check for Unnerve and add the checked ability as 

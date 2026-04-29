@@ -3820,3 +3820,12 @@ Symbols:
   - Name: BtlServer_StartBattleSequence
     Segment: 0xA7
     Address: 0x219e649
+  - Name: ServerDisplay_MoveMessage
+    Segment: 0xA7
+    Address: 0x21a915d
+  - Name: BattleMon_GetStatsForCritDamage
+    Segment: 0xA7
+    Address: 0x21bb319
+  - Name: CalcWeatherDamage
+    Segment: 0xA7
+    Address: 0x21bd429
