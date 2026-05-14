@@ -368,7 +368,7 @@ extern "C" b32 ServerControl_CheckMoveExeFreezeThaw(ServerFlow* serverFlow, Batt
 extern "C" void ServerControl_MoveCore(ServerFlow* serverFlow, u32 clientID, int partyMon1, int partyMon2, b32 a5);
 extern "C" void ServerControl_AfterMove(ServerFlow* serverFlow, u32 clientID, int partyMon1, int partyMon2);
 extern "C" b32 ServerControl_IsGuaranteedHit(ServerFlow* serverFlow, BattleMon* attackingMon, BattleMon* defendingMon);
-extern "C" b32 ServerControl_CheckNoEffectCore(ServerFlow* serverFlow, u16* moveID, BattleMon* attackingMon, BattleMon* defendingMon, int dmgAffRec, BattleEventType eventType);
+extern "C" b32 ServerControl_CheckNoEffectCore(ServerFlow* serverFlow, MoveParam* moveParam, BattleMon* attackingMon, BattleMon* defendingMon, int dmgAffRec, BattleEventType eventType);
 extern "C" b32 ServerControl_HideTurnStart(ServerFlow * serverFlow, BattleMon * attackingMon, u32 attackingPos, PokeSet * targetSet, u16 moveID);
 extern "C" CONDITION_FLAG ServerControl_ChargeUpLockClear(ServerFlow * serverFlow, BattleMon * attackingMon);
 extern "C" void ServerControl_Switch(ServerFlow* serverFlow, BattleMon* battleMon, u32 switchSlot);

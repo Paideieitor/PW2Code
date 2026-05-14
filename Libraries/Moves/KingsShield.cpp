@@ -2,6 +2,7 @@
 #ifdef EXPAND_MOVES
 
 #include "Patches/BattleUpgrade/BattleEngine.h"
+#include "Patches/BattleUpgrade/include/Contact.h"
 #include "Patches/BattleUpgrade/include/MoveExpansion.h"
 
 #include "server_flow.h"
@@ -11,27 +12,38 @@ extern "C" void HandlerPosKingsShield(BattleEventItem* item, ServerFlow* serverF
     if (IS_NOT_NEW_EVENT)
         return;
 
-    u32 pokemonSlot = Handler_PokePosToPokeID(serverFlow, targetPos);
+    u32 defendingSlot = Handler_PokePosToPokeID(serverFlow, targetPos);
     MOVE_ID moveID = BattleEventVar_GetValue(VAR_MOVE_ID);
-    if (pokemonSlot == BattleEventVar_GetValue(NEW_VAR_DEFENDING_MON) && 
-        PML_MoveGetCategory(moveID) == CATEGORY_PHYSICAL) {
+    if (defendingSlot == BattleEventVar_GetValue(NEW_VAR_DEFENDING_MON) && 
+            getMoveFlag(moveID, FLAG_CONTACT)) {
         u32 attackingSlot = BattleEventVar_GetValue(NEW_VAR_ATTACKING_MON);
 
-        HandlerParam_ChangeStatStage* statChange;
-        statChange = (HandlerParam_ChangeStatStage*)BattleHandler_PushWork(serverFlow, EFFECT_CHANGE_STAT_STAGE, pokemonSlot);
-        statChange->pokeCount = 1;
-        statChange->pokeID[0] = attackingSlot;
-        statChange->stat = STATSTAGE_DEFENSE;
+        if (MakesContact(serverFlow, moveID, attackingSlot, defendingSlot)) {
+
+            HandlerParam_ChangeStatStage* statChange;
+            statChange = (HandlerParam_ChangeStatStage*)BattleHandler_PushWork(serverFlow, EFFECT_CHANGE_STAT_STAGE, defendingSlot);
+            statChange->pokeCount = 1;
+            statChange->pokeID[0] = attackingSlot;
+            statChange->stat = STATSTAGE_DEFENSE;
 #if !GEN6_KINGS_SHIELD
-        statChange->volume = -1;
+            statChange->volume = -1;
 #else
-        statChange->volume = -2;
+            statChange->volume = -2;
 #endif
-        BattleHandler_PopWork(serverFlow, statChange);
+            BattleHandler_PopWork(serverFlow, statChange);
+        }
+    }
+}
+extern "C" void HandlerPosKingsShieldStatus(BattleEventItem* item, ServerFlow* serverFlow, u32 targetPos, u32* work) {
+    u32 pokemonSlot = Handler_PokePosToPokeID(serverFlow, targetPos);
+    if (pokemonSlot == BattleEventVar_GetValue(VAR_DEFENDING_MON) &&
+            BattleEventVar_GetValue(VAR_MOVE_CATEGORY) == CATEGORY_STATUS) {
+        BattleEventVar_RewriteValue(VAR_GENERAL_USE_FLAG, 2);
     }
 }
 BattleEventHandlerTableEntry PosKingsShieldHandlers[]{
     {EVENT_PROTECT_SUCCESS, HandlerPosKingsShield},
+    {EVENT_CHECK_PROTECT_BREAK, HandlerPosKingsShieldStatus},
     {EVENT_TURN_CHECK_DONE, HandlerPosTurnCheckDone},
 };
 extern "C" BattleEventHandlerTableEntry* EventAddPosKingsShield(u32* handlerAmount) {
@@ -57,7 +69,6 @@ BattleEventHandlerTableEntry KingsShieldHandlers[]{
     {EVENT_MOVE_EXECUTE_CHECK2, HandlerProtectCheckFail},
     {EVENT_MOVE_EXECUTE_FAIL, HandlerProtectResetCounter},
     {EVENT_UNCATEGORIZED_MOVE, HandlerProtect},
-    
 };
 extern "C" BattleEventHandlerTableEntry* EventAddKingsShield(u32* handlerAmount) {
     *handlerAmount = ARRAY_COUNT(KingsShieldHandlers);

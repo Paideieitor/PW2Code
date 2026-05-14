@@ -8,7 +8,6 @@
 // ROTOTILLER
 extern "C" void HandlerRototiller(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work) {
     if (pokemonSlot == BattleEventVar_GetValue(VAR_ATTACKING_MON)) {
-
         u32 defendingSlot = BattleEventVar_GetValue(VAR_DEFENDING_MON);
         if (defendingSlot >= BATTLE_MAX_SLOTS)
             return;

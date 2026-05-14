@@ -27,8 +27,7 @@ extern "C" void HandlerStanceChange(BattleEventItem * item, ServerFlow * serverF
             BattleHandler_AddArg(&changeForm->exStr, pokemonSlot);
             BattleHandler_PopWork(serverFlow, changeForm);
         }
-        // TODO: ADD KING'S SHIELD 
-        else if (moveID == MOVE_NULL) {
+        else if (moveID == MOVE_KINGS_SHIELD) {
             changeForm = (HandlerParam_ChangeForm*)BattleHandler_PushWork(serverFlow, EFFECT_CHANGE_FORM, pokemonSlot);
             changeForm->header.flags |= HANDLER_ABILITY_POPUP_FLAG;
             changeForm->pokeID = pokemonSlot;

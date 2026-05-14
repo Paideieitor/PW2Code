@@ -3829,3 +3829,6 @@ Symbols:
   - Name: CalcWeatherDamage
     Segment: 0xA7
     Address: 0x21bd429
+  - Name: EventAddPayDay
+    Segment: 0xA7
+    Address: 0x21c78a9

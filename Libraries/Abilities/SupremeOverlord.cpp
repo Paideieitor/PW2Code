@@ -25,12 +25,16 @@ extern "C" u32 GetFaintedAlliesCount(ServerFlow * serverFlow, u32 pokemonSlot) {
 }
 extern "C" void HandlerSupremeOverlordSwitchIn(BattleEventItem * item, ServerFlow * serverFlow, u32 pokemonSlot, u32 * work) {
     if (pokemonSlot == BattleEventVar_GetValue(VAR_MON_ID)) {
+        BattleHandler_PushRun(serverFlow, EFFECT_ABILITY_POPUP_ADD, pokemonSlot);
+
         u32 faintedAllies = GetFaintedAlliesCount(serverFlow, pokemonSlot);
         u32 ratio = 0;
         for (u32 i = 0; i < faintedAllies; ++i) {
             ratio += 409;
         }
         work[0] = ratio;
+
+        BattleHandler_PushRun(serverFlow, EFFECT_ABILITY_POPUP_REMOVE, pokemonSlot);
     }
 }
 extern "C" void HandlerSupremeOverlordPower(BattleEventItem * item, ServerFlow * serverFlow, u32 pokemonSlot, u32 * work) {

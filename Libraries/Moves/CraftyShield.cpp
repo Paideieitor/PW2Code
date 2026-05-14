@@ -12,8 +12,8 @@ extern "C" void HandlerPosCraftyShield(BattleEventItem* item, ServerFlow* server
     u32 defendingSlot = BattleEventVar_GetValue(VAR_DEFENDING_MON);
     u32 attackingSlot = BattleEventVar_GetValue(VAR_ATTACKING_MON);
     if (defendingSlot != attackingSlot &&
-        !MainModule_IsAllyMonID(attackingSlot, defendingSlot) &&
-        MainModule_IsAllyMonID(pokemonSlot, defendingSlot)) {
+            !MainModule_IsAllyMonID(attackingSlot, defendingSlot) &&
+            MainModule_IsAllyMonID(pokemonSlot, defendingSlot)) {
 
         MOVE_ID moveID = BattleEventVar_GetValue(VAR_MOVE_ID);
         if (PML_MoveGetCategory(moveID) == CATEGORY_STATUS) {
@@ -27,8 +27,8 @@ extern "C" void HandlerPosCraftyShield(BattleEventItem* item, ServerFlow* server
 }
 BattleEventHandlerTableEntry PosCraftyShieldHandlers[]{
     {EVENT_ABILITY_CHECK_NO_EFFECT, HandlerPosCraftyShield},
-    {EVENT_TURN_CHECK_DONE, HandlerPosTurnCheckDone},
-    {EVENT_PROTECT_BROKEN, HandlerPosProtectBroken},
+        {EVENT_TURN_CHECK_DONE, HandlerPosTurnCheckDone},
+        {EVENT_PROTECT_BROKEN, HandlerPosProtectBroken},
 };
 extern "C" BattleEventHandlerTableEntry* EventAddPosCraftyShield(u32* handlerAmount) {
     *handlerAmount = ARRAY_COUNT(PosCraftyShieldHandlers);

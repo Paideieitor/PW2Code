@@ -2982,6 +2982,11 @@ extern "C" u32 THUMB_BRANCH_SAFESTACK_ServerEvent_CalcDamage(ServerFlow * server
             weather = (u32)WEATHER_SUN;
         }
 #endif
+#if EXPAND_MOVES
+        if (moveParam->moveID == MOVE_HYDRO_STEAM && weather == WEATHER_SUN) {
+            weather = (u32)WEATHER_RAIN;
+        }
+#endif
         u32 weatherDmgRatio = WeatherPowerMod(weather, moveParam->moveType);
         if (weatherDmgRatio != 4096
 #if EXPAND_ITEMS
@@ -4881,7 +4886,7 @@ extern "C" void THUMB_BRANCH_SAFESTACK_ServerControl_SubstituteExclude(ServerFlo
 
 #if EXPAND_ABILITIES
 // Unseen Fist - Modified CheckProtectBreak server event
-extern "C" u32 ServerEvent_CheckProtectBreakExt(ServerFlow * serverFlow, BattleMon * attackingMon, BattleMon * defendingMon, MOVE_ID moveID, bool targetIsProtected)
+extern "C" u32 ServerEvent_CheckProtectBreakExt(ServerFlow * serverFlow, BattleMon * attackingMon, BattleMon * defendingMon, MoveParam* moveParam, bool targetIsProtected)
 {
     BattleEventVar_Push();
     u32 attackingSlot = BattleMon_GetID(attackingMon);
@@ -4890,7 +4895,8 @@ extern "C" u32 ServerEvent_CheckProtectBreakExt(ServerFlow * serverFlow, BattleM
     u32 defendingSlot = BattleMon_GetID(defendingMon);
     BattleEventVar_SetValue(VAR_DEFENDING_MON, defendingSlot);
     // Added the Move ID so that Unseen Fist can check if it is contact
-    BattleEventVar_SetValue(VAR_MOVE_ID, moveID);
+    BattleEventVar_SetValue(VAR_MOVE_ID, moveParam->moveID);
+    BattleEventVar_SetValue(VAR_MOVE_CATEGORY, moveParam->category);
     BattleEventVar_SetValue(VAR_GENERAL_USE_FLAG, 0);
     BattleEventVar_SetConstValue(VAR_NO_EFFECT_FLAG, targetIsProtected ? 1 : 0);
     BattleEvent_CallHandlers(serverFlow, EVENT_CHECK_PROTECT_BREAK);
@@ -4908,6 +4914,7 @@ extern "C" void ServerEvent_ProtectSuccess(ServerFlow* serverFlow, BattleMon* at
     u32 defendingSlot = BattleMon_GetID(defendingMon);
     BattleEventVar_SetConstValue(NEW_VAR_DEFENDING_MON, defendingSlot);
     BattleEventVar_SetConstValue(VAR_MOVE_ID, moveID);
+    DPRINT("SUCCESS \n");
     BattleEvent_CallHandlers(serverFlow, EVENT_PROTECT_SUCCESS);
     BattleEventVar_Pop();
 }
@@ -4923,27 +4930,27 @@ extern "C" void ServerEvent_ProtectBroken(ServerFlow* serverFlow, BattleMon* att
     BattleEventVar_Pop();
 }
 #endif
-extern "C" void THUMB_BRANCH_SAFESTACK_flowsub_CheckNoEffect_Protect(ServerFlow * serverFlow, u16 * moveID, BattleMon * attackingMon, PokeSet * targetSet, int dmgAffRec) {
+extern "C" void THUMB_BRANCH_SAFESTACK_flowsub_CheckNoEffect_Protect(ServerFlow * serverFlow, MoveParam* moveParam, BattleMon * attackingMon, PokeSet * targetSet, int dmgAffRec) {
     PokeSet_SeekStart(targetSet);
     for (BattleMon* targetMon = PokeSet_SeekNext(targetSet); targetMon; targetMon = PokeSet_SeekNext(targetSet)) {
         if (!ServerControl_IsGuaranteedHit(serverFlow, attackingMon, targetMon)
-            && ServerControl_CheckNoEffectCore(serverFlow, moveID, attackingMon, targetMon, dmgAffRec, EVENT_REDIRECT_TARGETEND)) {
+            && ServerControl_CheckNoEffectCore(serverFlow, moveParam, attackingMon, targetMon, dmgAffRec, EVENT_REDIRECT_TARGETEND)) {
             PokeSet_Remove(targetSet, targetMon);
         }
     }
     PokeSet_SeekStart(targetSet);
     for (BattleMon* targetMon = PokeSet_SeekNext(targetSet); targetMon; targetMon = PokeSet_SeekNext(targetSet)) {
-        if (ServerControl_CheckNoEffectCore(serverFlow, moveID, attackingMon, targetMon, dmgAffRec, EVENT_NOEFFECT_CHECK)) {
+        if (ServerControl_CheckNoEffectCore(serverFlow, moveParam, attackingMon, targetMon, dmgAffRec, EVENT_NOEFFECT_CHECK)) {
             PokeSet_Remove(targetSet, targetMon);
         }
     }
 
     PokeSet_SeekStart(targetSet);
     for (BattleMon* targetMon = PokeSet_SeekNext(targetSet); targetMon; targetMon = PokeSet_SeekNext(targetSet)) {
-        bool targetIsProtected = BattleMon_GetTurnFlag(targetMon, TURNFLAG_PROTECT) && getMoveFlag(*moveID, FLAG_BLOCKED_BY_PROTECT);
+        bool targetIsProtected = BattleMon_GetTurnFlag(targetMon, TURNFLAG_PROTECT) && getMoveFlag(moveParam->moveID, FLAG_BLOCKED_BY_PROTECT);
 
 #if EXPAND_ABILITIES
-        u32 breakProtect = ServerEvent_CheckProtectBreakExt(serverFlow, attackingMon, targetMon, *moveID, targetIsProtected);
+        u32 breakProtect = ServerEvent_CheckProtectBreakExt(serverFlow, attackingMon, targetMon, moveParam, targetIsProtected);
 #else
         u32 breakProtect = ServerEvent_CheckProtectBreak(serverFlow, attackingMon);
 #endif
@@ -4958,7 +4965,7 @@ extern "C" void THUMB_BRANCH_SAFESTACK_flowsub_CheckNoEffect_Protect(ServerFlow 
                 ServerDisplay_AddMessageImpl(serverFlow->serverCommandQueue, SCID_SetMessage, 523, targetSlot, 0xFFFF0000);
 #if EXPAND_MOVES      
                 u32 HEID = HEManager_PushState(&serverFlow->HEManager);
-                ServerEvent_ProtectSuccess(serverFlow, attackingMon, targetMon, *moveID);
+                ServerEvent_ProtectSuccess(serverFlow, attackingMon, targetMon, moveParam->moveID);
                 HEManager_PopState(&serverFlow->HEManager, HEID);
 #endif
             }
@@ -4966,7 +4973,7 @@ extern "C" void THUMB_BRANCH_SAFESTACK_flowsub_CheckNoEffect_Protect(ServerFlow 
 #if EXPAND_MOVES
         case 1:
             u32 HEID = HEManager_PushState(&serverFlow->HEManager);
-            ServerEvent_ProtectBroken(serverFlow, attackingMon, targetMon, *moveID);
+            ServerEvent_ProtectBroken(serverFlow, attackingMon, targetMon, moveParam->moveID);
             HEManager_PopState(&serverFlow->HEManager, HEID);
             break;
 #endif
@@ -4976,7 +4983,7 @@ extern "C" void THUMB_BRANCH_SAFESTACK_flowsub_CheckNoEffect_Protect(ServerFlow 
     PokeSet_SeekStart(targetSet);
     for (BattleMon* targetMon = PokeSet_SeekNext(targetSet); targetMon; targetMon = PokeSet_SeekNext(targetSet)) {
 #if GRASS_IMMUNE_TO_POWDER
-        if (getMoveFlag(*moveID, FLAG_POWDER) && BattleMon_HasType(targetMon, TYPE_GRASS)) {
+        if (getMoveFlag(moveParam->moveID, FLAG_POWDER) && BattleMon_HasType(targetMon, TYPE_GRASS)) {
             // If a Grass Pokémon is hit by a non-self-targeting move
             u32 targetSlot = BattleMon_GetID(targetMon);
             if (targetSlot != BattleMon_GetID(attackingMon)) {
@@ -4998,7 +5005,7 @@ extern "C" void THUMB_BRANCH_SAFESTACK_flowsub_CheckNoEffect_Protect(ServerFlow 
             }
         }
 #endif
-        if (ServerControl_CheckNoEffectCore(serverFlow, moveID, attackingMon, targetMon, dmgAffRec, EVENT_ABILITY_CHECK_NO_EFFECT)) {
+        if (ServerControl_CheckNoEffectCore(serverFlow, moveParam, attackingMon, targetMon, dmgAffRec, EVENT_ABILITY_CHECK_NO_EFFECT)) {
             PokeSet_Remove(targetSet, targetMon);
         }
     }
@@ -5588,6 +5595,13 @@ extern "C" void THUMB_BRANCH_HandlerRainDish(BattleEventItem* item, ServerFlow* 
     }
 }
 
+extern "C" u32 THUMB_BRANCH_LINK_HandlerSandVeil_0x12(ServerFlow* serverFlow) {
+    return Handler_CheckWeather(serverFlow, BATTLE_MAX_SLOTS, BattleEventVar_GetValue(VAR_DEFENDING_MON), ServerEvent_GetWeather(serverFlow));
+}
+extern "C" u32 THUMB_BRANCH_LINK_HandlerSnowCloak_0x12(ServerFlow* serverFlow) {
+    return Handler_CheckWeather(serverFlow, BATTLE_MAX_SLOTS, BattleEventVar_GetValue(VAR_DEFENDING_MON), ServerEvent_GetWeather(serverFlow));
+}
+
 // WARNING HandlerSolarPowerWeather is used in BattleUpgrade.S
 extern "C" WEATHER THUMB_BRANCH_LINK_HandlerSolarPowerWeather_0x14(ServerFlow* serverFlow) {
     return Handler_CheckWeather(serverFlow, BATTLE_MAX_SLOTS, BattleEventVar_GetValue(VAR_MON_ID), BattleEventVar_GetValue(VAR_WEATHER));
@@ -5915,7 +5929,11 @@ MoveEventAddTableExt moveEventAddTableExt[] = {
     {MOVE_ELECTRIFY, EventAddElectrify, "Moves/Electrify"},
     {MOVE_FAIRY_LOCK, EventAddSpiderWeb, nullptr},
     {MOVE_KINGS_SHIELD, EventAddKingsShield, "Moves/KingsShield"},
-
+    {MOVE_SPIKY_SHIELD, EventAddSpikyShield, "Moves/SpikyShield"},
+    {MOVE_VENOM_DRENCH, EventAddVenomDrench, "Moves/VenomDrench"},
+    {MOVE_POWDER, EventAddPowder, "Moves/Powder"},
+    {MOVE_MAGNETIC_FLUX, EventAddMagneticFlux, "Moves/MagneticFlux"},
+    {MOVE_HAPPY_HOUR, EventAddPayDay, nullptr},
     {MOVE_ELECTRIC_TERRAIN, EventAddElectricTerrain, "Moves/ElectricTerrain"},
 
     {MOVE_PSYCHIC_TERRAIN, EventAddPsychicTerrain, "Moves/PsychicTerrain"},
@@ -5937,6 +5955,8 @@ PosEffectEventAddTableExt posEffectEventAddTableExt[] = {
     {POSEFF_CRAFTY_SHIELD, EventAddPosCraftyShield, "Moves/CraftyShield"},
     {POSEFF_ELECTRIFY, EventAddPosElectrify, "Moves/Electrify"},
     {POSEFF_KINGS_SHIELD, EventAddPosKingsShield, "Moves/KingsShield"},
+    {POSEFF_SPIKY_SHIELD, EventAddPosSpikyShield, "Moves/SpikyShield"},
+    {POSEFF_POWDER, EventAddPosPowder, "Moves/Powder"},
 };
 
 extern "C" void CMD_ACT_MoveAnimStart(BtlvScu * btlvScu, u32 attckViewPos, u32 defViewPos, u16 moveID, u32 moveTarget, u8 effectIndex, u8 zero);

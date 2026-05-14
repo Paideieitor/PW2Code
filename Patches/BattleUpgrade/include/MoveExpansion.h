@@ -19,7 +19,10 @@ extern "C" BattleEventHandlerTableEntry* EventAddGrassyTerrain(u32* handlerAmoun
 extern "C" BattleEventHandlerTableEntry* EventAddMistyTerrain(u32* handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddElectrify(u32* handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddKingsShield(u32* handlerAmount);
-
+extern "C" BattleEventHandlerTableEntry* EventAddSpikyShield(u32* handlerAmount);
+extern "C" BattleEventHandlerTableEntry* EventAddVenomDrench(u32* handlerAmount);
+extern "C" BattleEventHandlerTableEntry* EventAddPowder(u32* handlerAmount);
+extern "C" BattleEventHandlerTableEntry* EventAddMagneticFlux(u32* handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddElectricTerrain(u32* handlerAmount);
 
 extern "C" BattleEventHandlerTableEntry* EventAddPsychicTerrain(u32* handlerAmount);
@@ -35,6 +38,8 @@ extern "C" BattleEventHandlerTableEntry* EventAddPosIonDeluge(u32* handlerAmount
 extern "C" BattleEventHandlerTableEntry* EventAddPosCraftyShield(u32* handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddPosElectrify(u32* handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddPosKingsShield(u32* handlerAmount);
+extern "C" BattleEventHandlerTableEntry* EventAddPosSpikyShield(u32* handlerAmount);
+extern "C" BattleEventHandlerTableEntry* EventAddPosPowder(u32* handlerAmount);
 
 extern "C" void GetSideBattleSlots(ServerFlow * serverFlow, u32 side, u8 battleSlots[3]);
 extern "C" u32 PosEffect_SetPriority(BattleEventPriority priority, u32 handlerCount);
