@@ -713,6 +713,9 @@ extern "C" BattleEventHandlerTableEntry * EventAddHex(u32 * handlerAmount);
 extern "C" BattleEventHandlerTableEntry * EventAddShadowForce(u32* handlerAmount);
 extern "C" BattleEventHandlerTableEntry * EventAddSpiderWeb(u32* handlerAmount);
 extern "C" BattleEventHandlerTableEntry * EventAddPayDay(u32* handlerAmount);
+extern "C" BattleEventHandlerTableEntry * EventAddFalseSwipe(u32* handlerAmount);
+extern "C" BattleEventHandlerTableEntry * EventAddBind(u32* handlerAmount);
+extern "C" BattleEventHandlerTableEntry * EventAddSmackDown(u32* handlerAmount);
 
 extern "C" void MoveEvent_ForceRemoveItemFromBattleMon(BattleMon* battleMon, MOVE_ID moveID);
 extern "C" bool MoveEvent_CanEffectBeRegistered(u32 battleSlot, MOVE_ID moveID, u8 * output);

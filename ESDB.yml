@@ -3832,3 +3832,18 @@ Symbols:
   - Name: EventAddPayDay
     Segment: 0xA7
     Address: 0x21c78a9
+  - Name: EventAddFalseSwipe
+    Segment: 0xA7
+    Address: 0x21c92b5
+  - Name: EventAddBind
+    Segment: 0xA7
+    Address: 0x21c6b8d
+  - Name: EventAddSmackDown
+    Segment: 0xA7
+    Address: 0x21ccea9
+  - Name: HandlerSmackDown
+    Segment: 0xA7
+    Address: 0x21cceb5
+  - Name: Handler_CheckFloating
+    Segment: 0xA7
+    Address: 0x21abdb5

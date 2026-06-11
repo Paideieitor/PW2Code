@@ -335,6 +335,14 @@ struct SWAN_ALIGNED(4) HandlerParam_AddPosEffect
     u32 workCount;
 };
 
+struct HandlerParam_HideTurnCancel
+{
+  HandlerParam_Header header;
+  u8 pokeID;
+  u32 flag;
+  HandlerParam_StrParams exStr;
+};
+
 extern "C" HandlerParam_Header* BattleHandler_PushWork(ServerFlow* serverFlow, BattleHandlerEffect battleHandler, u32 currentSlot);
 extern "C" void BattleHandler_PopWork(ServerFlow* serverFlow, void* handlerParms);
 extern "C" void BattleHandler_PushRun(ServerFlow* serverFlow, BattleHandlerEffect effect, u32 pokemonSlot);
@@ -347,5 +355,7 @@ extern "C" u32 BattleHandler_Result(ServerFlow* serverFlow);
 
 extern "C" b32 Handler_GetFightEnableBenchPokeNum(ServerFlow* serverFlow, u32 pokemonSlot);
 extern "C" b32 Handler_CheckReservedMemberChangeAction(ServerFlow* serverFlow);
+extern "C" b32 Handler_IsMonInSkyDrop(ServerFlow* serverFlow, u32 battleSlot);
+extern "C" b32 Handler_CheckFloating(ServerFlow* serverFlow, u32 battleSlot);
 
 #endif // __HANDLER_PARAMS_H

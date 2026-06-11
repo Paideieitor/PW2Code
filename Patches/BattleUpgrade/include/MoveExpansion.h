@@ -24,6 +24,8 @@ extern "C" BattleEventHandlerTableEntry* EventAddVenomDrench(u32* handlerAmount)
 extern "C" BattleEventHandlerTableEntry* EventAddPowder(u32* handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddMagneticFlux(u32* handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddElectricTerrain(u32* handlerAmount);
+extern "C" BattleEventHandlerTableEntry* EventAddThousandArrows(u32* handlerAmount);
+extern "C" BattleEventHandlerTableEntry* EventAddHyperspaceFury(u32* handlerAmount);
 
 extern "C" BattleEventHandlerTableEntry* EventAddPsychicTerrain(u32* handlerAmount);
 

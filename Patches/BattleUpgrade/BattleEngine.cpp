@@ -5935,6 +5935,11 @@ MoveEventAddTableExt moveEventAddTableExt[] = {
     {MOVE_MAGNETIC_FLUX, EventAddMagneticFlux, "Moves/MagneticFlux"},
     {MOVE_HAPPY_HOUR, EventAddPayDay, nullptr},
     {MOVE_ELECTRIC_TERRAIN, EventAddElectricTerrain, "Moves/ElectricTerrain"},
+    {MOVE_HOLD_BACK, EventAddFalseSwipe, nullptr},
+    {MOVE_INFESTATION, EventAddBind, nullptr},
+    {MOVE_THOUSAND_ARROWS, EventAddThousandArrows, "Moves/ThousandArrows"},
+    {MOVE_THOUSAND_WAVES, EventAddSpiderWeb, nullptr},
+    {MOVE_HYPERSPACE_FURY, EventAddHyperspaceFury, "Moves/HyperspaceFury"},
 
     {MOVE_PSYCHIC_TERRAIN, EventAddPsychicTerrain, "Moves/PsychicTerrain"},
 
