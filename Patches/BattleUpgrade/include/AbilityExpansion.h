@@ -144,6 +144,8 @@ extern "C" BattleEventHandlerTableEntry* EventAddTeraShell(u32 * handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddTeraformZero(u32 * handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddPoisonPuppeteer(u32 * handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddDragonize(u32 * handlerAmount);
+extern "C" BattleEventHandlerTableEntry* EventAddEelevate(u32 * handlerAmount);
+extern "C" BattleEventHandlerTableEntry* EventAddFireMane(u32 * handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddSpicySpray(u32 * handlerAmount);
 
 //Natural Cure - can't find after battle status heal

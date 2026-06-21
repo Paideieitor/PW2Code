@@ -59,4 +59,21 @@ extern "C" BattleEventHandlerTableEntry * EventAddBeastBoost(u32 * handlerAmount
     *handlerAmount = ARRAY_COUNT(BeastBoostHandlers);
     return BeastBoostHandlers;
 }
+
+// EELEVATE
+extern "C" void HandlerLevitate(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work);
+extern "C" void HandlerLevitateAddImmunity(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work);
+extern "C" void HandlerLevitateTurnCheck(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work);
+
+BattleEventHandlerTableEntry EelevateHandlers[]{
+    {EVENT_DAMAGE_PROCESSING_END_HIT_REAL, HandlerBeastBoost},
+    {EVENT_CHECK_FLOATING, HandlerLevitate},
+    {EVENT_FLOATING_IMMUNE_TO_MOVE, HandlerLevitateAddImmunity},
+    {EVENT_TURN_CHECK_BEGIN, HandlerLevitateTurnCheck},
+};
+extern "C" BattleEventHandlerTableEntry * EventAddEelevate(u32 * handlerAmount) {
+    *handlerAmount = ARRAY_COUNT(EelevateHandlers);
+    return EelevateHandlers;
+}
+
 #endif // EXPAND_ABILITIES

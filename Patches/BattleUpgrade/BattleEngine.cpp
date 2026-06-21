@@ -3794,8 +3794,8 @@ AbilityEventAddTableExt abilityEventAddTableExt[]{
     { ABIL_QUICK_DRAW, EventAddQuickDraw, "Abilities/QuickDraw" },
     { ABIL_UNSEEN_FIST, EventAddUnseenFist, "Abilities/UnseenFist" },
     { ABIL_CURIOUS_MEDICINE, EventAddCuriousMedicine, "Abilities/CuriousMedicine" },
-    { ABIL_TRANSISTOR, EventAddTransistor, "Abilities/Transistor" },
-    { ABIL_DRAGON_S_MAW, EventAddDragonsMaw, "Abilities/DragonsMaw" },
+    { ABIL_TRANSISTOR, EventAddTransistor, "Abilities/TypeBoost" },
+    { ABIL_DRAGON_S_MAW, EventAddDragonsMaw, "Abilities/TypeBoost" },
     { ABIL_CHILLING_NEIGH, EventAddChillingNeigh, "Abilities/AsOne" },
     { ABIL_GRIM_NEIGH, EventAddGrimNeigh, "Abilities/AsOne" },
     { ABIL_AS_ONE_ICE, EventAddAsOne, "Abilities/AsOne" },
@@ -3845,6 +3845,8 @@ AbilityEventAddTableExt abilityEventAddTableExt[]{
     { ABIL_POISON_PUPPETEE, EventAddPoisonPuppeteer, "Abilities/PoisonPuppeteer" },
     { ABIL_PIERCING_DRILL, EventAddUnseenFist, "Abilities/UnseenFist" },
     { ABIL_DRAGONIZE, EventAddDragonize, "Abilities/Dragonize" },
+    { ABIL_EELEVATE, EventAddEelevate, "Abilities/BeastBoost" },
+    { ABIL_FIRE_MANE, EventAddFireMane, "Abilities/TypeBoost" },
     { ABIL_SPICY_SPRAY, EventAddSpicySpray, "Abilities/SpicySpray" },
 };
 
@@ -5940,6 +5942,7 @@ MoveEventAddTableExt moveEventAddTableExt[] = {
     {MOVE_THOUSAND_ARROWS, EventAddThousandArrows, "Moves/ThousandArrows"},
     {MOVE_THOUSAND_WAVES, EventAddSpiderWeb, nullptr},
     {MOVE_HYPERSPACE_FURY, EventAddHyperspaceFury, "Moves/HyperspaceFury"},
+    {MOVE_SHORE_UP, EventAddShoreUp, "Moves/ShoreUp"},
 
     {MOVE_PSYCHIC_TERRAIN, EventAddPsychicTerrain, "Moves/PsychicTerrain"},
 
