@@ -27,6 +27,9 @@ extern "C" BattleEventHandlerTableEntry* EventAddElectricTerrain(u32* handlerAmo
 extern "C" BattleEventHandlerTableEntry* EventAddThousandArrows(u32* handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddHyperspaceFury(u32* handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddShoreUp(u32* handlerAmount);
+extern "C" BattleEventHandlerTableEntry* EventAddBanefulBunker(u32* handlerAmount);
+extern "C" BattleEventHandlerTableEntry* EventAddSparklingAria(u32* handlerAmount);
+extern "C" BattleEventHandlerTableEntry* EventAddFloralHealing(u32* handlerAmount);
 
 extern "C" BattleEventHandlerTableEntry* EventAddPsychicTerrain(u32* handlerAmount);
 
@@ -43,6 +46,7 @@ extern "C" BattleEventHandlerTableEntry* EventAddPosElectrify(u32* handlerAmount
 extern "C" BattleEventHandlerTableEntry* EventAddPosKingsShield(u32* handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddPosSpikyShield(u32* handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddPosPowder(u32* handlerAmount);
+extern "C" BattleEventHandlerTableEntry* EventAddPosBanefulBunker(u32* handlerAmount);
 
 extern "C" void GetSideBattleSlots(ServerFlow * serverFlow, u32 side, u8 battleSlots[3]);
 extern "C" u32 PosEffect_SetPriority(BattleEventPriority priority, u32 handlerCount);

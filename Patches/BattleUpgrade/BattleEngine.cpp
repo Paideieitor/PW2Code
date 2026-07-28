@@ -5467,7 +5467,7 @@ ItemEventAddTableExt itemEventAddTableExt[] = {
     { ITEM_LOADED_DICE, EventAddLoadedDice, "Items/LoadedDice" },
     { ITEM_MIRROR_HERB, EventAddMirrorHerb, "Items/MirrorHerb" },
     { ITEM_PUNCHING_GLOVE, EventAddIronFist, nullptr },
-    { ITEM_COVERT_CLOAK, EventAddCovertCloak, "Items/CovertCloak" },
+    { ITEM_COVERT_CLOAK, EventAddShieldDust, nullptr },
     { ITEM_FAIRY_FEATHER, EventAddFairyFeather, "Items/FairyFeather" },
     { ITEM_TERRAIN_EXTENDER, EventAddTerrainExtender, "Items/TerrainExtender" },
     { ITEM_ELECTRIC_SEED, EventAddElectricSeed, "Items/TerrainSeeds" },
@@ -5943,6 +5943,12 @@ MoveEventAddTableExt moveEventAddTableExt[] = {
     {MOVE_THOUSAND_WAVES, EventAddSpiderWeb, nullptr},
     {MOVE_HYPERSPACE_FURY, EventAddHyperspaceFury, "Moves/HyperspaceFury"},
     {MOVE_SHORE_UP, EventAddShoreUp, "Moves/ShoreUp"},
+    {MOVE_FIRST_IMPRESSION, EventAddFakeOut, nullptr},
+    {MOVE_BANEFUL_BUNKER, EventAddBanefulBunker, "Moves/BanefulBunker"},
+    {MOVE_SPIRIT_SHACKLE, EventAddSpiderWeb, nullptr},
+    {MOVE_DARKEST_LARIAT, EventAddChipAway, nullptr},
+    {MOVE_SPARKLING_ARIA, EventAddSparklingAria, "Moves/SparklingAria"},
+    {MOVE_FLORAL_HEALING, EventAddFloralHealing, "Moves/FloralHealing"},
 
     {MOVE_PSYCHIC_TERRAIN, EventAddPsychicTerrain, "Moves/PsychicTerrain"},
 
@@ -5965,6 +5971,7 @@ PosEffectEventAddTableExt posEffectEventAddTableExt[] = {
     {POSEFF_KINGS_SHIELD, EventAddPosKingsShield, "Moves/KingsShield"},
     {POSEFF_SPIKY_SHIELD, EventAddPosSpikyShield, "Moves/SpikyShield"},
     {POSEFF_POWDER, EventAddPosPowder, "Moves/Powder"},
+    {POSEFF_BANEFUL_BUNKER, EventAddPosBanefulBunker, "Moves/BanefulBunker"},
 };
 
 extern "C" void CMD_ACT_MoveAnimStart(BtlvScu * btlvScu, u32 attckViewPos, u32 defViewPos, u16 moveID, u32 moveTarget, u8 effectIndex, u8 zero);

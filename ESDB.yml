@@ -3847,3 +3847,30 @@ Symbols:
   - Name: Handler_CheckFloating
     Segment: 0xA7
     Address: 0x21abdb5
+  - Name: getStartOffsetOfSaveBlockDataInSave
+    Segment: 0x0
+    Address: 0x203c3b1
+  - Name: SaveControl_Create
+    Segment: 0x0
+    Address: 0x20070f1
+  - Name: SaveData_InitMain
+    Segment: 0x0
+    Address: 0x203ad61
+  - Name: BoxMainSave_InitMain
+    Segment: 0x0
+    Address: 0x2007711
+  - Name: BoxMainSave_Init
+    Segment: 0x0
+    Address: 0x2007721
+  - Name: SaveData_ReadSaveFile
+    Segment: 0x0
+    Address: 0x203ae79
+  - Name: ReadFlashWaitSuccess
+    Segment: 0x0
+    Address: 0x203c025
+  - Name: EventAddFakeOut
+    Segment: 0xA7
+    Address: 0x21cb999
+  - Name: EventAddChipAway
+    Segment: 0xA7
+    Address: 0x21cd1d1
