@@ -1795,6 +1795,7 @@ extern "C" void THUMB_BRANCH_BattleField_InitCore(BattleFieldExt * battleField, 
 
     sys_memset(battleField->extraTypes, TYPE_NULL, BATTLE_MAX_SLOTS);
 
+    sys_memset(battleField->conditionsExt, 0, sizeof(BattleCondition) * BATTLE_MAX_SLOTS);
 #endif 
 }
 
@@ -4327,21 +4328,6 @@ extern "C" void THUMB_BRANCH_ServerControl_ApplyDamageToRecover(ServerFlow* serv
     }
 }
 
-// Comatose & Neutralizing Gas - Return permanent conditions
-extern "C" b32 THUMB_BRANCH_BattleMon_CheckIfMoveCondition(BattleMon* battleMon, CONDITION condition) {
-    if (condition == CONDITION_SLEEP && BattleMon_GetValue(battleMon, VALUE_EFFECTIVE_ABILITY) == ABIL_COMATOSE) {
-        return 1;
-    }
-
-    if (condition == CONDITION_GASTROACID && 
-        BattleField_GetNeutralizingGasMons() &&
-        !AbilityCantBeNeutralized(BattleMon_GetValue(battleMon, VALUE_ABILITY))) {
-        return 1;
-    }
-
-    return (battleMon->conditions[condition].status) != 0;
-}
-
 // Comatose - Hex is not boosted against a Comatose Pokémon
 extern "C" void THUMB_BRANCH_HandlerHex(BattleEventItem* item, ServerFlow* serverFlow, u32 pokemonSlot, u32* work) {
     if (pokemonSlot == BattleEventVar_GetValue(VAR_ATTACKING_MON)) {
@@ -5014,7 +5000,7 @@ extern "C" void THUMB_BRANCH_SAFESTACK_flowsub_CheckNoEffect_Protect(ServerFlow 
     }
 }
 
-#endif // EXPAND_ABILITIES || GRASS_IMMUNE_TO_POWDER
+#endif // EXPAND_ABILITIES || EXPAND_MOVES || GRASS_IMMUNE_TO_POWDER
 
 #if EXPAND_ABILITIES || ADD_MEGA_EVOLUTION
 
@@ -5405,6 +5391,32 @@ extern "C" void THUMB_BRANCH_ServerEvent_GetMoveParam(ServerFlow* serverFlow, MO
     BattleEventVar_Pop();
 }
 
+// Comatose & Neutralizing Gas - Return permanent conditions
+extern "C" b32 THUMB_BRANCH_BattleMon_CheckIfMoveCondition(BattleMon* battleMon, CONDITION condition) {
+    if (condition == CONDITION_SLEEP && BattleMon_GetValue(battleMon, VALUE_EFFECTIVE_ABILITY) == ABIL_COMATOSE) {
+        return 1;
+    }
+
+    if (condition == CONDITION_GASTROACID && 
+        BattleField_GetNeutralizingGasMons() &&
+        !AbilityCantBeNeutralized(BattleMon_GetValue(battleMon, VALUE_ABILITY))) {
+        return 1;
+    }
+
+#if EXPAND_MOVES
+    // Condition Expansion
+    if (condition >= CONDITION_EXT_OFFSET) {
+        u32 extIdx = condition - CONDITION_EXT_OFFSET;
+        u32 battleSlot = BattleMon_GetID(battleMon);
+        if (battleSlot == BATTLE_MAX_SLOTS) {
+            return 0;
+        }
+        return g_BattleField->conditionsExt[battleSlot].condData[extIdx].status != 0;
+    }
+#endif
+    return (battleMon->conditions[condition].status) != 0;
+}
+
 #endif // EXPAND_ABILITIES || EXPAND_MOVES
 
 #if EXPAND_ITEMS
@@ -5769,9 +5781,21 @@ extern "C" b32 THUMB_BRANCH_SAFESTACK_IsUnselectableMove(BtlClientWk* client, Ba
             return 1;
         }
 
+#if EXPAND_MOVES
+        if (BattleMon_CheckIfMoveCondition(battleMon, CONDITION_THROAT_CHOP)
+            && getMoveFlag(moveID, FLAG_SOUND)) {
+            if (strparam) {
+                Btlv_StringParam_Setup(strparam, 1, BATTLE_THROAT_CHOP_MSGID);
+                DPRINTF("MSG: %d \n", BATTLE_THROAT_CHOP_MSGID);
+                u32 battleSlot = BattleMon_GetID(battleMon);
+                Btlv_StringParam_AddArg(strparam, battleSlot);
+            }
+            return 1;
+        }
+#endif
+
         if (BattleMon_CheckIfMoveCondition(battleMon, CONDITION_DISABLE)
-            && moveID == BattleMon_GetConditionAffectedMove(battleMon, CONDITION_DISABLE)
-            && moveID != MOVE_STRUGGLE) {
+            && moveID == BattleMon_GetConditionAffectedMove(battleMon, CONDITION_DISABLE)) {
             if (strparam) {
                 Btlv_StringParam_Setup(strparam, 2, 595);
                 u32 battleSlot = BattleMon_GetID(battleMon);
@@ -6259,6 +6283,237 @@ extern "C" void THUMB_BRANCH_SAFESTACK_ServerDisplay_MoveEffectivenessMessage(Se
     else if (notEffective) {
         ServerDisplay_AddMessageImpl(serverFlow->serverCommandQueue, SCID_MessageStandard, 79, 0xFFFF0000);
     }
+}
+
+// Condition Expansion
+extern "C" ConditionData THUMB_BRANCH_BattleMon_GetMoveCondition(BattleMon* battleMon, CONDITION condition) {
+    if (condition >= CONDITION_EXT_OFFSET) {
+        u32 extIdx = condition - CONDITION_EXT_OFFSET;
+        u32 battleSlot = BattleMon_GetID(battleMon);
+        if (battleSlot == BATTLE_MAX_SLOTS) {
+            return Condition_MakeNull();
+        }
+        return g_BattleField->conditionsExt[battleSlot].condData[extIdx];
+    }
+    return battleMon->conditions[condition];
+}
+
+extern "C" void THUMB_BRANCH_BattleMon_CureMoveCondition(BattleMon *battleMon, CONDITION condition) {
+  if (IsBasicStatus(condition)) {
+    CureStatusCondition(battleMon);
+  }
+  else {
+    if (condition >= CONDITION_EXT_OFFSET) {
+        u32 extIdx = condition - CONDITION_EXT_OFFSET;
+        u32 battleSlot = BattleMon_GetID(battleMon);
+        if (battleSlot == BATTLE_MAX_SLOTS) {
+            return;
+        }
+        g_BattleField->conditionsExt[battleSlot].condData[extIdx] = Condition_MakeNull();
+        g_BattleField->conditionsExt[battleSlot].counters[extIdx] = 0;
+        return;
+    }
+    battleMon->conditions[condition] = Condition_MakeNull();
+    battleMon->moveConditionCounter[condition] = 0;
+
+  }
+}
+
+extern "C" u8 THUMB_BRANCH_GetConditionTurnCounter(BattleMon* battleMon, CONDITION condition) {
+    if (condition >= CONDITION_EXT_OFFSET) {
+        u32 extIdx = condition - CONDITION_EXT_OFFSET;
+        u32 battleSlot = BattleMon_GetID(battleMon);
+        if (battleSlot == BATTLE_MAX_SLOTS) {
+            return 0;
+        }
+        return g_BattleField->conditionsExt[battleSlot].counters[extIdx];
+    }
+    return battleMon->moveConditionCounter[condition];
+}
+
+extern "C" void THUMB_BRANCH_BattleMon_CureMoveConditionDependPoke(BattleMon *battleMon, u32 dependSlot) {
+    if (dependSlot == BATTLE_MAX_SLOTS) {
+        return;
+    }
+
+    for (CONDITION condition = CONDITION_NONE; condition < CONDITION_EXT_MAX; ++condition) {
+        ConditionData* data = nullptr;
+        if (condition < CONDITION_EXT_OFFSET) {
+            data = &battleMon->conditions[condition];
+        } else {
+            u32 extIdx = condition - CONDITION_EXT_OFFSET;
+            u32 battleSlot = BattleMon_GetID(battleMon);
+            if (battleSlot == BATTLE_MAX_SLOTS) {
+                continue;
+            }
+            data = &g_BattleField->conditionsExt[battleSlot].condData[extIdx];
+        }
+
+        if (!Condition_IsNull(*data) && dependSlot == Condition_GetMonID(*data)) {
+            *data = Condition_MakeNull();
+            CureDependentCondition(battleMon, condition);
+        }
+    }
+}
+
+extern "C" void THUMB_BRANCH_LINK_ClearMoveStatusWork_0x2E(void* ptr, u8 value, u32 size) {
+    sys_memset(ptr, value, size);
+    sys_memset(g_BattleField->conditionData, 0, sizeof(BattleCondition) * BATTLE_MAX_SLOTS);
+}
+
+extern "C" u32 THUMB_BRANCH_SAFESTACK_MoveCondition_TurnCheck(BattleMon *battleMon, CONDITION condition, ConditionData *condData, u32 *removeCondition) {
+    if (condition == CONDITION_SLEEP || condition == CONDITION_CONFUSION) {
+        return 0;
+    }
+
+    ConditionData* currData = nullptr;
+    u8* currCounter = nullptr;
+    if (condition < CONDITION_EXT_OFFSET) {
+        currData = &battleMon->conditions[condition];
+        currCounter = &battleMon->moveConditionCounter[condition];
+    } else {
+        if (!condData) {
+            // Skip server-side update for extended conditions
+            return 0;
+        }
+        u32 extIdx = condition - CONDITION_EXT_OFFSET;
+        u32 battleSlot = BattleMon_GetID(battleMon);
+        if (battleSlot == BATTLE_MAX_SLOTS) {
+            return 0;
+        }
+        currData = &g_BattleField->conditionsExt[battleSlot].condData[extIdx];
+        currCounter = &g_BattleField->conditionsExt[battleSlot].counters[extIdx];
+    }
+    if (currData->status == 0) {
+        return 0;
+    }
+
+    if (condData) {
+        condData = currData;
+    }
+    if (removeCondition) {
+        *removeCondition = 0;
+    }
+
+    if (condition == CONDITION_CHOICELOCK) {
+        MOVE_ID lockedMove = Condition_GetParam(*currData);
+        if (!BattleMon_HasMove(battleMon, lockedMove)) {
+            *currData = Condition_MakeNull();
+            *currCounter = 0;
+            if (removeCondition) {
+                *removeCondition = 1;
+            }
+        }
+    }
+
+    u32 turnMax = Condition_GetTurnMax(*currData);
+    if (turnMax) {
+        if (++*currCounter >= turnMax) {
+            *currData = Condition_MakeNull();
+            *currCounter = 0;
+            if (removeCondition) {
+                *removeCondition = 1;
+            }
+        }
+    } else if (currData->status == 1) {
+        u32 turnCount = (*(int*)currData & 0x1F8) >> 3;
+        if (turnCount && *currCounter < turnCount) {
+            ++*currCounter;
+        }
+    }
+
+    return 1;
+}
+
+extern "C" void THUMB_BRANCH_SetMoveCondition(BattleMon *battleMon, CONDITION condition, ConditionData condData) {
+  if (IsBasicStatus(condition)) {
+    CureStatusCondition(battleMon);
+  }
+
+  ConditionData* currData = nullptr;
+  u8* currCounter = nullptr;
+  if (condition < CONDITION_EXT_OFFSET) {
+      currData = &battleMon->conditions[condition];
+      currCounter = &battleMon->moveConditionCounter[condition];
+  } else {
+      u32 extIdx = condition - CONDITION_EXT_OFFSET;
+      u32 battleSlot = BattleMon_GetID(battleMon);
+      if (battleSlot == BATTLE_MAX_SLOTS) {
+          return;
+      }
+      currData = &g_BattleField->conditionsExt[battleSlot].condData[extIdx];
+      currCounter = &g_BattleField->conditionsExt[battleSlot].counters[extIdx];
+  }
+
+  *currData = condData;
+  *currCounter = 0;
+}
+
+CONDITION ConditionTurnOrder[] = {
+    CONDITION_AQUARING,
+    CONDITION_INGRAIN,
+    CONDITION_LEECHSEED,
+    CONDITION_POISON,
+    CONDITION_BURN,
+    CONDITION_NIGHTMARE,
+    CONDITION_CURSE,
+    CONDITION_BIND,
+    CONDITION_TAUNT,
+    CONDITION_TORMENT,
+    CONDITION_ENCORE,
+    CONDITION_DISABLE,
+    CONDITION_FLOATING,
+    CONDITION_TELEKINESIS,
+    CONDITION_HEALBLOCK,
+    CONDITION_EMBARGO,
+    CONDITION_MUSTHIT,
+    CONDITION_LOCKON,
+    CONDITION_YAWN,
+    CONDITION_PERISHSONG,
+    CONDITION_PARALYSIS,
+    CONDITION_SLEEP,
+    CONDITION_FREEZE,
+    CONDITION_ATTRACT,
+    CONDITION_CONFUSION,
+    CONDITION_GASTROACID,
+    CONDITION_FORESIGHT,
+    CONDITION_BLOCK,
+    CONDITION_ROOST,
+    CONDITION_MOVELOCK,
+    CONDITION_CHARGELOCK,
+    CONDITION_CHOICELOCK,
+    CONDITION_KNOCKEDDOWN,
+    CONDITION_SKYDROP,
+    CONDITION_ACCURACYUP,
+    CONDITION_THROAT_CHOP,
+};
+extern "C" CONDITION THUMB_BRANCH_SAFESTACK_Tables_GetMoveConditionByTurnCheckOrder(u32 idx) {
+    if (idx < ARRAY_COUNT(ConditionTurnOrder)) {
+        return ConditionTurnOrder[idx];
+    }
+    return CONDITION_NONE;
+}
+
+extern "C" u32 THUMB_BRANCH_LINK_ServerControl_MoveExecuteCheck1_0x92(ServerFlow* serverFlow, BattleMon* attackingMon, MOVE_ID moveID, BattleEventType eventType) {
+    MoveFailCause failCause = ServerEvent_CheckMoveExecute(serverFlow, attackingMon, moveID, eventType);
+
+    if (failCause == MOVEFAIL_NULL && BattleMon_CheckIfMoveCondition(attackingMon, CONDITION_THROAT_CHOP) && getMoveFlag(moveID, FLAG_SOUND)) {
+        failCause = MOVEFAIL_THROAT_CHOP;
+    }
+
+    return failCause;
+}
+
+extern "C" void THUMB_BRANCH_LINK_ServerControl_MoveExecuteFail_0x2E(ServerFlow* serverFlow, BattleMon* battleMon, MOVE_ID moveID, MoveFailCause failCause) {
+    u32 battleSlot = BattleMon_GetID(battleMon);
+    switch (failCause) {
+        case MOVEFAIL_THROAT_CHOP:
+            ServerDisplay_AddMessageImpl(serverFlow->serverCommandQueue, SCID_SetMessage, BATTLE_THROAT_CHOP_FAIL_MSGID, battleSlot, moveID, 0xFFFF0000, battleMon);
+            break;
+        default:
+            ServerDisplay_MoveExecuteFailMessage(serverFlow, battleMon, moveID, failCause);
+            break;
+    };
 }
 
 #endif // EXPAND_MOVES

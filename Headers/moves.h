@@ -612,6 +612,9 @@ enum MoveFailCause : u32
     MOVEFAIL_IGNORE_SLEEPING = 0x18,
     MOVEFAIL_NO_REACTION = 0x19,
     MOVEFAIL_OTHER = 0x1A,
+#if EXPAND_MOVES
+    MOVEFAIL_THROAT_CHOP = 0x1B,
+#endif
 };
 
 enum SecretPowerEffect : u32

@@ -2008,6 +2008,9 @@ Symbols:
   - Name: HandlerCommon_CheckTargetMonID
     Segment: 0xA7
     Address: 0x21cde79
+  - Name: IsBasicStatus
+    Segment: 0xA7
+    Address: 0x21bd5c1
   - Name: MakeBasicStatus
     Segment: 0xA7
     Address: 0x21bd56d
@@ -3889,3 +3892,45 @@ Symbols:
   - Name: EventAddStoredPower
     Segment: 0xA7
     Address: 0x21cc8f5
+  - Name: GetConditionTurnCounter
+    Segment: 0xA7
+    Address: 0x21bbb5d
+  - Name: BattleMon_CureMoveConditionDependPoke
+    Segment: 0xA7
+    Address: 0x21bbaa5
+  - Name: Condition_IsNull
+    Segment: 0xA7
+    Address: 0x21ce1a9
+  - Name: CureDependentCondition
+    Segment: 0xA7
+    Address: 0x21bba5d
+  - Name: MoveCondition_TurnCheck
+    Segment: 0xA7
+    Address: 0x21bb8a5
+  - Name: BattleMon_HasMove
+    Segment: 0xA7
+    Address: 0x21baf91
+  - Name: SetMoveCondition
+    Segment: 0xA7
+    Address: 0x21bb875
+  - Name: Tables_GetMoveConditionByTurnCheckOrder
+    Segment: 0xA9
+    Address: 0x689cb81
+  - Name: ServerControl_MoveExecuteCheck1
+    Segment: 0xA7
+    Address: 0x21a3b01
+  - Name: ServerEvent_CheckMoveExecute
+    Segment: 0xA7
+    Address: 0x21a3db1
+  - Name: MoveConditionToPokeCondition
+    Segment: 0xA7
+    Address: 0x21bd4c5
+  - Name: RandomInRange
+    Segment: 0xA7
+    Address: 0x21bd3e1
+  - Name: ServerControl_MoveExecuteFail
+    Segment: 0xA7
+    Address: 0x21a3f35
+  - Name: ServerDisplay_MoveExecuteFailMessage
+    Segment: 0xA7
+    Address: 0x21a4005

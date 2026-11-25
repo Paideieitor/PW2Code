@@ -490,6 +490,7 @@ extern "C" void ServerDisplay_UseHeldItem(ServerFlow* serverFlow, BattleMon* bat
 
 extern "C" void ServerControl_ChangeHeldItem(ServerFlow* serverFlow, BattleMon* battleMon, ITEM itemID, u32 consumeItem);
 extern "C" u32 ServerControl_ActOrderProc_OnlyPokeIn(ServerFlow* serverFlow, u32* clientAction);
+extern "C" void ServerDisplay_MoveExecuteFailMessage(ServerFlow* serverFlow, BattleMon* battleMon, MOVE_ID moveID, MoveFailCause failCause);
 
 extern "C" BattleMon* PokeCon_GetBattleMon(PokeCon* pokeCon, u32 index);
 extern "C" BattleParty* PokeCon_GetBattleParty(PokeCon* pokeCon, u32 idx);
@@ -564,5 +565,6 @@ extern "C" BtlServerWk* BattleServer_InitChangePokemonReq(BtlServerWk* result);
 
 extern "C" bool CMDCHECK_Make(BtlServerWk* btlServer, u32 state, void* cmdPtr, u32 cmdSize);
 extern "C" void MovePokemonTripleBattle1v1(ServerFlow* serverFlow); 
+extern "C" u32 RandomInRange(u32 min, u32 max);
 
 #endif // __SERVER_FLOW_H

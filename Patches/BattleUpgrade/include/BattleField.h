@@ -12,6 +12,11 @@
 #include "items.h"
 #include "abilities.h"
 
+struct BattleCondition {
+    ConditionData condData[CONDITION_EXT_COUNT];
+    u8 counters[CONDITION_EXT_COUNT];
+};
+
 struct BattleFieldExt
 {
     WEATHER weather;
@@ -98,6 +103,9 @@ struct BattleFieldExt
 
     // Extra type added by moves like Trick-or-Treat or Forest's Curse
     u8 extraTypes[BATTLE_MAX_SLOTS];
+
+    // Condition expansion
+    BattleCondition conditionsExt[BATTLE_MAX_SLOTS];
 #endif // EXPAND_MOVES
 };
 

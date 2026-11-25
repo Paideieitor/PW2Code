@@ -187,6 +187,8 @@ extern "C" u16 BattleMon_GetPreviousMoveID(BattleMon* battleMon);
 extern "C" u8 BattleMon_GetCount(BattleMon* battleMon, COUNTER counter);
 extern "C" MOVE_ID BattleMon_GetPreviousMove(BattleMon* battleMon);
 extern "C" u32 BattleMon_GetConditionAffectedMove(BattleMon* battleMon, CONDITION condition);
+extern "C" u32 BattleMon_HasMove(BattleMon* battleMon, MOVE_ID moveID);
+extern "C" void CureDependentCondition(BattleMon* battleMon, CONDITION condition);
 extern "C" u32 BattleMon_GetStatStageVolumeToMax(BattleMon* battleMon, StatStage stat);
 extern "C" u16 BattleMon_GetPokeType(BattleMon* battleMon);
 extern "C" u32 BattleMon_GetStatsForCritDamage(BattleMon* battleMon, BattleMonValue statStage);

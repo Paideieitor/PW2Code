@@ -44,4 +44,6 @@ extern "C" void ServerEvent_ActProcEnd(ServerFlow* serverFlow, BattleMon* curren
 extern "C" void ServerEvent_AfterSwitchInPrevious(ServerFlow* serverFlow);
 extern "C" void ServerEvent_SwitchIn(ServerFlow* serverFlow, BattleMon* battleMon);
 extern "C" void ServerEvent_AfterLastSwitchIn(ServerFlow* serverFlow);
+extern "C" MoveFailCause ServerEvent_CheckMoveExecute(ServerFlow* serverFlow, BattleMon* attackingMon, MOVE_ID moveID, BattleEventType eventType);
+
 #endif // __SERVER_EVENTS_H

@@ -44,7 +44,9 @@ enum MoveCondition : u32
     CONDITION_SKYDROP = 0x21,
     CONDITION_ACCURACYUP = 0x22,
     CONDITION_AQUARING = 0x23,
-    CONDITION_24 = 0x24,
+    CONDITION_CURE_ALL = 0x24,
+    CONDITION_CURE_STATUS = 0x25,
+    CONDITION_CURE_MENTAL = 0x26,
 };
 
 typedef u32 CONDITION_FLAG;
@@ -77,7 +79,8 @@ struct ConditionData
     u32 rest : 20;
 };
 
-extern "C" ConditionData MakeBasicStatus(MoveCondition condition);
+extern "C" u32 IsBasicStatus(CONDITION condition);
+extern "C" ConditionData MakeBasicStatus(CONDITION condition);
 extern "C" ConditionData Condition_MakeNull();
 extern "C" u32 Condition_GetMonID(ConditionData condData);
 extern "C" void Condition_SetMonID(ConditionData* condData, u32 pokemonSlot);
@@ -90,5 +93,6 @@ extern "C" ConditionData MakeCondition(CONDITION condition, BattleMon* battleMon
 extern "C" ConditionData ConditionData_MakePoke(u32 battleSlot);
 extern "C" ConditionData Condition_MakeBadlyPoisoned();
 extern "C" u16 Condition_GetParam(ConditionData condData);
+extern "C" bool Condition_IsNull(ConditionData condData);
 
 #endif // __CONDITIONS_H
