@@ -39,6 +39,7 @@ extern "C" BattleEventHandlerTableEntry* EventAddBurnUp(u32* handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddSpeedSwap(u32* handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddPurify(u32* handlerAmount);
 extern "C" BattleEventHandlerTableEntry* EventAddRevelationDance(u32* handlerAmount);
+extern "C" BattleEventHandlerTableEntry* EventAddCoreEnforcer(u32* handlerAmount);
 
 extern "C" BattleEventHandlerTableEntry* EventAddPlasmaFist(u32* handlerAmount);
 

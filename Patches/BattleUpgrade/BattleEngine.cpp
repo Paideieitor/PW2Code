@@ -5992,6 +5992,7 @@ MoveEventAddTableExt moveEventAddTableExt[] = {
     {MOVE_SPEED_SWAP, EventAddSpeedSwap, "Moves/SpeedSwap"},
     {MOVE_PURIFY, EventAddPurify, "Moves/Purify"},
     {MOVE_REVELATION_DANCE, EventAddRevelationDance, "Moves/RevelationDance"},
+    {MOVE_CORE_ENFORCER, EventAddCoreEnforcer, "Moves/CoreEnforcer"},
 
     {MOVE_PSYCHIC_TERRAIN, EventAddPsychicTerrain, "Moves/PsychicTerrain"},
 

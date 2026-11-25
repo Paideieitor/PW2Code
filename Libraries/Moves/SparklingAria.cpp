@@ -11,6 +11,10 @@ extern "C" void HandlerSparklingAria(BattleEventItem* item, ServerFlow* serverFl
     if (pokemonSlot == BattleEventVar_GetValue(VAR_ATTACKING_MON)) {
         u32 targetCount = BattleEventVar_GetValue(VAR_TARGET_COUNT); 
 
+        HandlerParam_CureCondition* cureCondition = (HandlerParam_CureCondition*)BattleHandler_PushWork(serverFlow, EFFECT_CURE_STATUS, pokemonSlot);
+        cureCondition->condition = CONDITION_BURN;
+
+        cureCondition->pokeCount = 0;
         for (u32 targetIdx = 0; targetIdx < targetCount; ++targetIdx) {
             u32 targetSlot = BattleEventVar_GetValue((BattleEventVar)(VAR_TARGET_MON_ID + targetIdx));
 
@@ -19,14 +23,13 @@ extern "C" void HandlerSparklingAria(BattleEventItem* item, ServerFlow* serverFl
 
                 if (BattleMon_CheckIfMoveCondition(targetMon, CONDITION_BURN)) {
 
-                    HandlerParam_CureCondition* cureCondition = (HandlerParam_CureCondition*)BattleHandler_PushWork(serverFlow, EFFECT_CURE_STATUS, pokemonSlot);
-                    cureCondition->pokeID[0] = targetSlot;
-                    cureCondition->pokeCount = 1;
-                    cureCondition->condition = CONDITION_BURN;
-                    BattleHandler_PopWork(serverFlow, cureCondition);
+                    cureCondition->pokeID[cureCondition->pokeCount] = targetSlot;
+                    ++cureCondition->pokeCount;
                 }
             }
         }
+
+        BattleHandler_PopWork(serverFlow, cureCondition);
     }
 }
 
